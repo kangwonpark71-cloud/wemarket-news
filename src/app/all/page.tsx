@@ -2,35 +2,41 @@ import Sidebar from '@/components/layout/Sidebar'
 import NewsList from '@/components/news/NewsList'
 import { getArticles } from '@/lib/rss/db-service'
 
-interface HomePageProps {
-  searchParams: Promise<{ source?: string; page?: string }>
+interface AllPageProps {
+  searchParams: Promise<{ source?: string; page?: string; language?: string }>
 }
 
-export default async function HomePage({ searchParams }: HomePageProps) {
+export default async function AllPage({ searchParams }: AllPageProps) {
   const params = await searchParams
   const page = parseInt(params.page || '1', 10)
   const source = params.source
+  const language = params.language
 
   const { articles, total, totalPages } = await getArticles({
-    category: 'domestic',
     sourceName: source,
+    language,
     page,
-    limit: 20,
+    limit: 30,
   })
 
   return (
     <div className="mx-auto max-w-7xl px-4 py-6 sm:px-6 lg:px-8">
       <div className="flex gap-8">
-        <Sidebar category="domestic" />
+        <Sidebar category="all" />
 
         <div className="min-w-0 flex-1">
           <div className="mb-6">
-            <h1 className="text-2xl font-bold text-gray-900">국내 경제</h1>
+            <h1 className="text-2xl font-bold text-gray-900">전체 뉴스</h1>
             <p className="mt-1 text-sm text-gray-500">
-              한국경제, 매일경제의 최신 경제 뉴스
-              {source && (
+              국내외 경제 뉴스를 한 곳에서
+              {language && (
                 <span className="ml-2 rounded-full bg-blue-100 px-2 py-0.5 text-xs text-blue-700">
-                  필터 적용 중
+                  {language === 'ko' ? '국내만' : '해외만'}
+                </span>
+              )}
+              {source && (
+                <span className="ml-2 rounded-full bg-green-100 px-2 py-0.5 text-xs text-green-700">
+                  소스 필터 적용 중
                 </span>
               )}
             </p>
@@ -42,7 +48,7 @@ export default async function HomePage({ searchParams }: HomePageProps) {
             <div className="mt-6 flex items-center justify-center gap-2">
               {page > 1 && (
                 <a
-                  href={`/?page=${page - 1}${source ? `&source=${source}` : ''}`}
+                  href={`/all?page=${page - 1}${source ? `&source=${source}` : ''}${language ? `&language=${language}` : ''}`}
                   className="rounded-lg border border-gray-300 bg-white px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50"
                 >
                   이전
@@ -53,7 +59,7 @@ export default async function HomePage({ searchParams }: HomePageProps) {
               </span>
               {page < totalPages && (
                 <a
-                  href={`/?page=${page + 1}${source ? `&source=${source}` : ''}`}
+                  href={`/all?page=${page + 1}${source ? `&source=${source}` : ''}${language ? `&language=${language}` : ''}`}
                   className="rounded-lg border border-gray-300 bg-white px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50"
                 >
                   다음

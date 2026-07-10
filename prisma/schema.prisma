@@ -1,0 +1,88 @@
+// Economy News - Prisma Schema
+// RSS 기반 경제 뉴스 아그리게이터
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+// RSS 소스 정의
+model Source {
+  id            String   @id @default(uuid())
+  name          String   // "한국경제", "매일경제", "Fed Press" 등
+  nameEn        String   @unique @map("name_en") // "hankyung", "mk", "fed_press" 등
+  url           String   @unique // RSS URL
+  category      String   // "domestic" | "overseas"
+  subcategory   String?  // "korean_economy", "monetary_policy" 등
+  icon          String?  // 소스 아이콘 URL
+  isActive      Boolean  @default(true) @map("is_active")
+  fetchInterval Int      @default(3) @map("fetch_interval") // 수집 주기 (시간)
+  createdAt     DateTime @default(now()) @map("created_at")
+  updatedAt     DateTime @updatedAt @map("updated_at")
+
+  articles    Article[]
+  fetchLogs   FetchLog[]
+
+  @@index([category, isActive])
+  @@map("sources")
+}
+
+// 뉴스 기사
+model Article {
+  id              String   @id @default(uuid())
+  sourceId        String   @map("source_id")
+  guid            String?  // RSS GUID (중복 방지용)
+  title           String
+  url             String   @unique
+  description     String?  @db.Text
+  author          String?
+  thumbnail       String?  // 매경은 이미지 포함
+  publishedAt     DateTime @map("published_at")
+  fetchedAt       DateTime @default(now()) @map("fetched_at")
+  category        String?  // RSS category (Fed 관련)
+  language        String   @default("ko") // "ko" | "en"
+  isRead          Boolean  @default(false) @map("is_read")
+  isBookmarked    Boolean  @default(false) @map("is_bookmarked")
+
+  source          Source   @relation(fields: [sourceId], references: [id], onDelete: Cascade)
+
+  @@index([sourceId, publishedAt(sort: Desc)])
+  @@index([category, publishedAt(sort: Desc)])
+  @@index([language, publishedAt(sort: Desc)])
+  @@index([publishedAt(sort: Desc)])
+  @@map("articles")
+}
+
+// 수집 로그
+model FetchLog {
+  id          String   @id @default(uuid())
+  sourceId    String   @map("source_id")
+  status      String   // "success" | "error" | "partial"
+  count       Int      @default(0) // 수집된 기사 수
+  newCount    Int      @default(0) @map("new_count") // 새로 수집된 기사 수
+  error       String?  @db.Text
+  duration    Int?     // 소요시간 (ms)
+  fetchedAt   DateTime @default(now()) @map("fetched_at")
+
+  source      Source   @relation(fields: [sourceId], references: [id], onDelete: Cascade)
+
+  @@index([sourceId, fetchedAt(sort: Desc)])
+  @@map("fetch_logs")
+}
+
+// 사용자 설정 (선택사항: 확장용)
+model UserPreference {
+  id              String   @id @default(uuid())
+  sessionId       String   @unique @map("session_id") // 브라우저 세션 ID
+  hiddenSources   String[] @default([]) @map("hidden_sources") // 숨긴 소스 ID 목록
+  pinnedSources   String[] @default([]) @map("pinned_sources") // 고정 소스 ID 목록
+  theme           String   @default("light") // "light" | "dark"
+  createdAt       DateTime @default(now()) @map("created_at")
+  updatedAt       DateTime @updatedAt @map("updated_at")
+
+  @@map("user_preferences")
+}
