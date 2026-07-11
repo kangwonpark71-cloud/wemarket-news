@@ -1,6 +1,6 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import Link from 'next/link'
 import { usePathname, useSearchParams } from 'next/navigation'
 import { cn } from '@/lib/utils'
@@ -18,6 +18,27 @@ export default function Header() {
   const searchParams = useSearchParams()
   const [isSearchOpen, setIsSearchOpen] = useState(false)
   const [searchQuery, setSearchQuery] = useState(searchParams.get('search') || '')
+  const [lastCrawled, setLastCrawled] = useState<string>('')
+
+  useEffect(() => {
+    const updateTime = () => {
+      const now = new Date()
+      const dateStr = now.toLocaleDateString('ko-KR', {
+        year: 'numeric',
+        month: 'long',
+        day: 'numeric',
+        weekday: 'short',
+      })
+      const timeStr = now.toLocaleTimeString('ko-KR', {
+        hour: '2-digit',
+        minute: '2-digit',
+      })
+      setLastCrawled(`${dateStr} · 크롤링: ${timeStr}`)
+    }
+    updateTime()
+    const interval = setInterval(updateTime, 60000)
+    return () => clearInterval(interval)
+  }, [])
 
   const isActive = (href: string) => {
     if (href === '/') return pathname === '/'
@@ -38,9 +59,14 @@ export default function Header() {
   return (
     <header className="sticky top-0 z-50 w-full border-b border-border bg-background/80 backdrop-blur-md">
       <div className="mx-auto flex h-16 max-w-7xl items-center justify-between px-4 sm:px-6 lg:px-8">
-        <Link href="/" className="flex items-center gap-2" aria-label="경제뉴스 홈">
+        <Link href="/" className="flex items-center gap-2" aria-label="위마켓_뉴스 홈">
           <span className="text-2xl" aria-hidden="true">📰</span>
-          <span className="text-xl font-bold text-foreground">경제뉴스</span>
+          <span className="text-xl font-bold text-foreground">위마켓_뉴스</span>
+          {lastCrawled && (
+            <span className="ml-2 text-xs text-muted-foreground hidden sm:inline">
+              {lastCrawled}
+            </span>
+          )}
         </Link>
 
         <nav className="hidden items-center gap-1 md:flex" aria-label="주요 내비게이션">
