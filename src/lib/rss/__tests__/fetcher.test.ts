@@ -2,11 +2,13 @@ import { extractCategory, extractThumbnail } from '@/lib/rss/fetcher'
 
 interface CategoryItem {
   categories?: string[] | string
+  [key: string]: unknown
 }
 
 interface ThumbnailItem {
   mediaContent?: { $?: { url?: string } }
   mediaThumbnail?: { $?: { url?: string } }
+  [key: string]: unknown
 }
 
 describe('fetcher utilities', () => {
