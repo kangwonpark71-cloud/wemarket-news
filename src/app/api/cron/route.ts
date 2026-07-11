@@ -14,29 +14,34 @@ export async function POST(request: Request) {
 
   const url = new URL(request.url)
   const sourceParam = url.searchParams.get('source')
+  const forceFetch = url.searchParams.get('force') === 'true'
 
   const sourcesToFetch = sourceParam
     ? ALL_SOURCES.filter((s) => s.nameEn === sourceParam)
     : ALL_SOURCES
 
+  const startTime = Date.now()
   const results = []
 
+  console.log(`[Cron] Starting RSS fetch for ${sourcesToFetch.length} sources (force: ${forceFetch})`)
+
   for (const sourceConfig of sourcesToFetch) {
-    const startTime = Date.now()
+    const sourceStartTime = Date.now()
 
     try {
       const sourceId = await getSourceIdByNameEn(sourceConfig.nameEn)
       if (!sourceId) {
-        results.push({ source: sourceConfig.nameEn, status: 'skipped', error: 'Source not found' })
+        results.push({ source: sourceConfig.nameEn, status: 'skipped', error: 'Source not found in DB' })
         continue
       }
 
-      const { articles, error } = await fetchFeed(sourceConfig)
-      const duration = Date.now() - startTime
+      const { articles, error, fetchedAt } = await fetchFeed(sourceConfig)
+      const duration = Date.now() - sourceStartTime
 
       if (error) {
         await logFetch(sourceId, 'error', 0, 0, duration, error)
-        results.push({ source: sourceConfig.nameEn, status: 'error', error })
+        console.warn(`[Cron] ${sourceConfig.nameEn}: ${error}`)
+        results.push({ source: sourceConfig.nameEn, status: 'error', error, duration })
         continue
       }
 
@@ -50,9 +55,12 @@ export async function POST(request: Request) {
         total: totalCount,
         new: newCount,
         duration,
+        fetchedAt: fetchedAt.toISOString(),
       })
+
+      console.log(`[Cron] ${sourceConfig.nameEn}: ${status} - ${totalCount} total, ${newCount} new (${duration}ms)`)
     } catch (err) {
-      const duration = Date.now() - startTime
+      const duration = Date.now() - sourceStartTime
       const errorMessage = err instanceof Error ? err.message : 'Unknown error'
 
       const sourceId = await getSourceIdByNameEn(sourceConfig.nameEn)
@@ -60,13 +68,28 @@ export async function POST(request: Request) {
         await logFetch(sourceId, 'error', 0, 0, duration, errorMessage)
       }
 
-      results.push({ source: sourceConfig.nameEn, status: 'error', error: errorMessage })
+      console.error(`[Cron] ${sourceConfig.nameEn}: Exception - ${errorMessage}`)
+      results.push({ source: sourceConfig.nameEn, status: 'error', error: errorMessage, duration })
     }
   }
+
+  const totalDuration = Date.now() - startTime
+  const successCount = results.filter(r => r.status === 'success').length
+  const errorCount = results.filter(r => r.status === 'error').length
+  const partialCount = results.filter(r => r.status === 'partial').length
+
+  console.log(`[Cron] Completed in ${totalDuration}ms: ${successCount} success, ${partialCount} partial, ${errorCount} errors`)
 
   return NextResponse.json({
     success: true,
     timestamp: new Date().toISOString(),
+    duration: totalDuration,
+    summary: {
+      total: results.length,
+      success: successCount,
+      partial: partialCount,
+      errors: errorCount,
+    },
     results,
   })
 }
@@ -75,5 +98,6 @@ export async function GET() {
   return NextResponse.json({
     message: 'Use POST to trigger RSS fetch',
     timestamp: new Date().toISOString(),
+    usage: 'POST /api/cron?source=hankyung (optional) & force=true (optional)',
   })
 }

@@ -1,5 +1,5 @@
 import { NextResponse } from 'next/server'
-import { getArticles } from '@/lib/rss/db-service'
+import { getArticles, getArticleStats } from '@/lib/rss/db-service'
 
 export async function GET(request: Request) {
   const { searchParams } = new URL(request.url)
@@ -10,6 +10,9 @@ export async function GET(request: Request) {
   const page = parseInt(searchParams.get('page') || '1', 10)
   const limit = parseInt(searchParams.get('limit') || '20', 10)
   const search = searchParams.get('search') || undefined
+  const sortBy = searchParams.get('sortBy') || 'publishedAt'
+  const sortOrder = (searchParams.get('sortOrder') as 'asc' | 'desc') || 'desc'
+  const includeStats = searchParams.get('stats') === 'true'
 
   try {
     const result = await getArticles({
@@ -19,11 +22,19 @@ export async function GET(request: Request) {
       page,
       limit: Math.min(limit, 100),
       search,
+      sortBy,
+      sortOrder,
     })
+
+    let stats = null
+    if (includeStats) {
+      stats = await getArticleStats()
+    }
 
     return NextResponse.json({
       success: true,
       data: result,
+      stats,
     })
   } catch (error) {
     console.error('Failed to fetch articles:', error)

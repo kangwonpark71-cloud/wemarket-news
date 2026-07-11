@@ -48,6 +48,8 @@ export async function getArticles(params: {
   page?: number
   limit?: number
   search?: string
+  sortBy?: string
+  sortOrder?: 'asc' | 'desc'
 }): Promise<{ articles: ArticleWithSource[]; total: number; page: number; totalPages: number }> {
   const {
     category,
@@ -56,6 +58,8 @@ export async function getArticles(params: {
     page = 1,
     limit = 20,
     search,
+    sortBy = 'publishedAt',
+    sortOrder = 'desc',
   } = params
 
   const where: Prisma.ArticleWhereInput = {}
@@ -76,17 +80,21 @@ export async function getArticles(params: {
   }
 
   if (search) {
+    const searchLower = search.toLowerCase()
     where.OR = [
-      { title: { contains: search, mode: 'insensitive' } },
-      { description: { contains: search, mode: 'insensitive' } },
+      { title: { contains: searchLower } },
+      { description: { contains: searchLower } },
     ]
   }
+
+  const allowedSortFields = ['publishedAt', 'fetchedAt', 'title', 'createdAt']
+  const sortField = allowedSortFields.includes(sortBy) ? sortBy : 'publishedAt'
 
   const [articles, total] = await Promise.all([
     prisma.article.findMany({
       where,
       include: { source: true },
-      orderBy: { publishedAt: 'desc' },
+      orderBy: { [sortField]: sortOrder },
       skip: (page - 1) * limit,
       take: limit,
     }),

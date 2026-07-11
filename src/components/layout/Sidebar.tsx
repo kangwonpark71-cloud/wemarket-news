@@ -1,7 +1,7 @@
 'use client'
 
 import Link from 'next/link'
-import { usePathname } from 'next/navigation'
+import { usePathname, useSearchParams } from 'next/navigation'
 import { cn } from '@/lib/utils'
 
 interface SidebarProps {
@@ -29,75 +29,83 @@ const OVERSEAS_ITEMS: SidebarItem[] = [
   { label: 'Exchange Rates', href: '/overseas?source=fed_exchange_rates', icon: '💱' },
 ]
 
+const ALL_QUICK_FILTERS = [
+  { label: '전체 뉴스', href: '/all', icon: '📋' },
+  { label: '국내 뉴스만', href: '/all?language=ko', icon: '🇰🇷' },
+  { label: '해외 뉴스만', href: '/all?language=en', icon: '🇺🇸' },
+]
+
 export default function Sidebar({ category }: SidebarProps) {
   const pathname = usePathname()
+  const searchParams = useSearchParams()
 
   const items = category === 'domestic' ? DOMESTIC_ITEMS : category === 'overseas' ? OVERSEAS_ITEMS : []
 
   if (category === 'all') {
     return (
-      <aside className="hidden w-64 shrink-0 lg:block">
-        <div className="sticky top-20 space-y-6">
+      <aside className="hidden w-64 shrink-0 lg:block" aria-label="전체 뉴스 필터">
+        <div className="sticky top-24 space-y-6">
           <div>
-            <h3 className="mb-3 text-xs font-semibold uppercase tracking-wider text-gray-500">
+            <h3 className="mb-3 text-xs font-semibold uppercase tracking-wider text-muted-foreground">
               빠른 필터
             </h3>
-            <nav className="space-y-1">
-              <Link
-                href="/all"
-                className={cn(
-                  'flex items-center gap-3 rounded-lg px-3 py-2 text-sm font-medium transition-colors',
-                  pathname === '/all' && !pathname.includes('?')
-                    ? 'bg-blue-50 text-blue-700'
-                    : 'text-gray-700 hover:bg-gray-50'
-                )}
-              >
-                <span>📋</span>
-                <span>전체 뉴스</span>
-              </Link>
-              <Link
-                href="/all?language=ko"
-                className="flex items-center gap-3 rounded-lg px-3 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50"
-              >
-                <span>🇰🇷</span>
-                <span>국내 뉴스만</span>
-              </Link>
-              <Link
-                href="/all?language=en"
-                className="flex items-center gap-3 rounded-lg px-3 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50"
-              >
-                <span>🇺🇸</span>
-                <span>해외 뉴스만</span>
-              </Link>
+            <nav className="space-y-1" aria-label="빠른 필터">
+              {ALL_QUICK_FILTERS.map((item) => {
+                const isActive = pathname === item.href
+                return (
+                  <Link
+                    key={item.href}
+                    href={item.href}
+                    className={cn(
+                      'flex items-center gap-3 rounded-lg px-3 py-2 text-sm font-medium transition-colors',
+                      isActive
+                        ? 'bg-primary-light text-primary'
+                        : 'text-foreground hover:bg-muted'
+                    )}
+                    aria-current={isActive ? 'page' : undefined}
+                  >
+                    <span aria-hidden="true">{item.icon}</span>
+                    <span>{item.label}</span>
+                  </Link>
+                )
+              })}
             </nav>
+          </div>
+
+          <div className="rounded-xl border border-border bg-muted p-4">
+            <h4 className="mb-2 text-sm font-medium text-foreground">자동 업데이트</h4>
+            <p className="text-xs text-muted-foreground">3시간마다 자동으로 새 기사를 수집합니다</p>
           </div>
         </div>
       </aside>
     )
   }
 
+  const currentSource = searchParams.get('source')
+
   return (
-    <aside className="hidden w-64 shrink-0 lg:block">
-      <div className="sticky top-20 space-y-6">
+    <aside className="hidden w-64 shrink-0 lg:block" aria-label={`${category === 'domestic' ? '국내' : '해외'} 경제 소스`}>
+      <div className="sticky top-24 space-y-6">
         <div>
-          <h3 className="mb-3 text-xs font-semibold uppercase tracking-wider text-gray-500">
+          <h3 className="mb-3 text-xs font-semibold uppercase tracking-wider text-muted-foreground">
             {category === 'domestic' ? '국내 경제 소스' : '해외 경제 소스'}
           </h3>
-          <nav className="space-y-1">
+          <nav className="space-y-1" aria-label={`${category === 'domestic' ? '국내' : '해외'} 소스 목록`}>
             {items.map((item) => {
-              const isCurrentPage = pathname + item.href === item.href || pathname === item.href.split('?')[0]
+              const isCurrent = currentSource === item.href.split('=')[1]
               return (
                 <Link
                   key={item.href}
                   href={item.href}
                   className={cn(
                     'flex items-center gap-3 rounded-lg px-3 py-2 text-sm font-medium transition-colors',
-                    isCurrentPage
-                      ? 'bg-blue-50 text-blue-700'
-                      : 'text-gray-700 hover:bg-gray-50'
+                    isCurrent
+                      ? 'bg-primary-light text-primary'
+                      : 'text-foreground hover:bg-muted'
                   )}
+                  aria-current={isCurrent ? 'page' : undefined}
                 >
-                  <span>{item.icon}</span>
+                  <span aria-hidden="true">{item.icon}</span>
                   <span>{item.label}</span>
                 </Link>
               )
@@ -105,10 +113,21 @@ export default function Sidebar({ category }: SidebarProps) {
           </nav>
         </div>
 
-        <div className="rounded-lg border border-gray-200 bg-gray-50 p-4">
-          <h4 className="mb-2 text-sm font-medium text-gray-900">마지막 업데이트</h4>
-          <p className="text-xs text-gray-500">3시간마다 자동 갱신됩니다</p>
+        <div className="rounded-xl border border-border bg-muted p-4">
+          <h4 className="mb-2 text-sm font-medium text-foreground">마지막 업데이트</h4>
+          <p className="text-xs text-muted-foreground">3시간마다 자동 갱신됩니다</p>
         </div>
+
+        {category === 'domestic' && (
+          <div className="rounded-xl border border-border bg-muted p-4">
+            <h4 className="mb-2 text-sm font-medium text-foreground">검색 팁</h4>
+            <ul className="space-y-1 text-xs text-muted-foreground">
+              <li>헤더의 검색창으로 기사 검색</li>
+              <li>소스별 필터링: 사이드바 메뉴 사용</li>
+              <li>읽은 기사는 회색으로 표시</li>
+            </ul>
+          </div>
+        )}
       </div>
     </aside>
   )
