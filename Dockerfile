@@ -5,10 +5,8 @@ RUN apk add --no-cache libc6-compat
 WORKDIR /app
 
 COPY package.json package-lock.json* ./
-RUN npm ci --legacy-peer-deps
-
 COPY prisma ./prisma/
-RUN npx prisma generate
+RUN npm ci --legacy-peer-deps
 
 FROM base AS builder
 WORKDIR /app
