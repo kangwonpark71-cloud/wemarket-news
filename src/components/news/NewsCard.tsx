@@ -3,6 +3,7 @@
 import { ArticleWithSource } from '@/lib/rss/db-service'
 import { formatDate, truncate } from '@/lib/utils'
 import { useState } from 'react'
+import Link from 'next/link'
 
 interface NewsCardProps {
   article: ArticleWithSource
@@ -119,14 +120,12 @@ export default function NewsCard({ article, compact = false }: NewsCardProps) {
               </div>
             </div>
 
-            <a
-              href={article.url}
-              target="_blank"
-              rel="noopener noreferrer"
+            <Link
+              href={`/articles/${article.id}`}
               className="block truncate text-sm font-semibold leading-tight text-gray-900 group-hover:text-primary sm:text-base"
             >
               {article.title}
-            </a>
+            </Link>
 
             {!compact && article.description && (
               <p className="mt-2 text-sm leading-relaxed text-gray-600">

@@ -117,6 +117,13 @@ export async function getArticleById(id: string): Promise<ArticleWithSource | nu
   return article as ArticleWithSource | null
 }
 
+export async function saveArticleContent(id: string, content: string): Promise<void> {
+  await prisma.article.update({
+    where: { id },
+    data: { content },
+  })
+}
+
 export async function markAsRead(id: string): Promise<void> {
   await prisma.article.update({
     where: { id },

@@ -39,6 +39,7 @@ model Article {
   title           String
   url             String   @unique
   description     String?
+  content         String?  @db.Text // 전체 기사 본문 (스크래핑)
   author          String?
   thumbnail       String?  // 매경은 이미지 포함
   publishedAt     DateTime @map("published_at")
