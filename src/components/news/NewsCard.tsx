@@ -123,7 +123,7 @@ export default function NewsCard({ article, compact = false }: NewsCardProps) {
               href={article.url}
               target="_blank"
               rel="noopener noreferrer"
-              className="block text-sm font-semibold leading-tight text-gray-900 group-hover:text-primary sm:text-base"
+              className="block truncate text-sm font-semibold leading-tight text-gray-900 group-hover:text-primary sm:text-base"
             >
               {article.title}
             </a>

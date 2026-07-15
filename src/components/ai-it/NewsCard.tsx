@@ -129,7 +129,7 @@ export default function NewsCard({ article, variant = 'default' }: NewsCardProps
             {article.isBookmarked && <span className="text-yellow-500" title="북마크됨">★</span>}
           </div>
           <Link href={article.url}>
-            <h3 className="font-semibold text-foreground line-clamp-2 hover:text-primary transition-colors mb-2">
+            <h3 className="truncate font-semibold text-foreground hover:text-primary transition-colors mb-2">
               {article.title}
             </h3>
           </Link>
