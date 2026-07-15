@@ -317,6 +317,30 @@ export async function getPopularTags(limit = 50): Promise<{ name: string; count:
   return tags.map(t => ({ name: t.name, count: t._count.articles }));
 }
 
+export async function seedAIITSources(): Promise<number> {
+  const { ALL_AIIT_SOURCES } = await import('./sources')
+  let count = 0
+  for (const src of ALL_AIIT_SOURCES) {
+    try {
+      await upsertAIITSource({
+        name: src.name,
+        nameEn: src.nameEn,
+        url: src.url,
+        category: src.category,
+        subcategory: src.subcategory,
+        language: src.language,
+        icon: src.icon,
+        fetchInterval: src.fetchInterval,
+      })
+      count++
+    } catch (e) {
+      console.warn(`[SeedAIIT] Failed to upsert ${src.nameEn}:`, e)
+    }
+  }
+  console.log(`[SeedAIIT] Seeded ${count}/${ALL_AIIT_SOURCES.length} sources`)
+  return count
+}
+
 // Source operations
 export async function getAIITSourceByNameEn(nameEn: string) {
   return prisma.newsSource.findUnique({
