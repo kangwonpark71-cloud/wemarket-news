@@ -50,12 +50,12 @@ export default function NewsCard({ article, variant = 'default' }: NewsCardProps
     return (
       <article className="flex gap-3 py-3 border-b border-border last:border-0 hover:bg-muted/50 transition-colors">
         {article.thumbnail && (
-          <Link href={article.url} className="flex-shrink-0 w-20 h-20 rounded-lg overflow-hidden" aria-label={article.title}>
+          <Link href={`/ai-it/articles/${article.id}`} className="flex-shrink-0 w-20 h-20 rounded-lg overflow-hidden" aria-label={article.title}>
             <Image src={article.thumbnail} alt="" fill className="object-cover" sizes="80px" />
           </Link>
         )}
         <div className="flex-1 min-w-0">
-          <Link href={article.url} className="font-medium text-foreground hover:text-primary line-clamp-2">
+          <Link href={`/ai-it/articles/${article.id}`} className="font-medium text-foreground hover:text-primary line-clamp-2">
             {article.title}
           </Link>
           <div className="mt-1 flex items-center gap-2 text-xs text-muted-foreground">
@@ -75,7 +75,7 @@ export default function NewsCard({ article, variant = 'default' }: NewsCardProps
     return (
       <article className="group relative rounded-xl border border-border bg-card overflow-hidden transition-all hover:shadow-lg">
         {article.thumbnail && (
-          <Link href={article.url} className="relative aspect-video overflow-hidden" aria-label={article.title}>
+          <Link href={`/ai-it/articles/${article.id}`} className="relative aspect-video overflow-hidden" aria-label={article.title}>
             <Image src={article.thumbnail} alt="" fill className="object-cover group-hover:scale-105 transition-transform duration-300" sizes="100vw" />
           </Link>
         )}
@@ -85,7 +85,7 @@ export default function NewsCard({ article, variant = 'default' }: NewsCardProps
             <span className="text-xs font-medium text-muted-foreground">{article.source.name}</span>
             <span className="text-xs text-muted-foreground">{publishedDate}</span>
           </div>
-          <Link href={article.url}>
+          <Link href={`/ai-it/articles/${article.id}`}>
             <h3 className="font-semibold text-foreground line-clamp-2 group-hover:text-primary transition-colors">
               {article.title}
             </h3>
@@ -116,7 +116,7 @@ export default function NewsCard({ article, variant = 'default' }: NewsCardProps
     <article className="rounded-xl border border-border bg-card p-4 transition-all hover:shadow-md">
       <div className="flex gap-4">
         {article.thumbnail && (
-          <Link href={article.url} className="flex-shrink-0 w-32 h-32 rounded-lg overflow-hidden" aria-label={article.title}>
+          <Link href={`/ai-it/articles/${article.id}`} className="flex-shrink-0 w-32 h-32 rounded-lg overflow-hidden" aria-label={article.title}>
             <Image src={article.thumbnail} alt="" fill className="object-cover" sizes="128px" />
           </Link>
         )}
@@ -128,7 +128,7 @@ export default function NewsCard({ article, variant = 'default' }: NewsCardProps
             <time dateTime={new Date(article.publishedAt).toISOString()}>{publishedDate}</time>
             {article.isBookmarked && <span className="text-yellow-500" title="북마크됨">★</span>}
           </div>
-          <Link href={article.url}>
+          <Link href={`/ai-it/articles/${article.id}`}>
             <h3 className="truncate font-semibold text-foreground hover:text-primary transition-colors mb-2">
               {article.title}
             </h3>
