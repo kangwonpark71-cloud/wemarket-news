@@ -13,7 +13,7 @@
  *  - Each crawl gets a fresh context (isolated cookies/storage).
  */
 
-import { Browser, BrowserContext, Page, chromium } from 'playwright';
+import type { Browser, BrowserContext, Page } from 'playwright';
 import { AIITSourceConfig } from './sources';
 
 // ──────────────────────────────────────────────
@@ -63,6 +63,7 @@ let _context: BrowserContext | null = null;
 
 async function getBrowser(): Promise<Browser> {
   if (!_browser || !_browser.isConnected()) {
+    const { chromium } = await import('playwright');
     _browser = await chromium.launch({
       headless: true,
       args: [

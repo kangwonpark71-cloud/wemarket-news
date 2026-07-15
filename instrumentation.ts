@@ -1,6 +1,6 @@
 import { startRssScheduler } from '@/lib/rss/scheduler'
-import { seedAIITSources } from '@/lib/ai-it/db-service'
-import { fetchAllAIITNews } from '@/lib/ai-it/scheduler-service'
+import { seedAIITSources, getActiveAIITSources } from '@/lib/ai-it/db-service'
+import { fetchAllAIITNews, run15MinJob, run30MinJob, run60MinJob } from '@/lib/ai-it/scheduler-service'
 import cron from 'node-cron'
 
 export async function register() {
@@ -8,28 +8,26 @@ export async function register() {
     startRssScheduler()
 
     try {
-      const { getActiveAIITSources } = await import('@/lib/ai-it/db-service')
       const existing = await getActiveAIITSources()
       if (existing.length === 0) {
         console.log('[Instrumentation] No AI/IT sources found, seeding...')
         await seedAIITSources()
+      } else {
+        console.log(`[Instrumentation] AI/IT sources already seeded: ${existing.length}`)
       }
     } catch (err) {
       console.warn('[Instrumentation] AI/IT source check failed:', err)
     }
 
     cron.schedule('*/15 * * * *', () => {
-      const { run15MinJob } = require('@/lib/ai-it/scheduler-service')
       run15MinJob().catch((e: Error) => console.error('[AIIT/15m]', e))
     })
 
     cron.schedule('*/30 * * * *', () => {
-      const { run30MinJob } = require('@/lib/ai-it/scheduler-service')
       run30MinJob().catch((e: Error) => console.error('[AIIT/30m]', e))
     })
 
     cron.schedule('0 * * * *', () => {
-      const { run60MinJob } = require('@/lib/ai-it/scheduler-service')
       run60MinJob().catch((e: Error) => console.error('[AIIT/60m]', e))
     })
 
