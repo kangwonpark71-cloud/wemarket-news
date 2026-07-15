@@ -1,8 +1,8 @@
 import prisma from '@/lib/db';
 import { AIITParsedArticle } from './fetcher';
-import { Prisma, NewsArticle, NewsSource, NewsSummary } from '@prisma/client';
+import { Prisma, NewsArticle, NewsSource, NewsSummary, NewsTagRelation } from '@prisma/client';
 
-export type AINewsWithSource = NewsArticle & { source: NewsSource; summary: NewsSummary | null };
+export type AINewsWithSource = NewsArticle & { source: NewsSource; summary: NewsSummary | null; tags: { tag: { name: string } }[] };
 export type ITSummaryWithNews = NewsSummary & { news: NewsArticle };
 
 export async function upsertAIITArticles(
@@ -138,7 +138,7 @@ export async function getAIITArticles(params: {
 export async function getAIITArticleById(id: string): Promise<AINewsWithSource | null> {
   const article = await prisma.newsArticle.findUnique({
     where: { id },
-    include: { source: true },
+    include: { source: true, tags: { include: { tag: true } } },
   });
   return article as AINewsWithSource | null;
 }
