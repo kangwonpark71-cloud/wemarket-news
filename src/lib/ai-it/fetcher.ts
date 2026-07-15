@@ -1,5 +1,6 @@
 import Parser from 'rss-parser';
 import { AIITSourceConfig } from './sources';
+import { crawlWithPlaywright } from './playwright-crawler';
 
 export interface AIITParsedArticle {
   guid?: string;
@@ -181,77 +182,28 @@ export async function fetchAIITFeed(
 async function fetchWithCrawler(
   source: AIITSourceConfig
 ): Promise<AIITFetchResult> {
-  // Simple crawler implementation using fetch + DOM parsing
-  // For production, consider using puppeteer or playwright
-  const { crawlerConfig } = source;
-  
-  if (!crawlerConfig) {
-    return {
-      articles: [],
-      error: 'No crawler config provided',
-      fetchedAt: new Date(),
-      sourceNameEn: source.nameEn,
-    };
-  }
+  const result = await crawlWithPlaywright(source);
 
-  try {
-    const response = await fetch(source.url, {
-      headers: {
-        'User-Agent': 'EconomyNews/1.0 (AI&IT News Crawler)',
-      },
-    });
+  const articles: AIITParsedArticle[] = result.articles.map((a) => ({
+    guid: a.guid,
+    title: a.title,
+    url: a.url,
+    description: a.description,
+    content: undefined,
+    author: undefined,
+    thumbnail: a.thumbnail,
+    publishedAt: a.publishedAt,
+    category: a.category || source.subcategory,
+    language: source.language,
+    sourceNameEn: source.nameEn,
+  }));
 
-    if (!response.ok) {
-      throw new Error(`HTTP ${response.status}: ${response.statusText}`);
-    }
-
-    const html = await response.text();
-    
-    // Simple regex-based extraction (for production, use cheerio or similar)
-    const articles: AIITParsedArticle[] = [];
-    
-    // This is a basic implementation - in production use proper HTML parser
-    const titleRegex = new RegExp(`<${crawlerConfig.titleSelector}[^>]*>([^<]+)</${crawlerConfig.titleSelector}>`, 'gi');
-    const linkRegex = new RegExp(`<${crawlerConfig.linkSelector}[^>]*href=["']([^"']+)["'][^>]*>`, 'gi');
-    
-    const titles = [...html.matchAll(titleRegex)].map(m => m[1].trim());
-    const links = [...html.matchAll(linkRegex)].map(m => m[1].trim());
-    
-    for (let i = 0; i < Math.min(titles.length, links.length); i++) {
-      const title = titles[i];
-      let url = links[i];
-      
-      if (!url.startsWith('http')) {
-        const baseUrl = new URL(source.url);
-        url = new URL(url, baseUrl.origin).href;
-      }
-      
-      articles.push({
-        guid: url,
-        title,
-        url,
-        description: '',
-        publishedAt: new Date(),
-        category: source.subcategory,
-        language: source.language,
-        sourceNameEn: source.nameEn,
-      });
-    }
-
-    return {
-      articles,
-      fetchedAt: new Date(),
-      sourceNameEn: source.nameEn,
-    };
-  } catch (error) {
-    const errorMessage = error instanceof Error ? error.message : 'Unknown error';
-    return {
-      articles: [],
-      error: errorMessage,
-      fetchedAt: new Date(),
-      sourceNameEn: source.nameEn,
-    };
-  }
+  return {
+    articles,
+    error: result.error,
+    fetchedAt: result.fetchedAt,
+    sourceNameEn: source.nameEn,
+  };
 }
 
 export async function fetchAllAIITFeeds(

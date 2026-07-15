@@ -248,6 +248,66 @@ export const AI_TECH_SOURCES: AIITSourceConfig[] = [
     fetchInterval: 2,
     type: 'rss',
   },
+  // ProductHunt AI (JS-rendered, no RSS)
+  {
+    name: 'ProductHunt AI',
+    nameEn: 'producthunt_ai',
+    url: 'https://www.producthunt.com/topics/artificial-intelligence',
+    category: 'ai',
+    subcategory: 'ai_tools',
+    language: 'en',
+    icon: '🦄',
+    fetchInterval: 1,
+    type: 'crawler',
+    crawlerConfig: {
+      selector: 'article[class*="post"]',
+      titleSelector: 'a[class*="title"]',
+      linkSelector: 'a[class*="title"]',
+      descriptionSelector: '[class*="tagline"]',
+      thumbnailSelector: 'img[class*="thumbnail"]',
+      pagination: { type: 'scroll', maxPages: 2 },
+    },
+  },
+  // Futurepedia AI Tools (directory, JS-rendered)
+  {
+    name: 'Futurepedia',
+    nameEn: 'futurepedia',
+    url: 'https://www.futurepedia.io/',
+    category: 'ai',
+    subcategory: 'ai_tools',
+    language: 'en',
+    icon: '🔧',
+    fetchInterval: 2,
+    type: 'crawler',
+    crawlerConfig: {
+      selector: '[class*="tool-card"], [class*="tool"]',
+      titleSelector: 'h3, h4, [class*="title"]',
+      linkSelector: 'a[href*="http"]',
+      descriptionSelector: 'p, [class*="description"]',
+      thumbnailSelector: 'img',
+      pagination: { type: 'scroll', maxPages: 2 },
+    },
+  },
+  // AI News aggregator (JS-rendered)
+  {
+    name: 'AI News Hub',
+    nameEn: 'ai_news_hub',
+    url: 'https://www.artificialintelligence-news.com/',
+    category: 'ai',
+    subcategory: 'ai_industry',
+    language: 'en',
+    icon: '📡',
+    fetchInterval: 1,
+    type: 'crawler',
+    crawlerConfig: {
+      selector: 'article, [class*="post-item"], [class*="news-item"]',
+      titleSelector: 'h2, h3, [class*="title"]',
+      linkSelector: 'a[href]',
+      descriptionSelector: 'p, [class*="excerpt"]',
+      thumbnailSelector: 'img[src]',
+      pagination: { type: 'page', maxPages: 2 },
+    },
+  },
 ];
 
 // =============================================
@@ -405,6 +465,44 @@ export const IT_GLOBAL_SOURCES: AIITSourceConfig[] = [
     icon: '💻',
     fetchInterval: 1,
     type: 'rss',
+  },
+  // GitHub Trending (JS-rendered, no RSS)
+  {
+    name: 'GitHub Trending',
+    nameEn: 'github_trending',
+    url: 'https://github.com/trending',
+    category: 'it',
+    subcategory: 'dev',
+    language: 'en',
+    icon: '⭐',
+    fetchInterval: 1,
+    type: 'crawler',
+    crawlerConfig: {
+      selector: 'article[class*="Box-row"]',
+      titleSelector: 'h2',
+      linkSelector: 'a',
+      descriptionSelector: 'p',
+      pagination: { type: 'page', maxPages: 1 },
+    },
+  },
+  // Stack Overflow questions (JS-rendered trending)
+  {
+    name: 'Stack Overflow',
+    nameEn: 'stackoverflow',
+    url: 'https://stackoverflow.com/questions?tab=trending',
+    category: 'it',
+    subcategory: 'dev',
+    language: 'en',
+    icon: '📚',
+    fetchInterval: 2,
+    type: 'crawler',
+    crawlerConfig: {
+      selector: 'div[class*="question-summary"]',
+      titleSelector: 'h3',
+      linkSelector: 'a[class*="question-hyperlink"]',
+      descriptionSelector: '[class*="excerpt"]',
+      pagination: { type: 'page', maxPages: 1 },
+    },
   },
 ];
 
