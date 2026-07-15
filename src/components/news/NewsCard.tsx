@@ -122,7 +122,8 @@ export default function NewsCard({ article, compact = false }: NewsCardProps) {
 
             <Link
               href={`/articles/${article.id}`}
-              className="block truncate text-sm font-semibold leading-tight text-gray-900 group-hover:text-primary sm:text-base"
+              className="block line-clamp-2 word-break-keep-all text-sm font-semibold leading-tight text-gray-900 group-hover:text-primary sm:text-base"
+              title={article.title}
             >
               {article.title}
             </Link>

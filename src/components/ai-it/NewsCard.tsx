@@ -55,7 +55,7 @@ export default function NewsCard({ article, variant = 'default' }: NewsCardProps
           </Link>
         )}
         <div className="flex-1 min-w-0">
-          <Link href={`/ai-it/articles/${article.id}`} className="font-medium text-foreground hover:text-primary line-clamp-2">
+          <Link href={`/ai-it/articles/${article.id}`} className="font-medium text-foreground hover:text-primary line-clamp-2 word-break-keep-all" title={article.title}>
             {article.title}
           </Link>
           <div className="mt-1 flex items-center gap-2 text-xs text-muted-foreground">
@@ -86,7 +86,7 @@ export default function NewsCard({ article, variant = 'default' }: NewsCardProps
             <span className="text-xs text-muted-foreground">{publishedDate}</span>
           </div>
           <Link href={`/ai-it/articles/${article.id}`}>
-            <h3 className="font-semibold text-foreground line-clamp-2 group-hover:text-primary transition-colors">
+            <h3 className="line-clamp-2 word-break-keep-all font-semibold text-foreground hover:text-primary transition-colors" title={article.title}>
               {article.title}
             </h3>
           </Link>
@@ -129,7 +129,7 @@ export default function NewsCard({ article, variant = 'default' }: NewsCardProps
             {article.isBookmarked && <span className="text-yellow-500" title="북마크됨">★</span>}
           </div>
           <Link href={`/ai-it/articles/${article.id}`}>
-            <h3 className="truncate font-semibold text-foreground hover:text-primary transition-colors mb-2">
+            <h3 className="line-clamp-2 word-break-keep-all font-semibold text-foreground hover:text-primary transition-colors mb-2" title={article.title}>
               {article.title}
             </h3>
           </Link>
