@@ -1,7 +1,7 @@
 import { NextResponse } from 'next/server'
 import { fetchFeed } from '@/lib/rss/fetcher'
 import { upsertArticles } from '@/lib/rss/db-service'
-import { getSourceIdByNameEn, logFetch } from '@/lib/rss/service'
+import { getSourceIdByNameEn, logFetch, seedSources } from '@/lib/rss/service'
 import { ALL_SOURCES } from '@/lib/rss/sources'
 
 export async function POST(request: Request) {
@@ -19,6 +19,13 @@ export async function POST(request: Request) {
   const sourcesToFetch = sourceParam
     ? ALL_SOURCES.filter((s) => s.nameEn === sourceParam)
     : ALL_SOURCES
+
+  // Auto-seed sources on first run (fresh deployment)
+  const anySource = sourcesToFetch.length > 0 ? await getSourceIdByNameEn(sourcesToFetch[0].nameEn) : null
+  if (!anySource) {
+    console.log('[Cron] No sources found in DB, seeding...')
+    await seedSources()
+  }
 
   const startTime = Date.now()
   const results = []
