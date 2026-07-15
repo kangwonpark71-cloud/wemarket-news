@@ -11,6 +11,7 @@
  *  - Browser instance is Lazy / singleton per Node process so we
  *    don't leak resources on repeated calls.
  *  - Each crawl gets a fresh context (isolated cookies/storage).
+ *  - Dynamic import avoids build-time dependency on chromium-bidi
  */
 
 import type { Browser, BrowserContext, Page } from 'playwright';
