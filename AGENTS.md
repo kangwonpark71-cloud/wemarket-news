@@ -92,7 +92,51 @@ These systems do not share models or queries.
 | `npm run db:seed` | Seed sources (tsx prisma/seed.ts) |
 | `npm run db:studio` | Prisma Studio |
 | `npm run worker` | Standalone RSS cron worker |
+| `npm run dev:fetch` | Dev fetch (tsx scripts/dev-fetch.ts) |
+| `npm run dev:fetch:source` | Dev fetch single source |
 | `npm run fetch` | Trigger RSS fetch (curl to /api/cron) |
+
+## API Reference
+
+### RSS News
+
+| Method | Endpoint | Description |
+|---|---|---|
+| GET | `/api/articles` | List articles (query: category, source, page, limit, search, sortBy, sortOrder) |
+| GET | `/api/articles/[id]` | Get single article |
+| GET | `/api/stats` | Article/source statistics |
+| GET | `/api/sources` | List sources (?logs=true for fetch logs) |
+| GET | `/api/fetch-logs` | Recent fetch logs |
+| POST | `/api/cron` | Trigger RSS fetch (requires CRON_SECRET) |
+| GET | `/api/dev/fetch` | Dev-only fetch trigger (no auth, dev only) |
+| GET | `/api/fetch-stream` | SSE endpoint for real-time fetch progress |
+
+### AI/IT News
+
+| Method | Endpoint | Description |
+|---|---|---|
+| GET | `/api/ai-it/articles` | List AI/IT articles (query: category, subcategory, page, search, dateFrom, dateTo) |
+| POST | `/api/ai-it/fetch` | Trigger AI/IT fetch (?action=all\|category\|source\|15min\|30min\|60min) |
+| POST | `/api/ai-it/trigger` | Seed + fetch AI/IT sources (requires CRON_SECRET) |
+| GET | `/api/ai-it/stats` | AI/IT articles/sources statistics |
+| POST | `/api/ai/summarize` | LLM article summary |
+
+### Financial Data
+
+| Method | Endpoint | Description |
+|---|---|---|
+| GET | `/api/financial/dashboard` | KOSPI/KOSDAQ/BTC/ETH/USD/NASDAQ overview (cached 60s) |
+| GET | `/api/financial/overview` | Full market overview + stats (cached 60s) |
+| GET | `/api/financial/stocks` | Stock prices & details |
+| GET | `/api/financial/crypto` | Crypto tickers & candles |
+| GET | `/api/financial/forex` | Exchange rates |
+| GET | `/api/financial/global` | Global indices |
+
+### System
+
+| Method | Endpoint | Description |
+|---|---|---|
+| GET | `/api/health` | Health check |
 
 ## Development Setup
 
@@ -126,8 +170,32 @@ The project uses `@/` path alias for `./src/` (defined in tsconfig.json paths). 
 
 ## Records to Know
 
-- The Rss and AI/T systems have separate database tables and do not share state.
+### Recent Architectural Changes (July 2026)
+
+1. **Scheduler 통합** (`src/lib/startup/schedulers.ts`): RSS + AI/IT + 금융 스케줄러를 하나의 `startAllSchedulers()`에서 관리.
+   - RSS: 3시간 간격 (node-cron) + 서버 시작 2초 후
+   - AI/IT: 15/30/60분 간격 (node-cron) + 서버 시작 5초 후
+   - 금융: `SchedulerService` (setTimeout 기반, 주식 5분/코인 1분/환율 30분 등)
+
+2. **AI/IT 단일화 테이블 전환**: `NewsArticle`/`NewsSource`/`NewsFetchLog` → 통합 `Article`/`Source`/`FetchLog` 테이블로 단일화.
+   - 모든 데이터는 통합 테이블에만 저장
+   - AI/IT 전용 쿼리는 `sourceType: 'AI_IT'` 필터로 처리
+   - `NewsTag`, `NewsTagRelation`, `NewsSummary`, `NewsCategory`는 그대로 유지 (Article 테이블 참조)
+
+3. **SSE 실시간 Fetch 진행률**: `/api/fetch-stream` SSE 엔드포인트 + `FetchStatusBar` UI 컴포넌트.
+   - `fetchProgressPubSub`를 통해 수집 진행상황 실시간 전송
+   - 진행률 바 + 완료 팝업 (8초 후 자동 소멸)
+
+4. **AI 요약 LLM 우선**: `generateAISummaryWithLLM`을 기본 요약 엔진으로 사용 (GPT-4o-mini → 실패 시 규칙 기반 fallback).
+
+5. **다크모드**: `ThemeToggle` 컴포넌트 (light/dark/system 순환), FOUC 방지 스크립트, `localStorage` 영구 저장.
+
+6. **Redis 캐싱**: `financial/dashboard` 및 `financial/overview`에 60초 TTL 캐싱 적용.
+
+### 기타
+
 - The Playwright crawler (`src/lib/ai-it/playwright-crawler.ts`) is a separate tool from the RSS fetcher.
-- The file `src/lib/ai-it/summary-service.ts` provides rule-based summarization (not LLM), despite its name.
+- The `summary-service.ts` has both rule-based (`generateAISummary`) and LLM-first (`generateAISummaryWithLLM`) paths.
 - The `worker/index.ts` is a standalone script for running RSS backend in server deployments.
 - The `healthcheckPath` in production is `/api/health`.
+- Cache service (`cache-service.ts`): Redis with in-memory fallback. Financial data uses pre-defined `CacheTTL` constants.
