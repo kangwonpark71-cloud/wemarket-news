@@ -2,10 +2,14 @@ import { NextResponse } from 'next/server';
 import { koreaInvestmentService } from '@/lib/services/financial/financial-service';
 import { upbitService } from '@/lib/services/crypto/crypto-service';
 import { marketService } from '@/lib/services/market/market-service';
-// import { cacheService } from '@/lib/services/cache/cache-service';
+import { cacheService, CacheKeys, CacheTTL } from '@/lib/services/cache/cache-service';
 import { prisma } from '@/lib/db';
 
 export async function GET() {
+  const cacheKey = CacheKeys.financialDashboard();
+  const cached = await cacheService.get(cacheKey);
+  if (cached) return NextResponse.json({ success: true, data: cached });
+
   try {
     const [marketOverview, cryptoTickers, forexRates, globalIndices] = await Promise.all([
       koreaInvestmentService.getMarketOverview(),
@@ -14,7 +18,6 @@ export async function GET() {
       marketService.getGlobalIndices(),
     ]);
 
-    // Get stats from DB
     const [totalStocks, totalCryptos, totalArticles] = await Promise.all([
       prisma.stock.count({ where: { isActive: true } }),
       prisma.cryptocurrency.count({ where: { isActive: true } }),
@@ -46,6 +49,8 @@ export async function GET() {
       },
       lastUpdated: new Date().toISOString(),
     };
+
+    await cacheService.set(cacheKey, overview, { ttl: CacheTTL.MINUTE });
 
     return NextResponse.json({ success: true, data: overview });
   } catch (error) {
