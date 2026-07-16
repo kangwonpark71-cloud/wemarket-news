@@ -1,7 +1,5 @@
 'use client';
 
-import { useState } from 'react';
-
 interface ForexData {
   baseCurrency: string;
   quoteCurrency: string;
@@ -17,8 +15,6 @@ interface ForexCardProps {
 }
 
 export function ForexCard({ forex }: ForexCardProps) {
-  const isPositive = forex.changeRate >= 0;
-
   const flags: Record<string, string> = {
     USD: '🇺🇸',
     JPY: '🇯🇵',

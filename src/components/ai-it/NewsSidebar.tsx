@@ -1,7 +1,7 @@
 'use client';
 
 import Link from 'next/link';
-import { usePathname, useSearchParams } from 'next/navigation';
+import { useSearchParams } from 'next/navigation';
 import { cn } from '@/lib/utils';
 
 interface NewsSidebarProps {
@@ -33,7 +33,6 @@ const IT_SUBCATEGORY_LABELS: Record<string, { label: string; icon: string }> = {
 };
 
 export default function NewsSidebar({ category, subcategories }: NewsSidebarProps) {
-  const pathname = usePathname();
   const searchParams = useSearchParams();
 
   const labels = category === 'ai' ? AI_SUBCATEGORY_LABELS : IT_SUBCATEGORY_LABELS;

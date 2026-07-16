@@ -1,12 +1,6 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-import { StockCard } from './StockCard';
-import { CryptoCard } from './CryptoCard';
-import { ForexCard } from './ForexCard';
-import { GlobalIndexCard } from './GlobalIndexCard';
-import { FinancialDashboard as Dashboard } from './FinancialDashboard';
-import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
 
 interface DashboardData {
   kospi: { value: number; change: number; changeRate: number };
@@ -33,7 +27,7 @@ export function FinancialDashboard() {
         } else {
           setError(json.error);
         }
-      } catch (err) {
+      } catch {
         setError('데이터를 불러오는데 실패했습니다.');
       } finally {
         setLoading(false);

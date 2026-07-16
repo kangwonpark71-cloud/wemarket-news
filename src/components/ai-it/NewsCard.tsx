@@ -4,8 +4,6 @@ import Link from 'next/link';
 import Image from 'next/image';
 import { formatDistanceToNow } from 'date-fns';
 import { ko, enUS } from 'date-fns/locale';
-import { cn } from '@/lib/utils';
-
 interface NewsCardProps {
   article: {
     id: string;
@@ -40,7 +38,6 @@ function formatDate(date: Date | string, language: string) {
 }
 
 export default function NewsCard({ article, variant = 'default' }: NewsCardProps) {
-  const isKorean = article.language === 'ko';
   const publishedDate = formatDate(new Date(article.publishedAt), article.language);
   const summary = article.summary;
   const tags = article.tags?.map(t => t.tag.name).slice(0, 5) || [];

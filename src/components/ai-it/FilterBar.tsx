@@ -5,7 +5,7 @@ import { useRouter, useSearchParams, usePathname } from 'next/navigation';
 import { cn } from '@/lib/utils';
 
 interface FilterBarProps {
-  category: 'ai' | 'it';
+  category?: string;
   sources: { id: string; name: string; nameEn: string; icon?: string }[];
   tags: { name: string; count: number }[];
   totalCount: number;
@@ -13,11 +13,10 @@ interface FilterBarProps {
   totalPages: number;
 }
 
-export default function FilterBar({ category, sources, tags, totalCount, currentPage, totalPages }: FilterBarProps) {
+export default function FilterBar({ sources, tags, totalCount, currentPage, totalPages }: FilterBarProps) {
   const router = useRouter();
   const pathname = usePathname();
   const searchParams = useSearchParams();
-  const [isFilterOpen, setIsFilterOpen] = useState(false);
   const [showTags, setShowTags] = useState(false);
 
   const currentSource = searchParams.get('source');
