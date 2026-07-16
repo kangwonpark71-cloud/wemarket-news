@@ -2,7 +2,7 @@ import { NextResponse } from 'next/server';
 import { koreaInvestmentService } from '@/lib/services/financial/financial-service';
 import { upbitService } from '@/lib/services/crypto/crypto-service';
 import { marketService } from '@/lib/services/market/market-service';
-import { cacheService, CacheKeys, CacheTTL } from '@/lib/services/cache/cache-service';
+import { cacheService, CacheKeys } from '@/lib/services/cache/cache-service';
 import { prisma } from '@/lib/db';
 
 export async function GET() {
@@ -11,7 +11,7 @@ export async function GET() {
   if (cached) return NextResponse.json({ success: true, data: cached });
 
   try {
-    const [stockPrices, cryptoTickers, forexRates, globalIndices] = await Promise.all([
+    const [stockPrices, , forexRates, globalIndices] = await Promise.all([
       koreaInvestmentService.getMarketOverview(),
       upbitService.getAllTickers(),
       marketService.getAllExchangeRates(),

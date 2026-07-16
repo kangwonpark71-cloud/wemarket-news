@@ -1,6 +1,6 @@
 import { NextResponse } from 'next/server';
 import { prisma } from '@/lib/db';
-import { cacheService, CacheKeys, CacheTTL } from '@/lib/services/cache/cache-service';
+import { cacheService, CacheKeys } from '@/lib/services/cache/cache-service';
 
 export async function GET(request: Request) {
   const { searchParams } = new URL(request.url);

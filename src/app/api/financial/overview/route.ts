@@ -2,7 +2,7 @@ import { NextResponse } from 'next/server';
 import { koreaInvestmentService } from '@/lib/services/financial/financial-service';
 import { upbitService } from '@/lib/services/crypto/crypto-service';
 import { marketService } from '@/lib/services/market/market-service';
-import { cacheService } from '@/lib/services/cache/cache-service';
+// import { cacheService } from '@/lib/services/cache/cache-service';
 import { prisma } from '@/lib/db';
 
 export async function GET() {

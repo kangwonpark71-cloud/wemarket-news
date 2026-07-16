@@ -8,7 +8,6 @@ export async function GET(request: Request) {
   const codes = searchParams.get('codes')?.split(',') || [];
   const market = searchParams.get('market');
   const limit = parseInt(searchParams.get('limit') || '20');
-  const page = parseInt(searchParams.get('page') || '1');
 
   try {
     let result: any;

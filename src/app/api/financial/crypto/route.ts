@@ -6,7 +6,6 @@ export async function GET(request: Request) {
   const action = searchParams.get('action') || 'tickers';
   const symbol = searchParams.get('symbol');
   const unit = searchParams.get('unit') as any;
-  const count = parseInt(searchParams.get('count') || '200');
   const limit = parseInt(searchParams.get('limit') || '20');
 
   try {

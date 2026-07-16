@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { getAIITArticles, getAIITArticleStats, getSubcategoriesWithCount } from '@/lib/ai-it/db-service';
+import { getAIITArticles } from '@/lib/ai-it/db-service';
 
 export async function GET(request: NextRequest) {
   try {
