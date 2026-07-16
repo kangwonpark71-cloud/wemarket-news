@@ -1,5 +1,5 @@
 // Economy News - Prisma Schema
-// RSS 기반 경제 뉴스 아그리게이터
+// 통합 뉴스 아그리게이터 (RSS + AI/IT)
 
 generator client {
   provider = "prisma-client-js"
@@ -10,47 +10,70 @@ datasource db {
   url      = env("DATABASE_URL")
 }
 
-// RSS 소스 정의
+// =============================================
+// Enums
+// =============================================
+
+enum SourceType {
+  RSS
+  AI_IT
+}
+
+// =============================================
+// Unified Source (RSS + AI/IT)
+// =============================================
+
 model Source {
-  id            String   @id @default(uuid())
-  name          String   // "한국경제", "매일경제", "Fed Press" 등
-  nameEn        String   @unique @map("name_en") // "hankyung", "mk", "fed_press" 등
-  url           String   @unique // RSS URL
-  category      String   // "domestic" | "overseas"
-  subcategory   String?  // "korean_economy", "monetary_policy" 등
-  icon          String?  // 소스 아이콘 URL
-  isActive      Boolean  @default(true) @map("is_active")
-  fetchInterval Int      @default(3) @map("fetch_interval") // 수집 주기 (시간)
-  createdAt     DateTime @default(now()) @map("created_at")
-  updatedAt     DateTime @updatedAt @map("updated_at")
+  id            String     @id @default(uuid())
+  name          String     // "한국경제", "OpenAI Blog" 등
+  nameEn        String     @unique @map("name_en")
+  url           String     @unique
+  sourceType    SourceType @default(RSS) @map("source_type")
+  category      String     // "domestic" | "overseas" | "ai" | "it"
+  subcategory   String?    // "korean_economy", "official_ai", "tech_news" 등
+  language      String     @default("ko") // "ko" | "en"
+  icon          String?    // 소스 아이콘 URL
+  isActive      Boolean    @default(true) @map("is_active")
+  fetchInterval Int        @default(3) @map("fetch_interval") // 수집 주기 (RSS: 시간, AI/IT: 분)
+  fetchType     String     @default("rss") @map("fetch_type") // "rss" | "crawler"
+  crawlerConfig Json?      @map("crawler_config") // 크롤러 설정 (선택적)
+  createdAt     DateTime   @default(now()) @map("created_at")
+  updatedAt     DateTime   @updatedAt @map("updated_at")
 
   articles    Article[]
   fetchLogs   FetchLog[]
 
+  @@index([sourceType, isActive])
   @@index([category, isActive])
   @@map("sources")
 }
 
-// 뉴스 기사
+// 뉴스 기사 (통합: RSS + AI/IT)
 model Article {
-  id              String   @id @default(uuid())
-  sourceId        String   @map("source_id")
-  guid            String?  // RSS GUID (중복 방지용)
+  id              String     @id @default(uuid())
+  sourceId        String     @map("source_id")
+  sourceType      SourceType @default(RSS) @map("source_type")
+  categoryId      String?    @map("category_id") // AI/IT 전용: NewsCategory 참조
+  guid            String?    // RSS GUID (중복 방지용)
   title           String
-  url             String   @unique
+  url             String     @unique
   description     String?
-  content         String?  @db.Text // 전체 기사 본문 (스크래핑)
+  content         String?    @db.Text // 전체 기사 본문 (스크래핑)
   author          String?
-  thumbnail       String?  // 매경은 이미지 포함
-  publishedAt     DateTime @map("published_at")
-  fetchedAt       DateTime @default(now()) @map("fetched_at")
-  category        String?  // RSS category (Fed 관련)
-  language        String   @default("ko") // "ko" | "en"
-  isRead          Boolean  @default(false) @map("is_read")
-  isBookmarked    Boolean  @default(false) @map("is_bookmarked")
+  thumbnail       String?    // 썸네일 이미지 URL
+  publishedAt     DateTime   @map("published_at")
+  fetchedAt       DateTime   @default(now()) @map("fetched_at")
+  category        String?   // RSS category (Fed 관련)
+  language        String    @default("ko") // "ko" | "en"
+  isRead          Boolean   @default(false) @map("is_read")
+  isBookmarked    Boolean   @default(false) @map("is_bookmarked")
 
-  source          Source   @relation(fields: [sourceId], references: [id], onDelete: Cascade)
+  source          Source             @relation(fields: [sourceId], references: [id], onDelete: Cascade)
+  categoryRef     NewsCategory?      @relation(fields: [categoryId], references: [id], onDelete: SetNull)
+  tags            NewsTagRelation[]  @relation("ArticleTags")
+  summary         NewsSummary?
 
+  @@index([sourceType, publishedAt(sort: Desc)])
   @@index([sourceId, publishedAt(sort: Desc)])
   @@index([category, publishedAt(sort: Desc)])
   @@index([language, publishedAt(sort: Desc)])
@@ -133,6 +156,7 @@ model NewsCategory {
   parent      NewsCategory? @relation("CategoryHierarchy", fields: [parentId], references: [id])
   children    NewsCategory[] @relation("CategoryHierarchy")
   articles    NewsArticle[]
+  unifiedArticles Article[]
 
   @@index([category, type, isActive])
   @@index([parentId])
@@ -158,8 +182,6 @@ model NewsArticle {
 
   source          NewsSource           @relation(fields: [sourceId], references: [id], onDelete: Cascade)
   category        NewsCategory?        @relation(fields: [categoryId], references: [id], onDelete: SetNull)
-  tags            NewsTagRelation[]    @relation("ArticleTags")
-  summary         NewsSummary?
 
   @@index([sourceId, publishedAt(sort: Desc)])
   @@index([categoryId, publishedAt(sort: Desc)])
@@ -189,8 +211,8 @@ model NewsTagRelation {
   tagId     String   @map("tag_id")
   createdAt DateTime @default(now()) @map("created_at")
 
-  article   NewsArticle @relation("ArticleTags", fields: [articleId], references: [id], onDelete: Cascade)
-  tag       NewsTag     @relation("ArticleTags", fields: [tagId], references: [id], onDelete: Cascade)
+  article   Article @relation("ArticleTags", fields: [articleId], references: [id], onDelete: Cascade)
+  tag       NewsTag @relation("ArticleTags", fields: [tagId], references: [id], onDelete: Cascade)
 
   @@unique([articleId, tagId])
   @@index([articleId])
@@ -211,7 +233,7 @@ model NewsSummary {
   createdAt       DateTime @default(now()) @map("created_at")
   updatedAt       DateTime @updatedAt @map("updated_at")
 
-  article         NewsArticle @relation(fields: [articleId], references: [id], onDelete: Cascade)
+  article         Article @relation(fields: [articleId], references: [id], onDelete: Cascade)
 
   @@index([aiGenerated])
   @@map("news_summaries")
