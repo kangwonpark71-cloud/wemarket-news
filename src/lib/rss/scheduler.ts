@@ -3,10 +3,20 @@ import { fetchFeed } from './fetcher'
 import { upsertArticles } from './db-service'
 import { getSourceIdByNameEn, logFetch, seedSources } from './service'
 import { ALL_SOURCES } from './sources'
+import { fetchProgressPubSub } from '@/lib/sse/pubsub'
+
+export interface FetchResult {
+  source: string
+  status: 'success' | 'partial' | 'error' | 'skipped'
+  total?: number
+  new?: number
+  error?: string
+  duration: number
+}
 
 let initialized = false
 
-export async function runRssFetch(sourceNameEn?: string) {
+export async function runRssFetch(sourceNameEn?: string): Promise<FetchResult[]> {
   const sourcesToFetch = sourceNameEn
     ? ALL_SOURCES.filter(s => s.nameEn === sourceNameEn)
     : ALL_SOURCES
@@ -18,38 +28,89 @@ export async function runRssFetch(sourceNameEn?: string) {
     await seedSources()
   }
 
-  console.log(`[Scheduler] Fetching ${sourcesToFetch.length} sources`)
-  for (const config of sourcesToFetch) {
+  const results: FetchResult[] = []
+  const totalSources = sourcesToFetch.length
+
+  console.log(`[Scheduler] Fetching ${totalSources} sources`)
+  fetchProgressPubSub.publish('fetch-progress', {
+    phase: 'start',
+    system: 'rss',
+    total: totalSources,
+    completed: 0,
+  })
+
+  for (let i = 0; i < sourcesToFetch.length; i++) {
+    const config = sourcesToFetch[i]
     const start = Date.now()
     try {
       const sourceId = await getSourceIdByNameEn(config.nameEn)
-      if (!sourceId) { console.warn(`[Scheduler] Source ${config.nameEn} not found`); continue }
+      if (!sourceId) {
+        results.push({ source: config.nameEn, status: 'skipped', error: 'Source not found in DB', duration: Date.now() - start })
+        fetchProgressPubSub.publish('fetch-progress', {
+          phase: 'progress', system: 'rss', source: config.nameEn, status: 'skipped',
+          total: totalSources, completed: results.length, current: i + 1,
+        })
+        continue
+      }
       const { articles, error } = await fetchFeed(config)
-      if (error) { await logFetch(sourceId, 'error', 0, 0, Date.now() - start, error); continue }
+      if (error) {
+        await logFetch(sourceId, 'error', 0, 0, Date.now() - start, error)
+        results.push({ source: config.nameEn, status: 'error', error, duration: Date.now() - start })
+        fetchProgressPubSub.publish('fetch-progress', {
+          phase: 'progress', system: 'rss', source: config.nameEn, status: 'error', error,
+          total: totalSources, completed: results.length, current: i + 1,
+        })
+        continue
+      }
       const { newCount, totalCount } = await upsertArticles(sourceId, articles)
-      await logFetch(sourceId, newCount > 0 ? 'success' : 'partial', totalCount, newCount, Date.now() - start)
-      console.log(`[Scheduler] ${config.nameEn}: ${newCount} new / ${totalCount} total`)
+      const status = newCount > 0 ? 'success' : 'partial'
+      await logFetch(sourceId, status, totalCount, newCount, Date.now() - start)
+      results.push({ source: config.nameEn, status, total: totalCount, new: newCount, duration: Date.now() - start })
+      fetchProgressPubSub.publish('fetch-progress', {
+        phase: 'progress', system: 'rss', source: config.nameEn, status,
+        newArticles: newCount, totalArticles: totalCount,
+        total: totalSources, completed: results.length, current: i + 1,
+      })
     } catch (err) {
-      console.error(`[Scheduler] ${config.nameEn} failed:`, err)
+      const errorMessage = err instanceof Error ? err.message : String(err)
+      results.push({ source: config.nameEn, status: 'error', error: errorMessage, duration: Date.now() - start })
+      fetchProgressPubSub.publish('fetch-progress', {
+        phase: 'progress', system: 'rss', source: config.nameEn, status: 'error', error: errorMessage,
+        total: totalSources, completed: results.length, current: i + 1,
+      })
     }
   }
+
+  const ok = results.filter(r => r.status === 'success' || r.status === 'partial').length
+  const err = results.filter(r => r.status === 'error').length
+  fetchProgressPubSub.publish('fetch-complete', {
+    system: 'rss',
+    total: results.length,
+    success: ok,
+    errors: err,
+    results,
+  })
+
+  return results
 }
 
 export function startRssScheduler() {
   if (initialized) return
   initialized = true
 
-  // Run every 3 hours at minute 0
   cron.schedule('0 */3 * * *', () => {
     console.log('[Scheduler] Cron trigger (3-hour interval)')
     runRssFetch().catch(err => console.error('[Scheduler] Cron error:', err))
   })
 
-  // Also run once on startup (with 10s delay to let DB connections settle)
   setTimeout(() => {
     console.log('[Scheduler] Initial fetch on startup')
-    runRssFetch().catch(err => console.error('[Scheduler] Initial fetch error:', err))
-  }, 10000)
+    runRssFetch().then(results => {
+      const ok = results.filter(r => r.status === 'success' || r.status === 'partial').length
+      const err = results.filter(r => r.status === 'error').length
+      console.log(`[Scheduler] Initial fetch complete: ${ok} ok, ${err} errors`)
+    }).catch(err => console.error('[Scheduler] Initial fetch error:', err))
+  }, 2000)
 
   console.log('[Scheduler] RSS scheduler started (every 3 hours)')
 }

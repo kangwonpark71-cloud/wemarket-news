@@ -1,6 +1,6 @@
 import { getActiveAIITSources, logAIITFetch, upsertAIITArticles, getAIITArticleByUrl, upsertSummary } from './db-service';
 import { fetchAIITFeed } from './fetcher';
-import { generateAISummary } from './summary-service';
+import { generateAISummaryWithLLM } from './summary-service';
 import type { AIITSourceConfig } from './sources';
 
 async function fetchAndProcessSource(sourceId: string): Promise<{ count: number; newCount: number; error?: string }> {
@@ -36,7 +36,7 @@ async function fetchAndProcessSource(sourceId: string): Promise<{ count: number;
       try {
         const existing = await getAIITArticleByUrl(article.url);
         if (existing && !existing.summary) {
-          const summary = await generateAISummary(article.title, article.description, article.content);
+          const summary = await generateAISummaryWithLLM(article.title, article.description, article.content);
           await upsertSummary(existing.id, {
             summary3Line: summary.summary3Line,
             keywords: summary.keywords,
@@ -168,6 +168,15 @@ export async function run60MinJob(): Promise<void> {
   
   for (const source of lowPrioritySources) {
     await fetchAndProcessSource(source.id);
+  }
+}
+
+export async function seedAIITSourcesIfEmpty(): Promise<void> {
+  const { seedAIITSources } = await import('./db-service');
+  const sources = await getActiveAIITSources();
+  if (sources.length === 0) {
+    console.log('[AIITScheduler] No sources found, seeding...');
+    await seedAIITSources();
   }
 }
 

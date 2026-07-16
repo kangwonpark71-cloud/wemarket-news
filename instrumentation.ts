@@ -1,8 +1,8 @@
-import { startRssScheduler } from '@/lib/rss/scheduler'
+import { startAllSchedulers } from '@/lib/startup/schedulers'
 
 export async function register() {
   if (process.env.NEXT_RUNTIME === 'nodejs') {
-    startRssScheduler()
-    console.log('[Instrumentation] RSS scheduler started')
+    await startAllSchedulers()
+    console.log('[Instrumentation] All schedulers started')
   }
 }

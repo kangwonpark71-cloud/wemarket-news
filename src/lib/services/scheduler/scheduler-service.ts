@@ -312,7 +312,7 @@ export class SchedulerService {
           const totalValue = marketStocks.reduce((sum, s) => sum + Number(s.tradingValue), 0);
 
           await prisma.stockDailyStat.upsert({
-            where: { date: today },
+            where: { date: today, market },
             update: {
               totalStocks,
               advancing,
