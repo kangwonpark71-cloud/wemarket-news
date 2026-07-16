@@ -64,6 +64,7 @@ let _context: BrowserContext | null = null;
 
 async function getBrowser(): Promise<Browser> {
   if (!_browser || !_browser.isConnected()) {
+    registerBrowserShutdown();
     const { chromium } = await import('playwright');
     _browser = await chromium.launch({
       headless: true,
@@ -107,6 +108,26 @@ export async function closeBrowser(): Promise<void> {
   }
 }
 
+let _shutdownRegistered = false;
+
+/**
+ * Register SIGTERM / SIGINT handlers that close the browser.
+ * Safe to call multiple times — only registers once.
+ */
+export function registerBrowserShutdown(): void {
+  if (_shutdownRegistered) return;
+  _shutdownRegistered = true;
+
+  const shutdown = async () => {
+    console.log('[PlaywrightCrawler] Shutting down browser…');
+    await closeBrowser();
+    process.exit(0);
+  };
+
+  process.on('SIGTERM', shutdown);
+  process.on('SIGINT', shutdown);
+}
+
 // ──────────────────────────────────────────────
 //  Crawler core
 // ──────────────────────────────────────────────
@@ -148,6 +169,7 @@ async function extractArticlesFromPage(
           try {
             url = new URL(url, o).href;
           } catch {
+            console.warn(`[PlaywrightCrawler] Invalid URL: ${url}`);
             url = '';
           }
         }
@@ -161,6 +183,7 @@ async function extractArticlesFromPage(
           try {
             thumbnail = new URL(thumbnail, o).href;
           } catch {
+            console.warn(`[PlaywrightCrawler] Invalid thumbnail URL: ${thumbnail}`);
             thumbnail = '';
           }
         }

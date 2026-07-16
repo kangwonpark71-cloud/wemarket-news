@@ -3,11 +3,6 @@
  * Provides caching layer for financial data to minimize external API calls
  */
 
-interface CacheOptions {
-  ttl?: number;
-  prefix?: string;
-}
-
 class CacheService {
   private redis: unknown = null;
   private memoryCache: Map<string, { value: unknown; expiresAt: number }> = new Map();

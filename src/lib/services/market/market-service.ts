@@ -1,4 +1,4 @@
-import { cacheService, CacheKeys, CacheTTL } from '@/lib/services/cache/cache-service';
+import { cacheService } from '@/lib/services/cache/cache-service';
 import { prisma } from '@/lib/db';
 
 interface ExchangeRateData {
@@ -30,8 +30,7 @@ export class MarketService {
   private baseUrl = 'https://api.manana.kr/exchange/rate.json';
   private finnhubBaseUrl = 'https://finnhub.io/api/v1';
   private finnhubApiKey = process.env.FINNHUB_API_KEY || '';
-  private alphaVantageBaseUrl = 'https://www.alphavantage.co/query';
-  private alphaVantageApiKey = process.env.ALPHA_VANTAGE_API_KEY || '';
+
 
   async getAllExchangeRates(): Promise<ExchangeRateData[]> {
     const cacheKey = 'forex:rates:all';
@@ -125,7 +124,6 @@ export class MarketService {
 
           if (data.c !== undefined) {
             const name = this.getIndexName(symbol);
-            const nameKr = this.getIndexNameKr(symbol);
             indices.push({
               symbol,
               name,

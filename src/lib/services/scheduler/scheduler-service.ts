@@ -35,7 +35,7 @@ export class SchedulerService {
     cryptoMarketSyncInterval: 24 * 60 * 60 * 1000,
   };
 
-  constructor(private config: Partial<SchedulerConfig> = {}) {
+  constructor(config: Partial<SchedulerConfig> = {}) {
     const finalConfig = { ...this.defaultConfig, ...config };
     this.registerDefaultTasks(finalConfig);
   }
@@ -119,7 +119,7 @@ export class SchedulerService {
     this.isRunning = true;
     console.log('[Scheduler] Starting scheduler service...');
 
-    for (const [name, task] of this.tasks) {
+    for (const [name] of this.tasks) {
       this.scheduleTask(name);
     }
 
@@ -128,7 +128,9 @@ export class SchedulerService {
 
   stop(): void {
     this.isRunning = false;
-    for (const [name, task] of this.tasks) {
+    for (const [name] of this.tasks) {
+      const task = this.tasks.get(name);
+      if (!task) continue;
       if (task.timeoutId) {
         clearTimeout(task.timeoutId);
         task.timeoutId = undefined;
@@ -292,9 +294,6 @@ export class SchedulerService {
       });
 
       if (stockPrices.length > 0) {
-        const kospi = stockPrices.filter(p => p.stock.code.startsWith('001') || p.stock.code === '001');
-        const kosdaq = stockPrices.filter(p => p.stock.code.startsWith('101') || p.stock.code === '101');
-
         const markets = ['KOSPI', 'KOSDAQ'];
         for (const market of markets) {
           const marketStocks = stockPrices.filter(p => 

@@ -1,4 +1,4 @@
-import { cacheService, CacheKeys, CacheTTL } from '@/lib/services/cache/cache-service';
+import { cacheService, CacheKeys } from '@/lib/services/cache/cache-service';
 import { prisma } from '@/lib/db';
 
 interface UpbitConfig {

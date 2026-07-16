@@ -1,5 +1,6 @@
 import prisma from '@/lib/db';
 import { Prisma } from '@prisma/client';
+import { containsFilter } from '@/lib/db-utils';
 
 export interface SearchParams {
   query?: string;
@@ -29,11 +30,11 @@ export interface SearchResult {
   };
 }
 
-function buildSearchWhere(params: SearchParams): Prisma.NewsArticleWhereInput {
-  const where: Prisma.NewsArticleWhereInput = {};
+function buildSearchWhere(params: SearchParams): Prisma.ArticleWhereInput {
+  const where: Prisma.ArticleWhereInput = {};
 
   // Source filters
-  const sourceFilter: Prisma.NewsSourceWhereInput = {};
+  const sourceFilter: Prisma.SourceWhereInput = {};
   if (params.category) {
     sourceFilter.category = params.category;
   }
@@ -76,20 +77,20 @@ function buildSearchWhere(params: SearchParams): Prisma.NewsArticleWhereInput {
     if (searchTerms.length === 1) {
       const term = searchTerms[0].toLowerCase();
       where.OR = [
-        { title: { contains: term, mode: 'insensitive' } },
-        { description: { contains: term, mode: 'insensitive' } },
-        { content: { contains: term, mode: 'insensitive' } },
-        { summary: { summary3Line: { contains: term, mode: 'insensitive' } } },
-        { tags: { some: { tag: { name: { contains: term, mode: 'insensitive' } } } } },
+        { title: containsFilter(term) },
+        { description: containsFilter(term) },
+        { content: containsFilter(term) },
+        { summary: { summary3Line: containsFilter(term) } },
+        { tags: { some: { tag: { name: containsFilter(term) } } } },
       ];
     } else {
       where.AND = searchTerms.map(term => ({
         OR: [
-          { title: { contains: term, mode: 'insensitive' } },
-          { description: { contains: term, mode: 'insensitive' } },
-          { content: { contains: term, mode: 'insensitive' } },
-          { summary: { summary3Line: { contains: term, mode: 'insensitive' } } },
-          { tags: { some: { tag: { name: { contains: term, mode: 'insensitive' } } } } },
+          { title: containsFilter(term) },
+          { description: containsFilter(term) },
+          { content: containsFilter(term) },
+          { summary: { summary3Line: containsFilter(term) } },
+          { tags: { some: { tag: { name: containsFilter(term) } } } },
         ],
       }));
     }
@@ -98,7 +99,7 @@ function buildSearchWhere(params: SearchParams): Prisma.NewsArticleWhereInput {
   return where;
 }
 
-function getSortOrder(params: SearchParams): Prisma.NewsArticleOrderByWithRelationInput {
+function getSortOrder(params: SearchParams): Prisma.ArticleOrderByWithRelationInput {
   const sortBy = params.sortBy || 'publishedAt';
   const sortOrder = params.sortOrder || 'desc';
 
@@ -124,7 +125,7 @@ export async function searchAIITNews(params: SearchParams): Promise<SearchResult
   const orderBy = getSortOrder(params);
 
   const [articles, total] = await Promise.all([
-    prisma.newsArticle.findMany({
+    prisma.article.findMany({
       where,
       include: {
         source: true,
@@ -137,19 +138,19 @@ export async function searchAIITNews(params: SearchParams): Promise<SearchResult
       skip: (page - 1) * limit,
       take: limit,
     }),
-    prisma.newsArticle.count({ where }),
+    prisma.article.count({ where }),
   ]);
 
   // Get facets for filtering
   const [categories, sources, tags, languages] = await Promise.all([
-    prisma.newsArticle.groupBy({
+    prisma.article.groupBy({
       by: ['categoryId'],
       where: { ...where, categoryId: { not: null } },
       _count: { categoryId: true },
       orderBy: { _count: { categoryId: 'desc' } },
       take: 20,
     }),
-    prisma.newsSource.findMany({
+    prisma.source.findMany({
       where: { isActive: true },
       select: { id: true, name: true, category: true, subcategory: true, _count: { select: { articles: true } } },
       orderBy: { articles: { _count: 'desc' } },
@@ -160,7 +161,7 @@ export async function searchAIITNews(params: SearchParams): Promise<SearchResult
       orderBy: { articles: { _count: 'desc' } },
       take: 30,
     }),
-    prisma.newsArticle.groupBy({
+    prisma.article.groupBy({
       by: ['language'],
       _count: { language: true },
     }),
@@ -186,23 +187,23 @@ export async function getSearchSuggestions(query: string, limit = 10): Promise<s
   const lowerQuery = query.toLowerCase();
 
   const [titleMatches, tagMatches, companyMatches] = await Promise.all([
-    prisma.newsArticle.findMany({
+    prisma.article.findMany({
       where: {
-        title: { contains: lowerQuery, mode: 'insensitive' },
+        title: containsFilter(lowerQuery),
       },
       select: { title: true },
       take: limit,
       distinct: ['title'],
     }),
-prisma.newsTag.findMany({
+    prisma.newsTag.findMany({
       where: {
-        name: { contains: lowerQuery, mode: 'insensitive' },
+        name: containsFilter(lowerQuery),
         isActive: true,
       },
       select: { name: true },
       take: limit,
     }),
-prisma.newsArticle.findMany({
+    prisma.article.findMany({
       where: {
         summary: {
           relatedCompanies: { hasSome: [query] },
@@ -234,7 +235,7 @@ export async function getPopularSearches(limit = 10): Promise<string[]> {
 export async function getTrendingTopics(hours = 24, limit = 10): Promise<{ topic: string; count: number }[]> {
   const since = new Date(Date.now() - hours * 60 * 60 * 1000);
   
-  const articles = await prisma.newsArticle.findMany({
+  const articles = await prisma.article.findMany({
     where: {
       publishedAt: { gte: since },
     },

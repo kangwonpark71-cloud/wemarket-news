@@ -1,8 +1,8 @@
 import prisma from '@/lib/db';
 import { AIITParsedArticle } from './fetcher';
-import { Prisma, NewsArticle, NewsSource, NewsSummary, NewsTagRelation } from '@prisma/client';
+import { Prisma, NewsArticle, NewsSource, NewsSummary } from '@prisma/client';
 
-export type AINewsWithSource = NewsArticle & { source: NewsSource; summary: NewsSummary | null; tags: { tag: { name: string } }[] };
+export type AINewsWithSource = NewsArticle & { source: NewsSource; summary?: NewsSummary | null; tags?: { tag: { name: string } }[] };
 export type ITSummaryWithNews = NewsSummary & { news: NewsArticle };
 
 export async function upsertAIITArticles(
@@ -32,10 +32,32 @@ export async function upsertAIITArticles(
             language: article.language,
           },
         });
+
+        // Dual-write to unified Article model
+        try {
+          await prisma.article.create({
+            data: {
+              sourceId,
+              sourceType: 'AI_IT' as any,
+              guid: article.guid,
+              title: article.title,
+              url: article.url,
+              description: article.description,
+              content: article.content,
+              author: article.author,
+              thumbnail: article.thumbnail,
+              publishedAt: article.publishedAt,
+              language: article.language,
+            },
+          });
+        } catch (unifiedErr) {
+          console.warn(`[AIIT DB] Unified article write skipped:`, unifiedErr instanceof Error ? unifiedErr.message : unifiedErr)
+        }
+
         newCount++;
       }
-    } catch {
-      // Skip duplicate or invalid articles
+    } catch (err) {
+      console.warn(`[AIIT DB] Skipping article "${article.title?.substring(0, 50)}":`, err instanceof Error ? err.message : err)
     }
   }
 
@@ -74,10 +96,10 @@ export async function getAIITArticles(params: {
     dateTo,
   } = params;
 
-  const where: Prisma.NewsArticleWhereInput = {};
+  const where: Prisma.ArticleWhereInput = {};
 
   // Source filters
-  const sourceFilter: Prisma.NewsSourceWhereInput = {};
+  const sourceFilter: Prisma.SourceWhereInput = {};
   if (category) {
     sourceFilter.category = category;
   }
@@ -117,14 +139,14 @@ export async function getAIITArticles(params: {
   const sortField = allowedSortFields.includes(sortBy) ? sortBy : 'publishedAt';
 
   const [articles, total] = await Promise.all([
-    prisma.newsArticle.findMany({
+    prisma.article.findMany({
       where,
       include: { source: true },
       orderBy: { [sortField]: sortOrder },
       skip: (page - 1) * limit,
       take: limit,
     }),
-    prisma.newsArticle.count({ where }),
+    prisma.article.count({ where }),
   ]);
 
   return {
@@ -136,7 +158,7 @@ export async function getAIITArticles(params: {
 }
 
 export async function getAIITArticleById(id: string): Promise<AINewsWithSource | null> {
-  const article = await prisma.newsArticle.findUnique({
+  const article = await prisma.article.findUnique({
     where: { id },
     include: { source: true, tags: { include: { tag: true } } },
   });
@@ -144,7 +166,7 @@ export async function getAIITArticleById(id: string): Promise<AINewsWithSource |
 }
 
 export async function getAIITArticleByUrl(url: string): Promise<AINewsWithSource | null> {
-  const article = await prisma.newsArticle.findUnique({
+  const article = await prisma.article.findUnique({
     where: { url },
     include: { source: true },
   });
@@ -152,17 +174,17 @@ export async function getAIITArticleByUrl(url: string): Promise<AINewsWithSource
 }
 
 export async function markAsRead(id: string): Promise<void> {
-  await prisma.newsArticle.update({
+  await prisma.article.update({
     where: { id },
     data: { isRead: true },
   });
 }
 
 export async function toggleBookmark(id: string): Promise<boolean> {
-  const article = await prisma.newsArticle.findUnique({ where: { id } });
+  const article = await prisma.article.findUnique({ where: { id } });
   if (!article) throw new Error('Article not found');
 
-  const updated = await prisma.newsArticle.update({
+  const updated = await prisma.article.update({
     where: { id },
     data: { isBookmarked: !article.isBookmarked },
   });
@@ -171,7 +193,7 @@ export async function toggleBookmark(id: string): Promise<boolean> {
 }
 
 export async function getRecentArticlesBySource(sourceId: string, limit = 10): Promise<AINewsWithSource[]> {
-  const articles = await prisma.newsArticle.findMany({
+  const articles = await prisma.article.findMany({
     where: { sourceId },
     include: { source: true },
     orderBy: { publishedAt: 'desc' },
@@ -189,23 +211,23 @@ export async function getAIITArticleStats(): Promise<{
   articlesByLanguage: { language: string; count: number }[];
 }> {
   const [totalArticles, totalSources, lastFetch, articlesByCategory, articlesByLanguage, topSources] = await Promise.all([
-    prisma.newsArticle.count(),
-    prisma.newsSource.count({ where: { isActive: true } }),
+    prisma.article.count(),
+    prisma.source.count({ where: { isActive: true } }),
     prisma.newsFetchLog.findFirst({
       orderBy: { fetchedAt: 'desc' },
       select: { fetchedAt: true },
     }),
-    prisma.newsArticle.groupBy({
+    prisma.article.groupBy({
       by: ['categoryId'],
       _count: true,
       orderBy: { _count: { categoryId: 'desc' } },
       take: 10,
     }),
-    prisma.newsArticle.groupBy({
+    prisma.article.groupBy({
       by: ['language'],
       _count: true,
     }),
-    prisma.newsArticle.groupBy({
+    prisma.article.groupBy({
       by: ['sourceId'],
       _count: true,
       orderBy: { _count: { sourceId: 'desc' } },
@@ -362,18 +384,56 @@ export async function upsertAIITSource(source: {
     where: { nameEn: source.nameEn },
   });
 
+  let sourceId: string;
+
   if (existing) {
     await prisma.newsSource.update({
       where: { id: existing.id },
       data: source,
     });
-    return existing.id;
+    sourceId = existing.id;
+  } else {
+    const created = await prisma.newsSource.create({
+      data: source,
+    });
+    sourceId = created.id;
   }
 
-  const created = await prisma.newsSource.create({
-    data: source,
-  });
-  return created.id;
+  // Dual-write to unified Source model
+  try {
+    const existingUnified = await prisma.source.findUnique({
+      where: { nameEn: source.nameEn },
+    });
+
+    const unifiedData = {
+      name: source.name,
+      nameEn: source.nameEn,
+      url: source.url,
+      sourceType: 'AI_IT' as any,
+      category: source.category,
+      subcategory: source.subcategory,
+      language: source.language,
+      icon: source.icon,
+      fetchInterval: source.fetchInterval ?? 60,
+      fetchType: 'rss',
+      crawlerConfig: undefined,
+    };
+
+    if (existingUnified) {
+      await prisma.source.update({
+        where: { id: existingUnified.id },
+        data: unifiedData,
+      });
+    } else {
+      await prisma.source.create({
+        data: unifiedData,
+      });
+    }
+  } catch (unifiedErr) {
+    console.warn(`[AIIT DB] Unified source write skipped:`, unifiedErr instanceof Error ? unifiedErr.message : unifiedErr)
+  }
+
+  return sourceId;
 }
 
 export async function getActiveAIITSources(category?: 'ai' | 'it') {

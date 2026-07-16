@@ -100,7 +100,7 @@ const data = await response.json();
    * Get headers for API requests
    */
   private async getHeaders(trId: string): Promise<Record<string, string>> {
-    const token = await this.getAccessToken();
+    await this.getAccessToken();
     return {
       'Content-Type': 'application/json',
       'Authorization': `Bearer ${this.accessToken}`,

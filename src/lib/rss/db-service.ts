@@ -33,8 +33,8 @@ export async function upsertArticles(
         })
         newCount++
       }
-    } catch {
-      // Skip duplicate or invalid articles
+    } catch (err) {
+      console.warn(`[RSS DB] Skipping article "${article.title?.substring(0, 50)}":`, err instanceof Error ? err.message : err)
     }
   }
 

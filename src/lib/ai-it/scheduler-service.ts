@@ -1,6 +1,7 @@
-import { getActiveAIITSources, logAIITFetch, upsertAIITSource, upsertAIITArticles, getAIITArticleByUrl, upsertSummary, addTagsToNews } from './db-service';
-import { fetchAIITFeed, AIITFetchResult } from './fetcher';
+import { getActiveAIITSources, logAIITFetch, upsertAIITArticles, getAIITArticleByUrl, upsertSummary } from './db-service';
+import { fetchAIITFeed } from './fetcher';
 import { generateAISummary } from './summary-service';
+import type { AIITSourceConfig } from './sources';
 
 async function fetchAndProcessSource(sourceId: string): Promise<{ count: number; newCount: number; error?: string }> {
   const startTime = Date.now();
@@ -21,7 +22,7 @@ async function fetchAndProcessSource(sourceId: string): Promise<{ count: number;
       language: targetSource.language as 'ko' | 'en',
       fetchInterval: targetSource.fetchInterval,
       type: targetSource.fetchType as 'rss' | 'crawler',
-      crawlerConfig: targetSource.crawlerConfig as any,
+      crawlerConfig: targetSource.crawlerConfig as AIITSourceConfig['crawlerConfig'],
     });
     
     if (result.error) {

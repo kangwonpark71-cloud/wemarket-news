@@ -147,23 +147,13 @@ export async function generateAISummaryWithLLM(
   description?: string,
   content?: string
 ): Promise<AISummaryResult> {
-  const fullText = [title, description, content].filter(Boolean).join('\n\n');
-  
   try {
-    const response = await fetch('/api/ai/summarize', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ title, description, content }),
-    });
-    
-    if (response.ok) {
-      return await response.json();
-    }
-  } catch (error) {
-    console.warn('[AISummary] LLM summarization failed, falling back to simple:', error);
+    const { summarizeWithLLMFallback } = await import('@/lib/ai/llm-service');
+    return await summarizeWithLLMFallback(title, description, content);
+  } catch (llmErr) {
+    console.warn('[AISummary] LLM summarization failed, falling back to rule-based:', llmErr instanceof Error ? llmErr.message : llmErr);
+    return generateAISummary(title, description, content);
   }
-  
-  return generateAISummary(title, description, content);
 }
 
 export function getSummaryPrompt(title: string, description?: string, content?: string): string {
