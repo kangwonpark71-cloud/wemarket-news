@@ -141,7 +141,7 @@ export default async function AIITArticleDetailPage({ params }: Props) {
 
           {article.tags && article.tags.length > 0 && (
             <div className="mt-8 mb-6 flex flex-wrap gap-2">
-              {article.tags.map((t, i) => (
+              {article.tags.map((t) => (
                 <span
                   key={t.tag.name}
                   className="rounded-full bg-primary/10 px-3 py-1 text-xs font-medium text-primary"

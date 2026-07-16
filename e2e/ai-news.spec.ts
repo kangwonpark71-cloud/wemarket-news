@@ -47,7 +47,6 @@ test.describe('AI News Page', () => {
   test('should navigate via sidebar subcategory link', async ({ page }) => {
     const subcategoryLink = page.locator('aside a, [class*="sidebar"] a').first();
     if (await subcategoryLink.isVisible()) {
-      const href = await subcategoryLink.getAttribute('href');
       await subcategoryLink.click();
       await page.waitForLoadState('networkidle');
       expect(page.url()).toContain('subcategory=');

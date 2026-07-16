@@ -63,7 +63,7 @@ test.describe('Playwright Crawler Module', () => {
 test.describe('Crawler config validation', () => {
   test('pagination config should be valid when present', () => {
     const { ALL_AIIT_SOURCES } = require('../src/lib/ai-it/sources');
-    const crawlers = ALL_AIIT_SOURCES.filter((s: AIITSourceConfig) => s.type === 'crawler');
+    const crawlers = (ALL_AIIT_SOURCES as AIITSourceConfig[]).filter((s: AIITSourceConfig) => s.type === 'crawler');
 
     for (const source of crawlers) {
       if (source.crawlerConfig?.pagination) {

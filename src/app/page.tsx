@@ -1,7 +1,6 @@
 import Sidebar from '@/components/layout/Sidebar'
 import NewsList from '@/components/news/NewsList'
 import { FinancialDashboard } from '@/components/financial/FinancialDashboard'
-import RefreshButton from '@/components/ui/RefreshButton'
 import Link from 'next/link'
 import { getArticles } from '@/lib/rss/db-service'
 

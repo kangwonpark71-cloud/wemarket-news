@@ -31,7 +31,6 @@ export default async function AINewsPage({ searchParams }: AI_NewsPageProps) {
   const subcategory = params.subcategory;
   const language = params.language as 'ko' | 'en' | undefined;
   const sourceId = params.source;
-  const tags = params.tags?.split(',').filter(Boolean);
   
   let dateFrom: Date | undefined;
   let dateTo: Date | undefined;
@@ -43,7 +42,7 @@ export default async function AINewsPage({ searchParams }: AI_NewsPageProps) {
     dateFrom = new Date(Date.now() - 7 * 24 * 60 * 60 * 1000);
   }
 
-  const [articlesResult, stats, subcategories, sources] = await Promise.all([
+  const [articlesResult, , subcategories, sources] = await Promise.all([
     getAIITArticles({
       category: 'ai',
       subcategory,
