@@ -4,6 +4,7 @@ import { useState, useEffect } from 'react'
 import Link from 'next/link'
 import { usePathname, useSearchParams } from 'next/navigation'
 import { cn } from '@/lib/utils'
+import { ThemeToggle } from '@/components/ui/ThemeToggle'
 
 const NAV_ITEMS = [
   { href: '/', label: '국내 경제', category: 'domestic' },
@@ -87,7 +88,8 @@ export default function Header() {
           ))}
         </nav>
 
-        <div className="flex items-center gap-3">
+        <div className="flex items-center gap-2">
+          <ThemeToggle />
           <form onSubmit={handleSearchSubmit} className="flex items-center gap-2" role="search">
             <label htmlFor="header-search" className="sr-only">
               뉴스 검색

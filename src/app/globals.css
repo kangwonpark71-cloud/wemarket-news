@@ -14,30 +14,36 @@
   --color-accent-light: #d1fae5;
   --color-danger: #dc2626;
   --color-danger-light: #fee2e2;
+  --color-card: #ffffff;
+  --color-card-hover: #f9fafb;
 }
 
 :root {
   --background: var(--color-background);
   --foreground: var(--color-foreground);
+  color-scheme: light;
 }
 
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0f172a;
-    --foreground: #f8fafc;
-    --color-primary: #3b82f6;
-    --color-primary-light: #1e3a5f;
-    --color-primary-hover: #60a5fa;
-    --color-muted: #1e293b;
-    --color-muted-foreground: #94a3b8;
-    --color-border: #334155;
-    --color-background: #0f172a;
-    --color-foreground: #f8fafc;
-    --color-accent: #10b981;
-    --color-accent-light: #064e3b;
-    --color-danger: #ef4444;
-    --color-danger-light: #7f1d1d;
-  }
+/* Dark mode via class - controlled by ThemeToggle */
+.dark,
+.dark :root {
+  --background: #0f172a;
+  --foreground: #f8fafc;
+  --color-primary: #3b82f6;
+  --color-primary-light: #1e3a5f;
+  --color-primary-hover: #60a5fa;
+  --color-muted: #1e293b;
+  --color-muted-foreground: #94a3b8;
+  --color-border: #334155;
+  --color-background: #0f172a;
+  --color-foreground: #f8fafc;
+  --color-accent: #10b981;
+  --color-accent-light: #064e3b;
+  --color-danger: #ef4444;
+  --color-danger-light: #7f1d1d;
+  --color-card: #1e293b;
+  --color-card-hover: #253044;
+  color-scheme: dark;
 }
 
 * {
@@ -51,6 +57,7 @@ body {
   line-height: 1.6;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
+  transition: background-color 0.3s ease, color 0.3s ease;
 }
 
 ::selection {
@@ -128,3 +135,9 @@ button {
 .word-break-keep-all {
   word-break: keep-all;
 }
+
+/* Dark mode overrides for common elements */
+.dark .bg-white { background-color: var(--color-card); }
+.dark .bg-gray-50 { background-color: var(--color-muted); }
+.dark .text-gray-900 { color: var(--color-foreground); }
+.dark .text-gray-500 { color: var(--color-muted-foreground); }
