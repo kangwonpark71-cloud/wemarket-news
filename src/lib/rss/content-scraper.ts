@@ -55,7 +55,6 @@ function extractGeneralContent($: cheerio.CheerioAPI, sourceKey: string): string
   const contentEl = $(config.selector).first()
 
   if (contentEl.length === 0) {
-    // Fallback: collect all paragraphs
     const paragraphs: string[] = []
     $('p').each((_, el) => {
       const text = $(el).text().trim()
@@ -64,29 +63,32 @@ function extractGeneralContent($: cheerio.CheerioAPI, sourceKey: string): string
     return paragraphs.join('\n\n')
   }
 
-  // Remove unwanted elements
   if (config.clean) {
     config.clean.forEach((sel) => contentEl.find(sel).remove())
   }
 
-  // Get text from paragraphs within the content element
   const paragraphs: string[] = []
-  contentEl.find('p, h1, h2, h3, h4, li, div').each((_, el) => {
+  contentEl.find('p, h1, h2, h3, h4, li').each((_, el) => {
     const tag = $(el).prop('tagName')?.toLowerCase() || ''
     const text = $(el).text().trim()
     if (text.length < 10) return
 
     if (tag === 'li') {
-      paragraphs.push(`- ${text}`)
-    } else if (tag.startsWith('h')) {
-      paragraphs.push(`\n${text}\n`)
+      paragraphs.push(`* ${text}`)
+    } else if (tag === 'h1') {
+      paragraphs.push(`# ${text}`)
+    } else if (tag === 'h2') {
+      paragraphs.push(`## ${text}`)
+    } else if (tag === 'h3') {
+      paragraphs.push(`### ${text}`)
+    } else if (tag === 'h4') {
+      paragraphs.push(`#### ${text}`)
     } else {
       paragraphs.push(text)
     }
   })
 
   if (paragraphs.length === 0) {
-    // Ultimate fallback: just get inner text
     return cleanText(contentEl.text())
   }
 
