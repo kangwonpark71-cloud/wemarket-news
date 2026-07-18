@@ -1,0 +1,11 @@
+.next/
+node_modules/
+test-results/
+playwright-report/
+tmp/
+.git/
+*.db
+.env.local
+.env.development
+.env.production
+*.log
