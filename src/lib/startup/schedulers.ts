@@ -66,9 +66,7 @@ export async function startAllSchedulers() {
 
   // AI/IT source seeding
   setTimeout(async () => {
-    if (process.env.NODE_ENV !== 'production') {
-      await seedAIITSourcesIfEmpty()
-    }
+    await seedAIITSourcesIfEmpty()
   }, 3000)
 
   console.log('[Startup] All schedulers initialized')
