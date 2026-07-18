@@ -1,6 +1,7 @@
 import { koreaInvestmentService } from '@/lib/services/financial/financial-service';
 import { upbitService } from '@/lib/services/crypto/crypto-service';
 import { marketService } from '@/lib/services/market/market-service';
+import { cacheService } from '@/lib/services/cache/cache-service';
 import { prisma } from '@/lib/db';
 
 interface SchedulerConfig {
@@ -124,6 +125,31 @@ export class SchedulerService {
     }
 
     console.log('[Scheduler] All tasks scheduled');
+
+    setTimeout(async () => {
+      console.log('[Scheduler] Running initial financial data sync on startup...');
+      const lockName = 'scheduler:job:financial:initial';
+      const acquired = await cacheService.acquireLock(lockName, 600);
+      if (!acquired) {
+        console.log('[Scheduler] Initial financial data sync skipped: lock already held');
+        return;
+      }
+      try {
+        await this.syncStockMaster().catch(() => {});
+        await this.syncCryptoMarkets().catch(() => {});
+        await this.updateStockPrices().catch(() => {});
+        await this.updateCryptoTickers().catch(() => {});
+        await this.updateForexRates().catch(() => {});
+        await this.updateGlobalIndices().catch(() => {});
+        console.log('[Scheduler] Initial financial data sync completed!');
+      } catch (err) {
+        console.error('[Scheduler] Failed to run initial sync:', err);
+      } finally {
+        setTimeout(() => {
+          cacheService.releaseLock(lockName).catch(() => {});
+        }, 10000);
+      }
+    }, 5000);
   }
 
   stop(): void {
