@@ -56,6 +56,7 @@ export function FinancialDashboard() {
   const [error, setError] = useState<string | null>(null);
   const [retryCount, setRetryCount] = useState(0);
   const [lastUpdate, setLastUpdate] = useState<Date | null>(null);
+  const [refreshing, setRefreshing] = useState(false);
   const { historyRef, push } = useSparklineHistory();
 
   const fetchData = useCallback(async () => {
@@ -86,10 +87,40 @@ export function FinancialDashboard() {
     }
   }, [push, retryCount]);
 
+  const handleRefresh = async () => {
+    try {
+      setRefreshing(true);
+      const res = await fetch('/api/financial/refresh', { method: 'POST' });
+      const json = await res.json();
+      if (json.success) {
+        await fetchData();
+      } else {
+        alert(json.error || '갱신 실패');
+      }
+    } catch {
+      alert('시장 데이터 갱신 중 오류가 발생했습니다.');
+    } finally {
+      setRefreshing(false);
+    }
+  };
+
   useEffect(() => {
     fetchData();
     const interval = setInterval(fetchData, 30000);
     return () => clearInterval(interval);
+  }, [fetchData]);
+
+  useEffect(() => {
+    const backendRefreshInterval = setInterval(async () => {
+      try {
+        await fetch('/api/financial/refresh', { method: 'POST' });
+        await fetchData();
+      } catch (err) {
+        console.error(err);
+      }
+    }, 3 * 60 * 60 * 1000);
+
+    return () => clearInterval(backendRefreshInterval);
   }, [fetchData]);
 
   const formatTime = (date: Date) => {
@@ -187,10 +218,24 @@ export function FinancialDashboard() {
   return (
     <div className="space-y-4">
       <div className="flex items-center justify-between">
-        <h2 className="text-lg font-bold text-foreground">금융 대시보드</h2>
-        <span className="text-xs text-muted-foreground">
-          {lastUpdate ? `${formatTime(lastUpdate)} 업데이트` : ''}
-        </span>
+        <div className="flex items-center gap-2">
+          <h2 className="text-lg font-bold text-foreground">금융 대시보드</h2>
+          <span className="text-[10px] px-2 py-0.5 rounded-full bg-emerald-100 dark:bg-emerald-950/30 text-emerald-700 dark:text-emerald-400 font-medium">
+            3시간 간격 자동갱신
+          </span>
+        </div>
+        <div className="flex items-center gap-3">
+          <span className="text-xs text-muted-foreground">
+            {lastUpdate ? `${formatTime(lastUpdate)} 업데이트` : ''}
+          </span>
+          <button
+            onClick={handleRefresh}
+            disabled={refreshing}
+            className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 text-xs font-semibold text-slate-700 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-800 transition-all cursor-pointer disabled:bg-slate-100 disabled:cursor-not-allowed"
+          >
+            {refreshing ? '🔄 갱신 중...' : '🔄 시장 갱신'}
+          </button>
+        </div>
       </div>
 
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-6 gap-3">
