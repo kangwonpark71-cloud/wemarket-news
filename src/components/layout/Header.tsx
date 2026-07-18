@@ -76,10 +76,10 @@ export default function Header() {
               key={item.href}
               href={item.href}
               className={cn(
-                'rounded-lg px-4 py-2 text-sm font-medium transition-colors',
+                'rounded-sm px-4 py-2 text-sm font-semibold transition-all border-b-2',
                 isActive(item.href)
-                  ? 'bg-primary-light text-primary'
-                  : 'text-muted-foreground hover:bg-muted hover:text-foreground'
+                  ? 'border-primary text-foreground bg-primary/5'
+                  : 'border-transparent text-muted-foreground hover:bg-muted/40 hover:text-foreground'
               )}
               aria-current={isActive(item.href) ? 'page' : undefined}
             >

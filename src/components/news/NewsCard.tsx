@@ -55,10 +55,9 @@ export default function NewsCard({ article, compact = false }: NewsCardProps) {
 
   return (
     <article
-      className={`group relative rounded-xl border transition-all ${
-        article.isRead ? 'border-gray-200 bg-gray-50' : 'border-gray-200 bg-white hover:border-primary-light hover:shadow-lg'
+      className={`group relative rounded-sm border border-border bg-card hover:bg-muted/10 transition-all ${
+        article.isRead ? 'opacity-70 border-dashed' : ''
       }`}
-      style={article.isRead ? { opacity: 0.7 } : {}}
     >
       <div className="p-4">
         <div className="flex gap-4">
@@ -67,7 +66,7 @@ export default function NewsCard({ article, compact = false }: NewsCardProps) {
               <img
                 src={article.thumbnail}
                 alt=""
-                className="h-full w-full rounded-lg object-cover"
+                className="h-full w-full rounded-sm object-cover"
                 loading="lazy"
               />
             </div>
@@ -75,7 +74,7 @@ export default function NewsCard({ article, compact = false }: NewsCardProps) {
 
           <div className="min-w-0 flex-1">
             <div className="mb-2 flex flex-wrap items-center gap-2">
-              <span className="inline-flex items-center gap-1 rounded-full bg-primary-light px-2 py-0.5 text-xs font-medium text-primary">
+              <span className="inline-flex items-center gap-1 rounded-sm bg-primary/10 px-2 py-0.5 text-xs font-semibold text-primary">
                 <span>{source.icon || '📰'}</span>
                 <span>{source.name}</span>
               </span>
