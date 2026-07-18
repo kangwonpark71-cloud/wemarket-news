@@ -133,6 +133,17 @@ export const AI_OFFICIAL_SOURCES: AIITSourceConfig[] = [
 // =============================================
 
 export const AI_TECH_SOURCES: AIITSourceConfig[] = [
+  {
+    name: 'AI 타임스',
+    nameEn: 'ai_times',
+    url: 'https://www.aitimes.com/rss/allArticle.xml',
+    category: 'ai',
+    subcategory: 'ai_industry',
+    language: 'ko',
+    icon: '📰',
+    fetchInterval: 1,
+    type: 'rss',
+  },
   // VentureBeat AI
   {
     name: 'VentureBeat AI',

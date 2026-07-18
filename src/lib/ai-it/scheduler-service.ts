@@ -173,11 +173,8 @@ export async function run60MinJob(): Promise<void> {
 
 export async function seedAIITSourcesIfEmpty(): Promise<void> {
   const { seedAIITSources } = await import('./db-service');
-  const sources = await getActiveAIITSources();
-  if (sources.length === 0) {
-    console.log('[AIITScheduler] No sources found, seeding...');
-    await seedAIITSources();
-  }
+  console.log('[AIITScheduler] Syncing and seeding AI/IT sources...');
+  await seedAIITSources();
 }
 
 export async function triggerFetch(sourceNameEn?: string): Promise<{ success: boolean; count: number; newCount: number }> {
