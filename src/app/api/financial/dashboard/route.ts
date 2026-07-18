@@ -12,10 +12,22 @@ export async function GET() {
 
   try {
     const [stockPrices, , forexRates, globalIndices] = await Promise.all([
-      koreaInvestmentService.getMarketOverview(),
-      upbitService.getAllTickers(),
-      marketService.getAllExchangeRates(),
-      marketService.getGlobalIndices(),
+      koreaInvestmentService.getMarketOverview().catch(err => {
+        console.warn('[Dashboard] KOSPI/KOSDAQ overview failed:', err);
+        return { kospi: { value: 0, change: 0, changeRate: 0 }, kosdaq: { value: 0, change: 0, changeRate: 0 } };
+      }),
+      upbitService.getAllTickers().catch(err => {
+        console.warn('[Dashboard] Upbit tickers failed:', err);
+        return [];
+      }),
+      marketService.getAllExchangeRates().catch(err => {
+        console.warn('[Dashboard] Forex rates failed:', err);
+        return [];
+      }),
+      marketService.getGlobalIndices().catch(err => {
+        console.warn('[Dashboard] Global indices failed:', err);
+        return [];
+      }),
     ]);
 
     // Get latest tickers from DB for volume

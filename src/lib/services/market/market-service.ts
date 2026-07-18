@@ -41,15 +41,20 @@ export class MarketService {
       const response = await fetch(`${this.baseUrl}?base=KRW`);
       const data = await response.json();
 
-      const rates: ExchangeRateData[] = data.map((item: any) => ({
-        baseCurrency: item.cur_unit.replace('KRW/', ''),
-        quoteCurrency: 'KRW',
-        rate: parseFloat(item.deal_bas_r.replace(/,/g, '')),
-        change: 0,
-        changeRate: 0,
-        source: 'BOK',
-        timestamp: new Date(),
-      }));
+      const rates: ExchangeRateData[] = data
+        .filter((item: any) => item.name && item.name !== 'KRW=X')
+        .map((item: any) => {
+          const baseCurrency = item.name.replace('KRW=X', '').replace('=X', '').replace('KRW', '');
+          return {
+            baseCurrency: baseCurrency || 'USD',
+            quoteCurrency: 'KRW',
+            rate: parseFloat(String(item.rate)),
+            change: 0,
+            changeRate: 0,
+            source: 'Manana',
+            timestamp: new Date(),
+          };
+        });
 
       await cacheService.set('forex:rates:all', rates, { ttl: 300 });
       return rates;
@@ -68,16 +73,16 @@ export class MarketService {
       const response = await fetch(`${this.baseUrl}?base=${base}&quote=${quote}`);
       const data = await response.json();
 
-      if (data.length === 0) return null;
+      if (!data || data.length === 0) return null;
 
       const item = data[0];
       const rate: ExchangeRateData = {
         baseCurrency: base,
         quoteCurrency: quote,
-        rate: parseFloat(item.deal_bas_r.replace(/,/g, '')),
+        rate: parseFloat(String(item.rate)),
         change: 0,
         changeRate: 0,
-        source: 'BOK',
+        source: 'Manana',
         timestamp: new Date(),
       };
 
