@@ -115,30 +115,6 @@ model UserPreference {
 // AI & IT News Models
 // =============================================
 
-model NewsSource {
-  id            String   @id @default(uuid())
-  name          String   // "OpenAI Blog", "TechCrunch AI", "The Verge AI" 등
-  nameEn        String   @unique @map("name_en") // "openai_blog", "techcrunch_ai" 등
-  url           String   @unique // RSS URL 또는 크롤링 대상 URL
-  category      String   // "ai" | "it"
-  subcategory   String?  // "official_ai", "tech_news", "research" 등
-  language      String   @default("en") // "ko" | "en"
-  icon          String?  // 소스 아이콘 (이모지 또는 URL)
-  isActive      Boolean  @default(true) @map("is_active")
-  fetchInterval Int      @default(60) @map("fetch_interval") // 수집 주기 (분)
-  fetchType     String   @default("rss") @map("fetch_type") // "rss" | "crawler"
-  crawlerConfig Json?    @map("crawler_config") // 크롤러 설정 (선택적)
-  createdAt     DateTime @default(now()) @map("created_at")
-  updatedAt     DateTime @updatedAt @map("updated_at")
-
-  articles    NewsArticle[]
-  fetchLogs   NewsFetchLog[]
-
-  @@index([category, isActive])
-  @@index([subcategory, isActive])
-  @@map("news_sources")
-}
-
 model NewsCategory {
   id          String   @id @default(uuid())
   name        String   // "OpenAI", "Anthropic", "Google AI" 등
@@ -155,40 +131,11 @@ model NewsCategory {
 
   parent      NewsCategory? @relation("CategoryHierarchy", fields: [parentId], references: [id])
   children    NewsCategory[] @relation("CategoryHierarchy")
-  articles    NewsArticle[]
   unifiedArticles Article[]
 
   @@index([category, type, isActive])
   @@index([parentId])
   @@map("news_categories")
-}
-
-model NewsArticle {
-  id              String   @id @default(uuid())
-  sourceId        String   @map("source_id")
-  categoryId      String?  @map("category_id")
-  guid            String?  // RSS GUID (중복 방지용)
-  title           String
-  url             String   @unique
-  description     String?  // 원문 요약/설명
-  content         String?  // 전체 본문 (크롤링 시)
-  author          String?
-  thumbnail       String?  // 썸네일 이미지 URL
-  publishedAt     DateTime @map("published_at")
-  fetchedAt       DateTime @default(now()) @map("fetched_at")
-  language        String   @default("en") // "ko" | "en"
-  isRead          Boolean  @default(false) @map("is_read")
-  isBookmarked    Boolean  @default(false) @map("is_bookmarked")
-
-  source          NewsSource           @relation(fields: [sourceId], references: [id], onDelete: Cascade)
-  category        NewsCategory?        @relation(fields: [categoryId], references: [id], onDelete: SetNull)
-
-  @@index([sourceId, publishedAt(sort: Desc)])
-  @@index([categoryId, publishedAt(sort: Desc)])
-  @@index([language, publishedAt(sort: Desc)])
-  @@index([publishedAt(sort: Desc)])
-  @@index([isBookmarked, publishedAt(sort: Desc)])
-  @@map("news_articles")
 }
 
 model NewsTag {
@@ -237,37 +184,6 @@ model NewsSummary {
 
   @@index([aiGenerated])
   @@map("news_summaries")
-}
-
-model NewsFetchLog {
-  id        String   @id @default(uuid())
-  sourceId  String   @map("source_id")
-  status    String   // "success" | "error" | "partial"
-  count     Int      @default(0) // 수집된 기사 수
-  newCount  Int      @default(0) @map("new_count") // 새로 수집된 기사 수
-  error     String?
-  duration  Int?     // 소요시간 (ms)
-  fetchedAt DateTime @default(now()) @map("fetched_at")
-
-  source    NewsSource @relation(fields: [sourceId], references: [id], onDelete: Cascade)
-
-  @@index([sourceId, fetchedAt(sort: Desc)])
-  @@map("news_fetch_logs")
-}
-
-model NewsDailyStat {
-  id            String   @id @default(uuid())
-  date          DateTime @db.Date @unique
-  category      String   // "ai" | "it"
-  totalArticles Int      @map("total_articles")
-  bySource      Json     @map("by_source") // 소스별 기사 수
-  byCategory    Json     @map("by_category") // 카테고리별 기사 수
-  byLanguage    Json     @map("by_language") // 언어별 기사 수
-  topTags       Json     @map("top_tags") // 상위 태그
-  createdAt     DateTime @default(now()) @map("created_at")
-
-  @@index([date(sort: Desc), category])
-  @@map("news_daily_stats")
 }
 
 // =============================================

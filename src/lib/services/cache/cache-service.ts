@@ -138,6 +138,52 @@ class CacheService {
     const value = await this.get(key);
     return value !== null;
   }
+
+  /**
+   * Acquire a distributed lock with automatic expiration (TTL)
+   * Uses Redis NX option if connected, otherwise falls back to memory cache
+   */
+  async acquireLock(lockName: string, ttlSeconds: number = 300): Promise<boolean> {
+    const fullKey = `economy-news:lock:${lockName}`;
+    const uniqueVal = `${Date.now()}-${Math.random()}`;
+
+    if (this.useRedis && this.redis) {
+      try {
+        const result = await (this.redis as any).set(fullKey, uniqueVal, 'NX', 'EX', ttlSeconds);
+        return result === 'OK';
+      } catch (error) {
+        console.warn('[Cache] Redis acquireLock failed, falling back to memory:', error);
+      }
+    }
+
+    const now = Date.now();
+    const entry = this.memoryCache.get(fullKey);
+    if (entry && entry.expiresAt > now) {
+      return false;
+    }
+    
+    this.memoryCache.set(fullKey, {
+      value: uniqueVal,
+      expiresAt: now + ttlSeconds * 1000,
+    });
+    return true;
+  }
+
+  /**
+   * Release a previously acquired distributed lock
+   */
+  async releaseLock(lockName: string): Promise<void> {
+    const fullKey = `economy-news:lock:${lockName}`;
+    if (this.useRedis && this.redis) {
+      try {
+        await (this.redis as any).del(fullKey);
+        return;
+      } catch (error) {
+        console.warn('[Cache] Redis releaseLock failed:', error);
+      }
+    }
+    this.memoryCache.delete(fullKey);
+  }
 }
 
 export const cacheService = new CacheService();

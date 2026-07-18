@@ -1,6 +1,7 @@
 import Sidebar from '@/components/layout/Sidebar'
 import NewsList from '@/components/news/NewsList'
 import { FinancialDashboard } from '@/components/financial/FinancialDashboard'
+import WeatherWidget from '@/components/layout/WeatherWidget'
 import Link from 'next/link'
 import { getArticles } from '@/lib/rss/db-service'
 
@@ -73,6 +74,10 @@ export default async function HomePage({ searchParams }: HomePageProps) {
             </Link>
           </div>
         </div>
+      </div>
+
+      <div className="mb-6 max-w-lg">
+        <WeatherWidget />
       </div>
 
       <FinancialDashboard />

@@ -3,7 +3,7 @@ import { fetchAIITFeed } from './fetcher';
 import { generateAISummaryWithLLM } from './summary-service';
 import type { AIITSourceConfig } from './sources';
 
-async function fetchAndProcessSource(sourceId: string): Promise<{ count: number; newCount: number; error?: string }> {
+export async function fetchAndProcessSource(sourceId: string): Promise<{ count: number; newCount: number; error?: string }> {
   const startTime = Date.now();
   
   try {
