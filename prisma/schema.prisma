@@ -19,6 +19,11 @@ enum SourceType {
   AI_IT
 }
 
+enum UserRole {
+  USER
+  ADMIN
+}
+
 // =============================================
 // Unified Source (RSS + AI/IT)
 // =============================================
@@ -98,17 +103,76 @@ model FetchLog {
   @@map("fetch_logs")
 }
 
-// 사용자 설정 (선택사항: 확장용)
+// 사용자 회원가입/계정 정보
+model User {
+  id        String   @id @default(uuid())
+  email     String   @unique
+  password  String   
+  name      String?
+  role      UserRole @default(USER)
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  preferences UserPreference?
+
+  @@map("users")
+}
+
+// 사용자 설정
 model UserPreference {
   id              String   @id @default(uuid())
-  sessionId       String   @unique @map("session_id") // 브라우저 세션 ID
-  hiddenSources   String   @default("") @map("hidden_sources") // comma-separated source IDs
-  pinnedSources   String   @default("") @map("pinned_sources") // comma-separated source IDs
-  theme           String   @default("light") // "light" | "dark"
+  userId          String   @unique @map("user_id") 
+  hiddenSources   String   @default("") @map("hidden_sources") 
+  pinnedSources   String   @default("") @map("pinned_sources") 
+  theme           String   @default("light") 
+  language        String   @default("all") 
   createdAt       DateTime @default(now()) @map("created_at")
   updatedAt       DateTime @updatedAt @map("updated_at")
 
+  user            User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
   @@map("user_preferences")
+}
+
+// =============================================
+// Banner & Advertisement Models
+// =============================================
+
+model Banner {
+  id        String   @id @default(uuid())
+  title     String
+  imageUrl  String   @map("image_url")
+  linkUrl   String?  @map("link_url")
+  position  String   @default("top") // "top" | "sidebar" | "bottom"
+  sortOrder Int      @default(0) @map("sort_order")
+  isActive  Boolean  @default(true) @map("is_active")
+  startDate DateTime? @map("start_date")
+  endDate   DateTime? @map("end_date")
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  @@index([position, isActive])
+  @@index([sortOrder])
+  @@map("banners")
+}
+
+model Advertisement {
+  id          String   @id @default(uuid())
+  title       String
+  adType      String   @default("image") @map("ad_type") // "image" | "text" | "html"
+  content     String   // image URL, text content, or HTML snippet
+  linkUrl     String?  @map("link_url")
+  position    String   @default("sidebar") // "sidebar" | "in-content" | "header" | "footer"
+  isActive    Boolean  @default(true) @map("is_active")
+  startDate   DateTime? @map("start_date")
+  endDate     DateTime? @map("end_date")
+  impressions Int      @default(0)
+  clicks      Int      @default(0)
+  createdAt   DateTime @default(now()) @map("created_at")
+  updatedAt   DateTime @updatedAt @map("updated_at")
+
+  @@index([position, isActive])
+  @@map("advertisements")
 }
 
 // =============================================
@@ -170,6 +234,7 @@ model NewsTagRelation {
 model NewsSummary {
   id              String   @id @default(uuid())
   articleId       String   @unique @map("article_id")
+  translatedTitle String?  @map("translated_title")
   summary3Line    String   @map("summary_3line") // 3줄 요약
   keywords        String[] @default([]) // 키워드 배열
   relatedCompanies String[] @default([]) @map("related_companies") // 관련 기업
@@ -446,4 +511,25 @@ model FinancialFetchLog {
 
   @@index([service, fetchedAt(sort: Desc)])
   @@map("financial_fetch_logs")
+}
+
+// 분산 락 테이블 (Redis 없을 때 데이터베이스를 통한 다중 노드 동기화용)
+model DistributedLock {
+  id        String   @id @default(uuid())
+  lockName  String   @unique @map("lock_name")
+  owner     String   
+  expiresAt DateTime @map("expires_at")
+  createdAt DateTime @default(now()) @map("created_at")
+
+  @@map("distributed_locks")
+}
+
+// 이메일 뉴스레터 구독 테이블
+model NewsletterSubscription {
+  id        String   @id @default(uuid())
+  email     String   @unique
+  isActive  Boolean  @default(true) @map("is_active")
+  createdAt DateTime @default(now()) @map("created_at")
+
+  @@map("newsletter_subscriptions")
 }

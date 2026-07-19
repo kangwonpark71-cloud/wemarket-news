@@ -30,6 +30,15 @@ const output = lines
       line = line.replace(/\bBigInt\b/g, 'Int');
     }
 
+    // String[] → String for SQLite (no native array support)
+    if (line.includes('String[]')) {
+      line = line.replace(/String\[\]/g, 'String');
+    }
+    // @default([]) → @default("") for SQLite (list defaults on string fields)
+    if (line.includes('@default([])')) {
+      line = line.replace('@default([])', '@default("")');
+    }
+
     return line;
   })
   .join('\n');

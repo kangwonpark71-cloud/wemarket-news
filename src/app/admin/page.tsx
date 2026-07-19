@@ -146,19 +146,10 @@ export default function AdminPage() {
   }
 
   return (
-    <div className="min-h-screen bg-slate-50 text-slate-800 p-8">
-      <div className="max-w-7xl mx-auto">
-        <header className="mb-8 border-b border-slate-200 pb-4 flex flex-col md:flex-row md:items-center justify-between gap-4">
-          <div>
-            <h1 className="text-3xl font-bold text-slate-900">🛡️ 위마켓_뉴스 관리자 대시보드</h1>
-            <p className="text-slate-500 mt-1">수집 매체 관리, 수집 주기 설정 및 수동 크롤링 강제 기동 컨트롤러</p>
-          </div>
-          <button
-            onClick={() => window.location.href = '/'}
-            className="px-4 py-2 border border-slate-300 hover:bg-slate-100 text-xs font-semibold rounded-sm transition-all shrink-0 cursor-pointer"
-          >
-            ← 홈화면 바로가기
-          </button>
+    <div className="max-w-7xl mx-auto">
+        <header className="mb-8 border-b border-slate-200 pb-4">
+          <h1 className="text-3xl font-bold text-slate-900">🛡️ 대시보드</h1>
+          <p className="text-slate-500 mt-1 text-sm">수집 매체 관리, 수집 주기 설정, 시스템 현황</p>
         </header>
 
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
@@ -332,7 +323,6 @@ export default function AdminPage() {
               </tbody>
             </table>
           </div>
-        </div>
       </div>
     </div>
   )
