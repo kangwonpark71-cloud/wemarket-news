@@ -9,7 +9,6 @@
     "healthcheckPath": "/api/health",
     "healthcheckTimeout": 30,
     "restartPolicyType": "ON_FAILURE",
-    "restartPolicyMaxRetries": 3,
-    "preDeployCommand": "echo '=== PRE-DEPLOY START ===' && npx prisma db push --skip-generate && echo '=== PRE-DEPLOY END ==='"
+    "restartPolicyMaxRetries": 3
   }
 }
