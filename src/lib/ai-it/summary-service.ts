@@ -1,6 +1,7 @@
 import { cacheService } from '@/lib/services/cache/cache-service';
 
 export interface AISummaryResult {
+  translatedTitle?: string;
   summary3Line: string;
   keywords: string[];
   relatedCompanies: string[];
@@ -56,7 +57,7 @@ function extractModels(text: string): string[] {
 
 function determineDifficulty(text: string): 'beginner' | 'intermediate' | 'advanced' {
   const lowerText = text.toLowerCase();
-  let scores = { beginner: 0, intermediate: 0, advanced: 0 };
+  const scores = { beginner: 0, intermediate: 0, advanced: 0 };
   
   for (const [level, keywords] of Object.entries(DIFFICULTY_INDICATORS)) {
     for (const keyword of keywords) {

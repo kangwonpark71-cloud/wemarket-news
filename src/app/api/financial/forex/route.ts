@@ -8,7 +8,7 @@ export async function GET(request: Request) {
   const quote = searchParams.get('quote') || 'KRW';
 
   try {
-    let result: any;
+    let result: unknown;
 
     switch (action) {
       case 'rate':

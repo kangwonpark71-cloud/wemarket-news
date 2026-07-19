@@ -5,11 +5,11 @@ export async function GET(request: Request) {
   const { searchParams } = new URL(request.url);
   const action = searchParams.get('action') || 'tickers';
   const symbol = searchParams.get('symbol');
-  const unit = searchParams.get('unit') as any;
+  const unit = searchParams.get('unit') as 'minutes/1' | 'minutes/5' | 'minutes/15' | 'minutes/30' | 'minutes/60' | 'days' | 'weeks' | 'months' | undefined;
   const limit = parseInt(searchParams.get('limit') || '20');
 
   try {
-    let result: any;
+    let result: unknown;
 
     switch (action) {
       case 'tickers':

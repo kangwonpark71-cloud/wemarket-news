@@ -61,8 +61,8 @@ test.describe('Playwright Crawler Module', () => {
 });
 
 test.describe('Crawler config validation', () => {
-  test('pagination config should be valid when present', () => {
-    const { ALL_AIIT_SOURCES } = require('../src/lib/ai-it/sources');
+  test('pagination config should be valid when present', async () => {
+    const { ALL_AIIT_SOURCES } = await import('../src/lib/ai-it/sources');
     const crawlers = (ALL_AIIT_SOURCES as AIITSourceConfig[]).filter((s: AIITSourceConfig) => s.type === 'crawler');
 
     for (const source of crawlers) {
@@ -77,8 +77,8 @@ test.describe('Crawler config validation', () => {
 });
 
 test.describe('RSS fallback when crawler unavailable', () => {
-  test('non-crawler sources should have type set to rss', () => {
-    const { ALL_AIIT_SOURCES } = require('../src/lib/ai-it/sources');
+  test('non-crawler sources should have type set to rss', async () => {
+    const { ALL_AIIT_SOURCES } = await import('../src/lib/ai-it/sources');
     const nonCrawlers = ALL_AIIT_SOURCES.filter((s: AIITSourceConfig) => s.type !== 'crawler');
     for (const source of nonCrawlers) {
       expect(source.type).toBe('rss');

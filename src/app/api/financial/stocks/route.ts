@@ -10,7 +10,7 @@ export async function GET(request: Request) {
   const limit = parseInt(searchParams.get('limit') || '20');
 
   try {
-    let result: any;
+    let result: unknown;
 
     switch (action) {
       case 'price':

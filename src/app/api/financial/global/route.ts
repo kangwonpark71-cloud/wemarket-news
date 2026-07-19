@@ -6,7 +6,7 @@ export async function GET(request: Request) {
   const action = searchParams.get('action') || 'indices';
 
   try {
-    let result: any;
+    let result: unknown;
 
     switch (action) {
       case 'indices':

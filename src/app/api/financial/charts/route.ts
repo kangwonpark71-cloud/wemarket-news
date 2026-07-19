@@ -23,7 +23,9 @@ export async function GET(request: Request) {
       return NextResponse.json({ success: true, data: cached });
     }
 
-    let result: any[] = [];
+    type CandleData = { timestamp: Date; open: number; high: number; low: number; close: number; volume: number };
+    type RateData = { timestamp: Date; close: number };
+    let result: (CandleData | RateData)[] = [];
 
     switch (type) {
       case 'STOCK': {
@@ -45,7 +47,7 @@ export async function GET(request: Request) {
           take: limit,
         });
 
-        result = prices.map((p: any) => ({
+        result = prices.map((p) => ({
           timestamp: p.timestamp,
           open: Number(p.openPrice),
           high: Number(p.highPrice),
@@ -65,7 +67,7 @@ export async function GET(request: Request) {
         if (!crypto) {
           return NextResponse.json(
             { success: false, error: 'Cryptocurrency not found' },
-            { status: 404 }
+            { status: 400 }
           );
         }
 
@@ -78,7 +80,7 @@ export async function GET(request: Request) {
           take: limit,
         });
 
-        result = candles.map((c: any) => ({
+        result = candles.map((c) => ({
           timestamp: c.timestamp,
           open: Number(c.openPrice),
           high: Number(c.highPrice),
@@ -108,7 +110,7 @@ export async function GET(request: Request) {
           take: limit,
         });
 
-        result = quotes.map((q: any) => ({
+        result = quotes.map((q) => ({
           timestamp: q.timestamp,
           open: Number(q.openPrice),
           high: Number(q.highPrice),
@@ -129,7 +131,7 @@ export async function GET(request: Request) {
           take: limit,
         });
 
-        result = rates.map((r: any) => ({
+        result = rates.map((r) => ({
           timestamp: r.timestamp,
           close: Number(r.rate),
         })).reverse();

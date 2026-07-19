@@ -1,5 +1,5 @@
 import { Metadata } from 'next';
-import { getAIITArticles, getAIITArticleStats, getSubcategoriesWithCount, getActiveAIITSources } from '@/lib/ai-it/db-service';
+import { getAIITArticles, getAIITArticleStats, getSubcategoriesWithCount, getActiveAIITSources, type AINewsWithSource } from '@/lib/ai-it/db-service';
 import NewsSidebar from '@/components/ai-it/NewsSidebar';
 import FilterBar from '@/components/ai-it/FilterBar';
 import NewsCard from '@/components/ai-it/NewsCard';
@@ -8,6 +8,18 @@ export const metadata: Metadata = {
   title: 'IT News - 최신 IT/테크 뉴스',
   description: '국내외 주요 IT 매체의 최신 기술 뉴스를 실시간으로 확인하세요. 블로터, 지디넷코리아, IT조선, TechCrunch, The Verge, Ars Technica 등.',
 };
+
+function calcDateRange(period: string | undefined): { dateFrom: Date | undefined; dateTo: Date | undefined } {
+  const now = Date.now();
+  if (period === '1h') {
+    return { dateFrom: new Date(now - 60 * 60 * 1000), dateTo: undefined };
+  } else if (period === '24h') {
+    return { dateFrom: new Date(now - 24 * 60 * 60 * 1000), dateTo: undefined };
+  } else if (period === '7d') {
+    return { dateFrom: new Date(now - 7 * 24 * 60 * 60 * 1000), dateTo: undefined };
+  }
+  return { dateFrom: undefined, dateTo: undefined };
+}
 
 interface IT_NewsPageProps {
   searchParams: Promise<{
@@ -32,15 +44,7 @@ export default async function ITNewsPage({ searchParams }: IT_NewsPageProps) {
   const language = params.language as 'ko' | 'en' | undefined;
   const sourceId = params.source;
   
-  let dateFrom: Date | undefined;
-  let dateTo: Date | undefined;
-  if (params.period === '1h') {
-    dateFrom = new Date(Date.now() - 60 * 60 * 1000);
-  } else if (params.period === '24h') {
-    dateFrom = new Date(Date.now() - 24 * 60 * 60 * 1000);
-  } else if (params.period === '7d') {
-    dateFrom = new Date(Date.now() - 7 * 24 * 60 * 60 * 1000);
-  }
+  const { dateFrom, dateTo } = calcDateRange(params.period);
 
   const [articlesResult, , subcategories, sources] = await Promise.all([
     getAIITArticles({
@@ -76,7 +80,7 @@ export default async function ITNewsPage({ searchParams }: IT_NewsPageProps) {
           <div className="min-w-0 flex-1">
             <FilterBar
               category="it"
-              sources={sources.map((s: any) => ({ id: s.id, name: s.name, nameEn: s.nameEn, icon: s.icon || undefined }))}
+              sources={sources.map((s: { id: string; name: string; nameEn: string; icon: string | null }) => ({ id: s.id, name: s.name, nameEn: s.nameEn, icon: s.icon || undefined }))}
               tags={[]}
               totalCount={articlesResult.total}
               currentPage={articlesResult.page}
@@ -92,7 +96,7 @@ export default async function ITNewsPage({ searchParams }: IT_NewsPageProps) {
             ) : (
               <>
                 <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
-                  {articlesResult.articles.map((article: any, index: number) => (
+                  {articlesResult.articles.map((article: AINewsWithSource, index: number) => (
                     <NewsCard
                       key={article.id}
                       article={{
@@ -102,16 +106,15 @@ export default async function ITNewsPage({ searchParams }: IT_NewsPageProps) {
                           name: article.source.name,
                           nameEn: article.source.nameEn,
                           icon: article.source.icon,
-                          category: article.source.category as 'ai' | 'it',
                         },
                         summary: article.summary ? {
                           summary3Line: article.summary.summary3Line,
                           keywords: article.summary.keywords,
                           relatedCompanies: article.summary.relatedCompanies,
                           relatedModels: article.summary.relatedModels,
-                          difficulty: article.summary.difficulty,
+                          difficulty: article.summary.difficulty ?? 'beginner',
                         } : undefined,
-                        tags: article.tags?.map((t: any) => ({ tag: { name: t.tag.name } })) || [],
+                        tags: article.tags?.map((t: { tag: { name: string } }) => ({ tag: { name: t.tag.name } })) || [],
                         isBookmarked: article.isBookmarked,
                       }}
                       variant={index < 2 ? 'featured' : 'default'}
@@ -124,7 +127,7 @@ export default async function ITNewsPage({ searchParams }: IT_NewsPageProps) {
                     {articlesResult.page > 1 && (
                       <a
                         href={`/it-news?page=${articlesResult.page - 1}${subcategory ? `&subcategory=${subcategory}` : ''}${language ? `&language=${language}` : ''}`}
-                        className="h-10 w-10 rounded-lg border border-border bg-background text-sm font-medium hover:bg-muted transition-colors"
+                        className="h-10 w-10 rounded-none border border-border bg-background text-sm font-medium hover:bg-muted transition-colors"
                         aria-label="이전 페이지"
                       >
                         ←
@@ -136,7 +139,7 @@ export default async function ITNewsPage({ searchParams }: IT_NewsPageProps) {
                     {articlesResult.page < articlesResult.totalPages && (
                       <a
                         href={`/it-news?page=${articlesResult.page + 1}${subcategory ? `&subcategory=${subcategory}` : ''}${language ? `&language=${language}` : ''}`}
-                        className="h-10 w-10 rounded-lg border border-border bg-background text-sm font-medium hover:bg-muted transition-colors"
+                        className="h-10 w-10 rounded-none border border-border bg-background text-sm font-medium hover:bg-muted transition-colors"
                         aria-label="다음 페이지"
                       >
                         →

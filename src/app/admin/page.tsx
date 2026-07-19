@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useMemo } from 'react'
 
 interface Source {
   id: string
@@ -14,11 +14,41 @@ interface Source {
   fetchType: string
 }
 
+interface FetchLogEntry {
+  id: string
+  status: string
+  count: number
+  newCount: number
+  error: string | null
+  duration: number | null
+  fetchedAt: string
+  source: { name: string } | null
+  sourceId: string
+}
+
+interface StatsData {
+  totalArticles?: number
+  totalSources?: number
+  lastFetchAt?: string
+  lastFetchStatus?: string
+  lastFetchNewCount?: number
+  recentFetchLogs?: FetchLogEntry[]
+}
+
 export default function AdminPage() {
   const [sources, setSources] = useState<Source[]>([])
+  const [stats, setStats] = useState<StatsData | null>(null)
   const [loading, setLoading] = useState(true)
   const [triggeringId, setTriggeringId] = useState<string | null>(null)
   const [triggerResults, setTriggerResults] = useState<Record<string, string>>({})
+
+  const successRate = useMemo(() => {
+    if (!stats?.recentFetchLogs || stats.recentFetchLogs.length === 0) return 100;
+    const successCount = stats.recentFetchLogs.filter(
+      (l: FetchLogEntry) => l.status === 'success' || l.status === 'partial'
+    ).length;
+    return Math.round((successCount / stats.recentFetchLogs.length) * 100);
+  }, [stats]);
 
   useEffect(() => {
     fetchSources()
@@ -26,10 +56,18 @@ export default function AdminPage() {
 
   const fetchSources = async () => {
     try {
-      const res = await fetch('/api/admin/sources')
-      const data = await res.json()
-      if (data.success) {
-        setSources(data.sources)
+      const [sourcesRes, statsRes] = await Promise.all([
+        fetch('/api/admin/sources'),
+        fetch('/api/stats'),
+      ])
+      const sourcesData = await sourcesRes.json()
+      const statsData = await statsRes.json()
+
+      if (sourcesData.success) {
+        setSources(sourcesData.sources)
+      }
+      if (statsData.success) {
+        setStats(statsData.data)
       }
     } catch (err) {
       console.error('Failed to load sources:', err)
@@ -71,6 +109,12 @@ export default function AdminPage() {
             ...prev,
             [id]: `✅ 성공: 총 ${result.total ?? 0}개 중 신규 ${result.new ?? 0}개`,
           }))
+          
+          const statsRes = await fetch('/api/stats')
+          const statsData = await statsRes.json()
+          if (statsData.success) {
+            setStats(statsData.data)
+          }
         } else {
           setTriggerResults(prev => ({
             ...prev,
@@ -104,16 +148,62 @@ export default function AdminPage() {
   return (
     <div className="min-h-screen bg-slate-50 text-slate-800 p-8">
       <div className="max-w-7xl mx-auto">
-        <header className="mb-8 border-b border-slate-200 pb-4">
-          <h1 className="text-3xl font-bold text-slate-900">🛡️ 위마켓_뉴스 관리자 대시보드</h1>
-          <p className="text-slate-500 mt-1">수집 매체 관리, 수집 주기 설정 및 수동 크롤링 강제 기동 컨트롤러</p>
+        <header className="mb-8 border-b border-slate-200 pb-4 flex flex-col md:flex-row md:items-center justify-between gap-4">
+          <div>
+            <h1 className="text-3xl font-bold text-slate-900">🛡️ 위마켓_뉴스 관리자 대시보드</h1>
+            <p className="text-slate-500 mt-1">수집 매체 관리, 수집 주기 설정 및 수동 크롤링 강제 기동 컨트롤러</p>
+          </div>
+          <button
+            onClick={() => window.location.href = '/'}
+            className="px-4 py-2 border border-slate-300 hover:bg-slate-100 text-xs font-semibold rounded-sm transition-all shrink-0 cursor-pointer"
+          >
+            ← 홈화면 바로가기
+          </button>
         </header>
 
-        <div className="bg-white rounded-xl shadow-sm border border-slate-200 overflow-hidden">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
+          <div className="bg-white p-5 border border-slate-200 rounded-none shadow-sm flex flex-col justify-between">
+            <span className="text-xs font-bold text-slate-400 uppercase">수집된 전체 기사 수</span>
+            <span className="text-2xl font-black text-slate-900 mt-2">
+              {stats?.totalArticles?.toLocaleString() || '0'} <span className="text-xs text-slate-400 font-medium">건</span>
+            </span>
+          </div>
+
+          <div className="bg-white p-5 border border-slate-200 rounded-none shadow-sm flex flex-col justify-between">
+            <span className="text-xs font-bold text-slate-400 uppercase">활성화된 수집 비서</span>
+            <span className="text-2xl font-black text-slate-900 mt-2">
+              {stats?.totalSources || '0'} <span className="text-xs text-slate-400 font-medium">개 채널</span>
+            </span>
+          </div>
+
+          <div className="bg-white p-5 border border-slate-200 rounded-none shadow-sm flex flex-col justify-between">
+            <span className="text-xs font-bold text-slate-400 uppercase">수집기 작동 성공률 (최근 20회)</span>
+            <span className="text-2xl font-black text-emerald-600 mt-2">
+              {successRate}%
+            </span>
+          </div>
+
+          <div className="bg-white p-5 border border-slate-200 rounded-none shadow-sm flex flex-col justify-between">
+            <span className="text-xs font-bold text-slate-400 uppercase">마지막 수집 기동 및 상태</span>
+            <span className="text-sm font-bold text-slate-700 mt-2 truncate">
+              {stats?.lastFetchAt ? (
+                <span className="flex items-center gap-1.5">
+                  <span className={`inline-block h-2.5 w-2.5 rounded-full ${stats.lastFetchStatus === 'success' || stats.lastFetchStatus === 'partial' ? 'bg-emerald-500' : 'bg-rose-500'}`} />
+                  {new Date(stats.lastFetchAt).toLocaleTimeString('ko-KR')} ({stats.lastFetchNewCount}개 수집)
+                </span>
+              ) : '대기 중'}
+            </span>
+          </div>
+        </div>
+
+        <div className="bg-white rounded-none shadow-sm border border-slate-200 overflow-hidden mb-8">
+          <div className="py-4 px-6 bg-slate-50/50 border-b border-slate-200 font-bold text-sm text-slate-700">
+            수집 매체 및 스케줄러 세부 설정
+          </div>
           <div className="overflow-x-auto">
             <table className="w-full text-left border-collapse">
               <thead>
-                <tr className="bg-slate-100 text-slate-600 font-semibold text-sm border-b border-slate-200">
+                <tr className="bg-slate-100/50 text-slate-600 font-semibold text-xs border-b border-slate-200">
                   <th className="py-4 px-6">매체명 / 영문ID</th>
                   <th className="py-4 px-6">유형</th>
                   <th className="py-4 px-6">카테고리</th>
@@ -131,7 +221,7 @@ export default function AdminPage() {
                       <div className="text-slate-400 text-xs">{source.nameEn}</div>
                     </td>
                     <td className="py-4 px-6">
-                      <span className={`px-2 py-1 rounded text-xs font-semibold ${source.sourceType === 'RSS' ? 'bg-orange-50 text-orange-600 border border-orange-200' : 'bg-blue-50 text-blue-600 border border-blue-200'}`}>
+                      <span className={`px-2 py-1 rounded-sm text-xs font-semibold ${source.sourceType === 'RSS' ? 'bg-orange-50 text-orange-600 border border-orange-200' : 'bg-blue-50 text-blue-600 border border-blue-200'}`}>
                         {source.sourceType}
                       </span>
                     </td>
@@ -139,7 +229,7 @@ export default function AdminPage() {
                     <td className="py-4 px-6">
                       <button
                         onClick={() => handleUpdate(source.id, source.fetchInterval, !source.isActive)}
-                        className={`px-3 py-1 rounded-full text-xs font-semibold cursor-pointer transition-all ${source.isActive ? 'bg-emerald-100 text-emerald-700 hover:bg-emerald-200' : 'bg-rose-100 text-rose-700 hover:bg-rose-200'}`}
+                        className={`px-3 py-1 rounded-sm text-xs font-semibold cursor-pointer transition-all ${source.isActive ? 'bg-emerald-100 text-emerald-700 hover:bg-emerald-200' : 'bg-rose-100 text-rose-700 hover:bg-rose-200'}`}
                       >
                         {source.isActive ? '● 활성화' : '○ 비활성화'}
                       </button>
@@ -148,7 +238,7 @@ export default function AdminPage() {
                       <select
                         value={source.fetchInterval}
                         onChange={(e) => handleUpdate(source.id, parseInt(e.target.value, 10), source.isActive)}
-                        className="bg-white border border-slate-300 rounded px-2 py-1 text-slate-700 text-xs focus:ring-2 focus:ring-blue-500 focus:outline-none cursor-pointer"
+                        className="bg-white border border-slate-300 rounded-sm px-2 py-1 text-slate-700 text-xs focus:ring-2 focus:ring-blue-500 focus:outline-none cursor-pointer"
                       >
                         {source.sourceType === 'RSS' ? (
                           <>
@@ -172,7 +262,7 @@ export default function AdminPage() {
                       <button
                         disabled={triggeringId !== null}
                         onClick={() => handleTrigger(source.id)}
-                        className="bg-indigo-600 hover:bg-indigo-700 text-white font-semibold px-3 py-1.5 rounded text-xs transition-colors cursor-pointer disabled:bg-slate-300 disabled:cursor-not-allowed"
+                        className="bg-indigo-600 hover:bg-indigo-700 text-white font-semibold px-3 py-1.5 rounded-sm text-xs transition-colors cursor-pointer disabled:bg-slate-300 disabled:cursor-not-allowed"
                       >
                         ⚡ 강제수집
                       </button>
@@ -184,6 +274,61 @@ export default function AdminPage() {
                     </td>
                   </tr>
                 ))}
+              </tbody>
+            </table>
+          </div>
+        </div>
+
+        <div className="bg-white rounded-none border border-slate-200 shadow-sm p-6">
+          <h2 className="text-base font-bold text-slate-900 mb-2">📑 최근 20회의 백엔드 수집 세부 이력 및 디버그</h2>
+          <p className="text-xs text-slate-500 mb-4">크롤러 및 RSS 수집 비서의 실시간 오류 추적 및 처리 시간 통계 리포트</p>
+
+          <div className="overflow-x-auto max-h-96 overflow-y-auto">
+            <table className="w-full text-left text-xs border-collapse">
+              <thead>
+                <tr className="bg-slate-100 text-slate-600 font-bold border-b border-slate-200 sticky top-0 z-10">
+                  <th className="py-3 px-4">기동시간</th>
+                  <th className="py-3 px-4">매체 소스명</th>
+                  <th className="py-3 px-4 text-center">상태</th>
+                  <th className="py-3 px-4 text-right">총 기사</th>
+                  <th className="py-3 px-4 text-right">신규 기사</th>
+                  <th className="py-3 px-4 text-right">소요 시간 (ms)</th>
+                  <th className="py-3 px-4">발생 오류 내용 및 요약</th>
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-slate-100 font-medium">
+                {stats?.recentFetchLogs?.length === 0 ? (
+                  <tr>
+                    <td colSpan={7} className="py-8 text-center text-slate-400">
+                      수집된 백엔드 이력이 존재하지 않습니다.
+                    </td>
+                  </tr>
+                ) : (
+                  stats?.recentFetchLogs?.map((log: FetchLogEntry) => {
+                    const isSuccess = log.status === 'success' || log.status === 'partial';
+                    return (
+                      <tr key={log.id} className="hover:bg-slate-50/50">
+                        <td className="py-3 px-4 text-slate-500 tabular-nums">
+                          {new Date(log.fetchedAt).toLocaleString('ko-KR')}
+                        </td>
+                        <td className="py-3 px-4 font-bold text-slate-700">
+                          {log.source?.name || log.sourceId}
+                        </td>
+                        <td className="py-3 px-4 text-center">
+                          <span className={`px-2 py-0.5 rounded-sm font-bold text-[10px] ${isSuccess ? 'bg-emerald-50 text-emerald-700 border border-emerald-200' : 'bg-rose-50 text-rose-700 border border-rose-200'}`}>
+                            {log.status === 'success' ? 'SUCCESS' : log.status === 'partial' ? 'PARTIAL' : 'ERROR'}
+                          </span>
+                        </td>
+                        <td className="py-3 px-4 text-right tabular-nums text-slate-600">{log.count}</td>
+                        <td className="py-3 px-4 text-right tabular-nums text-emerald-600 font-bold">+{log.newCount}</td>
+                        <td className="py-3 px-4 text-right tabular-nums text-slate-500">{log.duration?.toLocaleString() || '-'}</td>
+                        <td className="py-3 px-4 text-rose-600 max-w-xs truncate" title={log.error || ''}>
+                          {log.error || <span className="text-slate-300 font-normal">-</span>}
+                        </td>
+                      </tr>
+                    );
+                  })
+                )}
               </tbody>
             </table>
           </div>

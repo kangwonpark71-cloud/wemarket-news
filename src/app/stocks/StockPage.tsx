@@ -1,7 +1,6 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-import Link from 'next/link';
 import { FinancialDashboard } from '@/components/financial/FinancialDashboard';
 
 interface StockData {
@@ -42,12 +41,6 @@ export function StockPage() {
   const [sortOrder, setSortOrder] = useState<'asc' | 'desc'>('desc');
   const [selectedStock, setSelectedStock] = useState<StockData | null>(null);
 
-  useEffect(() => {
-    fetchMasterData();
-    const interval = setInterval(fetchMasterData, 60000);
-    return () => clearInterval(interval);
-  }, [market]);
-
   const fetchMasterData = async () => {
     setLoading(true);
     try {
@@ -62,6 +55,12 @@ export function StockPage() {
       setLoading(false);
     }
   };
+
+  useEffect(() => {
+    fetchMasterData();
+    const interval = setInterval(fetchMasterData, 60000);
+    return () => clearInterval(interval);
+  }, [market]);
 
   useEffect(() => {
     if (masterData.length === 0) return;
@@ -142,62 +141,11 @@ export function StockPage() {
   const filteredStocks = stocks.filter((s) => s.price !== undefined);
 
   return (
-    <div className="min-h-screen bg-gray-50">
-      <header className="sticky top-0 z-50 w-full border-b border-gray-200 bg-white/80 backdrop-blur-md">
-        <div className="mx-auto flex h-16 max-w-7xl items-center justify-between px-4 sm:px-6 lg:px-8">
-          <div className="flex items-center gap-4">
-            <Link href="/" className="flex items-center gap-2">
-              <span className="text-2xl">📰</span>
-              <span className="text-xl font-bold text-gray-900">경제뉴스</span>
-            </Link>
-          </div>
-          <nav className="flex items-center gap-2">
-            <Link
-              href="/"
-              className="rounded-lg px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50 transition-colors"
-            >
-              홈
-            </Link>
-            <Link
-              href="/stocks"
-              className="rounded-lg bg-blue-50 px-4 py-2 text-sm font-medium text-blue-700"
-            >
-              주식
-            </Link>
-            <Link
-              href="/crypto"
-              className="rounded-lg px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50 transition-colors"
-            >
-              암호화폐
-            </Link>
-            <Link
-              href="/forex"
-              className="rounded-lg px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50 transition-colors"
-            >
-              환율
-            </Link>
-            <Link
-              href="/global"
-              className="rounded-lg px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50 transition-colors"
-            >
-              글로벌
-            </Link>
-            <Link
-              href="/all"
-              className="rounded-lg px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50 transition-colors"
-            >
-              전체보기
-            </Link>
-          </nav>
-        </div>
-      </header>
-
-      <main className="py-6">
-        <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
-          <div className="mb-6">
-            <h1 className="text-2xl font-bold text-gray-900">주식 시장</h1>
-            <p className="text-sm text-gray-500 mt-1">KOSPI, KOSDAQ 실시간 시세와 종목별 상세 정보</p>
-          </div>
+    <div className="mx-auto max-w-7xl px-4 py-6 sm:px-6 lg:px-8">
+      <div className="mb-6">
+        <h1 className="text-2xl font-bold text-gray-900">주식 시장</h1>
+        <p className="text-sm text-gray-500 mt-1">KOSPI, KOSDAQ 실시간 시세와 종목별 상세 정보</p>
+      </div>
 
           <FinancialDashboard />
 
@@ -364,8 +312,6 @@ export function StockPage() {
               </div>
             </div>
           )}
-        </div>
-      </main>
     </div>
   );
 }
