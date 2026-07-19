@@ -8,21 +8,21 @@ export async function POST(request: Request) {
 
     if (!email || !password) {
       return NextResponse.json(
-        { success: false, error: 'Email and password are required' },
+        { success: false, error: '이메일과 비밀번호를 입력해주세요.' },
         { status: 400 }
       );
     }
 
     if (password.length < 6) {
       return NextResponse.json(
-        { success: false, error: 'Password must be at least 6 characters' },
+        { success: false, error: '비밀번호는 최소 6자 이상이어야 합니다.' },
         { status: 400 }
       );
     }
 
     if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
       return NextResponse.json(
-        { success: false, error: 'Invalid email format' },
+        { success: false, error: '올바른 이메일 형식이 아닙니다.' },
         { status: 400 }
       );
     }
@@ -33,7 +33,7 @@ export async function POST(request: Request) {
 
     if (existing) {
       return NextResponse.json(
-        { success: false, error: 'Email already exists' },
+        { success: false, error: '이미 등록된 이메일입니다.' },
         { status: 400 }
       );
     }
@@ -75,7 +75,7 @@ export async function POST(request: Request) {
   } catch (error) {
     console.error('Signup error:', error);
     return NextResponse.json(
-      { success: false, error: 'Failed to complete registration' },
+        { success: false, error: '회원가입에 실패했습니다.' },
       { status: 500 }
     );
   }

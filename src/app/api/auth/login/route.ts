@@ -8,7 +8,7 @@ export async function POST(request: Request) {
 
     if (!email || !password) {
       return NextResponse.json(
-        { success: false, error: 'Email and password are required' },
+        { success: false, error: '이메일과 비밀번호를 입력해주세요.' },
         { status: 400 }
       );
     }
@@ -19,7 +19,7 @@ export async function POST(request: Request) {
 
     if (!user) {
       return NextResponse.json(
-        { success: false, error: 'Invalid email or password' },
+        { success: false, error: '이메일 또는 비밀번호가 일치하지 않습니다.' },
         { status: 400 }
       );
     }
@@ -28,7 +28,7 @@ export async function POST(request: Request) {
 
     if (user.password !== hashedPassword) {
       return NextResponse.json(
-        { success: false, error: 'Invalid email or password' },
+        { success: false, error: '이메일 또는 비밀번호가 일치하지 않습니다.' },
         { status: 400 }
       );
     }
@@ -52,7 +52,7 @@ export async function POST(request: Request) {
   } catch (error) {
     console.error('Login error:', error);
     return NextResponse.json(
-      { success: false, error: 'Failed to authenticate' },
+      { success: false, error: '로그인에 실패했습니다.' },
       { status: 500 }
     );
   }
