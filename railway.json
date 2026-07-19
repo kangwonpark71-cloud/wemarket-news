@@ -10,6 +10,6 @@
     "healthcheckTimeout": 30,
     "restartPolicyType": "ON_FAILURE",
     "restartPolicyMaxRetries": 3,
-    "preDeployCommand": "npx prisma db push --skip-generate"
+    "preDeployCommand": "echo '=== PRE-DEPLOY START ===' && npx prisma db push --skip-generate && echo '=== PRE-DEPLOY END ==='"
   }
 }
