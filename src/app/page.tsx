@@ -81,13 +81,9 @@ export default async function HomePage({ searchParams }: HomePageProps) {
         <WeatherWidget />
       </div>
 
-      <FinancialDashboard />
-
       <div className="flex gap-8 mt-8">
         <div className="w-72 shrink-0 space-y-6">
           <Sidebar category="domestic" />
-          <SidebarAds />
-          <BannerDisplay position="top" />
         </div>
 
         <div className="min-w-0 flex-1">
@@ -122,6 +118,14 @@ export default async function HomePage({ searchParams }: HomePageProps) {
           </div>
 
           <NewsletterWidget />
+
+          <FinancialDashboard />
+
+          <div className="mt-8">
+            <SidebarAds />
+            <BannerDisplay position="top" />
+          </div>
+
           <BannerDisplay position="bottom" />
         </div>
       </div>
