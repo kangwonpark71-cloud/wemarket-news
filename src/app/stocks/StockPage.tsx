@@ -200,7 +200,7 @@ export function StockPage() {
                 placeholder="종목명/코드 검색..."
                 value={search}
                 onChange={(e) => setSearch(e.target.value)}
-                className="w-64 rounded-lg border border-gray-300 px-4 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+                className="w-full rounded-lg border border-gray-300 px-4 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 sm:w-64"
               />
             </div>
           </div>
@@ -274,7 +274,7 @@ export function StockPage() {
                   <button onClick={() => setSelectedStock(null)} className="text-gray-400 hover:text-gray-600 text-xl">×</button>
                 </div>
                 <div className="p-4 space-y-4">
-                  <div className="grid grid-cols-2 gap-4">
+                  <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
                     <div>
                       <p className="text-sm text-gray-500">현재가</p>
                       <p className="text-2xl font-bold">{selectedStock.price?.toLocaleString()} KRW</p>

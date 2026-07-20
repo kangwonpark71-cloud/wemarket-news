@@ -145,7 +145,7 @@ export function SettingsPage() {
       <div className="space-y-6">
         <div className="border border-border p-6 bg-card rounded-sm">
           <h2 className="text-sm font-bold text-foreground mb-4">계정 정보</h2>
-          <div className="grid grid-cols-2 gap-4 text-xs font-medium">
+          <div className="grid grid-cols-1 gap-4 text-xs font-medium sm:grid-cols-2">
             <div>
               <span className="block text-muted-foreground">사용자 이름</span>
               <span className="block text-foreground mt-1 text-sm font-bold">{user.name || '미설정'}</span>
