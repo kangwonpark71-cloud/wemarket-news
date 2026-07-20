@@ -13,6 +13,7 @@ interface NavItem {
 const NAV_ITEMS: NavItem[] = [
   { label: '대시보드', href: '/admin', icon: '📊' },
   { label: '시스템 상태', href: '/admin/health', icon: '🏥' },
+  { label: '수집 성과', href: '/admin/sources-health', icon: '📡' },
   { label: '기사 관리', href: '/admin/articles', icon: '📰' },
   { label: '배너 관리', href: '/admin/banners', icon: '🖼️' },
   { label: '광고 관리', href: '/admin/ads', icon: '📢' },
