@@ -28,26 +28,24 @@ export async function BannerDisplay({ position }: BannerDisplayProps) {
 
   if (position === 'top') {
     return (
-      <div className="mb-6 grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
+      <div className="flex flex-col gap-2">
         {banners.map((banner) => (
           <a
             key={banner.id}
             href={banner.linkUrl || '#'}
             target={banner.linkUrl ? '_blank' : undefined}
             rel={banner.linkUrl ? 'noopener noreferrer' : undefined}
-            className="group relative flex flex-col overflow-hidden rounded-sm border border-border bg-card transition-shadow hover:shadow-md"
+            className="group flex h-11 w-full items-center gap-3 overflow-hidden rounded-sm border border-border bg-card px-4 transition-shadow hover:shadow-md"
           >
-            <div className="relative w-full overflow-hidden bg-muted" style={{ aspectRatio: '24 / 7', maxHeight: '200px' }}>
+            <div className="relative h-7 w-7 shrink-0 overflow-hidden rounded-sm bg-muted">
               <img
                 src={banner.imageUrl}
                 alt={banner.title}
-                className="h-full w-full object-cover transition-transform duration-300 group-hover:scale-105"
+                className="h-full w-full object-cover"
                 loading="lazy"
               />
             </div>
-            <div className="p-3">
-              <p className="text-xs font-medium text-foreground line-clamp-1">{banner.title}</p>
-            </div>
+            <p className="truncate text-sm font-medium text-foreground">{banner.title}</p>
           </a>
         ))}
       </div>
