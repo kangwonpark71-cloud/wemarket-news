@@ -1,5 +1,5 @@
 import { Metadata } from 'next';
-import { getAIITArticles, getAIITArticleStats, getSubcategoriesWithCount, getActiveAIITSources, type AINewsWithSource } from '@/lib/ai-it/db-service';
+import { getAIITArticles, getAIITArticleStats, getSubcategoriesWithCount, getActiveAIITSources, toReaderSummary, type AINewsWithSource } from '@/lib/ai-it/db-service';
 import NewsSidebar from '@/components/ai-it/NewsSidebar';
 import FilterBar from '@/components/ai-it/FilterBar';
 import NewsCard from '@/components/ai-it/NewsCard';
@@ -107,13 +107,9 @@ export default async function ITNewsPage({ searchParams }: IT_NewsPageProps) {
                           nameEn: article.source.nameEn,
                           icon: article.source.icon,
                         },
-                        summary: article.summary ? {
-                          summary3Line: article.summary.summary3Line,
-                          keywords: article.summary.keywords,
-                          relatedCompanies: article.summary.relatedCompanies,
-                          relatedModels: article.summary.relatedModels,
-                          difficulty: article.summary.difficulty ?? 'beginner',
-                        } : undefined,
+                        summary: article.summary
+                          ? toReaderSummary(article.summary)
+                          : undefined,
                         tags: article.tags?.map((t: { tag: { name: string } }) => ({ tag: { name: t.tag.name } })) || [],
                         isBookmarked: article.isBookmarked,
                       }}

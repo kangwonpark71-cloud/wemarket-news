@@ -56,6 +56,7 @@ export async function getAIITArticles(params: {
   sourceId?: string;
   dateFrom?: Date;
   dateTo?: Date;
+  excludeSourceIds?: string[];
 }): Promise<{
   articles: AINewsWithSource[];
   total: number;
@@ -74,11 +75,16 @@ export async function getAIITArticles(params: {
     sourceId,
     dateFrom,
     dateTo,
+    excludeSourceIds,
   } = params;
 
   const where: Prisma.ArticleWhereInput = {
     source: { sourceType: 'AI_IT' } as Prisma.SourceWhereInput,
   };
+
+  if (excludeSourceIds && excludeSourceIds.length > 0) {
+    where.sourceId = { notIn: excludeSourceIds };
+  }
 
   const sourceFilter: Record<string, unknown> = {};
   if (category) sourceFilter.category = category;
@@ -132,7 +138,7 @@ export async function getAIITArticles(params: {
 export async function getAIITArticleById(id: string): Promise<AINewsWithSource | null> {
   const article = await prisma.article.findUnique({
     where: { id },
-    include: { source: true, tags: { include: { tag: true } } },
+    include: { source: true, tags: { include: { tag: true } }, summary: true },
   });
   return article as AINewsWithSource | null;
 }
@@ -246,20 +252,32 @@ export async function getSubcategoriesWithCount(category: 'ai' | 'it'): Promise<
 export async function upsertSummary(
   newsId: string,
   summaryData: {
+    translatedTitle?: string;
     summary3Line: string;
     keywords: string[];
     relatedCompanies: string[];
     relatedModels: string[];
     difficulty: 'beginner' | 'intermediate' | 'advanced';
-    categories: string[];
   }
 ): Promise<NewsSummary> {
   return prisma.newsSummary.upsert({
     where: { articleId: newsId },
-    update: summaryData,
+    update: {
+      translatedTitle: summaryData.translatedTitle,
+      summary3Line: summaryData.summary3Line,
+      keywords: summaryData.keywords.join(','),
+      relatedCompanies: summaryData.relatedCompanies.join(','),
+      relatedModels: summaryData.relatedModels.join(','),
+      difficulty: summaryData.difficulty,
+    },
     create: {
       articleId: newsId,
-      ...summaryData,
+      translatedTitle: summaryData.translatedTitle,
+      summary3Line: summaryData.summary3Line,
+      keywords: summaryData.keywords.join(','),
+      relatedCompanies: summaryData.relatedCompanies.join(','),
+      relatedModels: summaryData.relatedModels.join(','),
+      difficulty: summaryData.difficulty,
     },
   });
 }
@@ -274,6 +292,37 @@ export async function getSummariesForNews(newsIds: string[]): Promise<NewsSummar
   return prisma.newsSummary.findMany({
     where: { articleId: { in: newsIds } },
   });
+}
+
+// NewsSummary stores keywords/companies/models as comma-joined strings (SQLite has
+// no native array type), but the reader UI expects string[]. Convert at the boundary.
+function parseList(value: string | null | undefined): string[] {
+  if (!value) return [];
+  return value
+    .split(',')
+    .map(item => item.trim())
+    .filter(item => item.length > 0);
+}
+
+export type ReaderSummary = {
+  translatedTitle?: string | null
+  summary3Line: string
+  keywords: string[]
+  relatedCompanies: string[]
+  relatedModels: string[]
+  difficulty: string
+}
+
+export function toReaderSummary(summary: NewsSummary | null | undefined): ReaderSummary | null {
+  if (!summary) return null;
+  return {
+    translatedTitle: summary.translatedTitle,
+    summary3Line: summary.summary3Line,
+    keywords: parseList(summary.keywords),
+    relatedCompanies: parseList(summary.relatedCompanies),
+    relatedModels: parseList(summary.relatedModels),
+    difficulty: summary.difficulty ?? 'beginner',
+  };
 }
 
 // Tag operations
@@ -334,7 +383,6 @@ export async function seedAIITSources(): Promise<number> {
       console.warn(`[SeedAIIT] Failed to upsert ${src.nameEn}:`, e)
     }
   }
-  console.log(`[SeedAIIT] Seeded ${count}/${ALL_AIIT_SOURCES.length} sources`)
   return count
 }
 

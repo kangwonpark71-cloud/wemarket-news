@@ -17,8 +17,18 @@ export interface SearchParams {
   sortOrder?: 'asc' | 'desc';
 }
 
+export type SearchArticle = Prisma.ArticleGetPayload<{
+  include: {
+    source: true;
+    summary: true;
+    tags: {
+      include: { tag: true };
+    };
+  };
+}>;
+
 export interface SearchResult {
-  articles: any[];
+  articles: SearchArticle[];
   total: number;
   page: number;
   totalPages: number;
@@ -206,7 +216,7 @@ export async function getSearchSuggestions(query: string, limit = 10): Promise<s
     prisma.article.findMany({
       where: {
         summary: {
-          relatedCompanies: { hasSome: [query] },
+          relatedCompanies: { contains: query },
         },
       },
       select: { summary: { select: { relatedCompanies: true } } },
@@ -215,10 +225,19 @@ export async function getSearchSuggestions(query: string, limit = 10): Promise<s
   ]);
 
   const suggestions = new Set<string>();
-  
+
   titleMatches.forEach(a => suggestions.add(a.title));
   tagMatches.forEach(t => suggestions.add(t.name));
-  companyMatches.forEach(c => c.summary?.relatedCompanies.forEach(comp => suggestions.add(comp)));
+  companyMatches.forEach(c => {
+    const raw = c.summary?.relatedCompanies;
+    if (raw) {
+      raw
+        .split(',')
+        .map(comp => comp.trim())
+        .filter(comp => comp.length > 0)
+        .forEach(comp => suggestions.add(comp));
+    }
+  });
 
   return Array.from(suggestions).slice(0, limit);
 }
