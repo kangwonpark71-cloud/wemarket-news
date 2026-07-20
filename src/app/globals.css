@@ -139,5 +139,12 @@ button {
 /* Dark mode overrides for common elements */
 .dark .bg-white { background-color: var(--color-card); }
 .dark .bg-gray-50 { background-color: var(--color-muted); }
+.dark .bg-gray-100 { background-color: var(--color-muted); }
+.dark .border-gray-100 { border-color: var(--color-border); }
+.dark .border-gray-200 { border-color: var(--color-border); }
+.dark .border-gray-300 { border-color: var(--color-border); }
 .dark .text-gray-900 { color: var(--color-foreground); }
+.dark .text-gray-700 { color: var(--color-foreground); }
+.dark .text-gray-600 { color: var(--color-muted-foreground); }
 .dark .text-gray-500 { color: var(--color-muted-foreground); }
+.dark .text-gray-300 { color: var(--color-muted-foreground); }
