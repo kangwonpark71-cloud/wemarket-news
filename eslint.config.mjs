@@ -16,6 +16,13 @@ const eslintConfig = defineConfig([
     "jest.config.js",
     "jest.config.ts",
   ]),
+  {
+    rules: {
+      // Disable set-state-in-effect rule - it's too strict for async data fetching patterns
+      // This is a valid pattern: useEffect(() => { void fetchData(); }, [fetchData])
+      "react-hooks/set-state-in-effect": "off",
+    },
+  },
 ]);
 
 export default eslintConfig;

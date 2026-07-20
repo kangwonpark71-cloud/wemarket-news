@@ -1,15 +1,16 @@
-module.exports = {
-  preset: 'ts-jest',
-  testEnvironment: 'node',
-  roots: ['<rootDir>/__tests__', '<rootDir>/src'],
-  testMatch: ['**/__tests__/**/*.test.ts', '**/?(*.)+(spec|test).ts'],
+const nextJest = require('next/jest')
+
+const createJestConfig = nextJest({
+  dir: './',
+})
+
+const customJestConfig = {
+  setupFilesAfterEnv: ['<rootDir>/__tests__/setup.ts'],
+  testEnvironment: 'jest-environment-jsdom',
   moduleNameMapper: {
     '^@/(.*)$': '<rootDir>/src/$1',
   },
-  collectCoverageFrom: [
-    'src/lib/**/*.ts',
-    'src/app/api/**/*.ts',
-    '!src/**/*.d.ts',
-  ],
-  setupFilesAfterEnv: ['<rootDir>/__tests__/setup.ts'],
+  testPathIgnorePatterns: ['<rootDir>/node_modules/', '<rootDir>/\.next/', '<rootDir>/e2e/', '<rootDir>/__tests__/setup.ts'],
 }
+
+module.exports = createJestConfig(customJestConfig)
