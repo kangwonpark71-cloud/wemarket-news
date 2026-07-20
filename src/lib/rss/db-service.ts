@@ -54,6 +54,8 @@ export async function getArticles(params: {
   sortBy?: string
   sortOrder?: 'asc' | 'desc'
   excludeSourceIds?: string[]
+  isBookmarked?: boolean
+  isRead?: boolean
 }): Promise<{ articles: ArticleWithSource[]; total: number; page: number; totalPages: number }> {
   const {
     category,
@@ -65,12 +67,21 @@ export async function getArticles(params: {
     sortBy = 'publishedAt',
     sortOrder = 'desc',
     excludeSourceIds,
+    isBookmarked,
+    isRead,
   } = params
 
   const where: Prisma.ArticleWhereInput = {}
 
   if (excludeSourceIds && excludeSourceIds.length > 0) {
     where.sourceId = { notIn: excludeSourceIds };
+  }
+
+  if (typeof isBookmarked === 'boolean') {
+    where.isBookmarked = isBookmarked
+  }
+  if (typeof isRead === 'boolean') {
+    where.isRead = isRead
   }
 
   const sourceFilter: Prisma.SourceWhereInput = {}

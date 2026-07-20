@@ -19,6 +19,7 @@ export const NAV_ITEMS: NavItem[] = [
   { href: '/crypto', label: '암호화폐', category: 'crypto' },
   { href: '/forex', label: '환율', category: 'forex' },
   { href: '/global', label: '글로벌', category: 'global' },
+  { href: '/bookmarks', label: '내 모음', icon: '🔖' },
   { href: '/search', label: '검색', icon: '🔍' },
 ]
 
