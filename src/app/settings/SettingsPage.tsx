@@ -68,7 +68,7 @@ export function SettingsPage() {
   };
 
   useEffect(() => {
-    loadData();
+    void loadData();
   }, []);
 
   const handleSourceToggle = (sourceId: string) => {

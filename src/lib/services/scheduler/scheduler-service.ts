@@ -1,7 +1,7 @@
 import { koreaInvestmentService } from '@/lib/services/financial/financial-service';
 import { upbitService } from '@/lib/services/crypto/crypto-service';
 import { marketService } from '@/lib/services/market/market-service';
-import { cacheService } from '@/lib/services/cache/cache-service';
+import { runJobWithLock } from '@/lib/utils/lock';
 import { prisma } from '@/lib/db';
 
 interface SchedulerConfig {
@@ -100,7 +100,6 @@ export class SchedulerService {
       ...task,
       isRunning: false,
     });
-    console.log(`[Scheduler] Registered task: ${task.name} (interval: ${task.intervalMs}ms)`);
   }
 
   removeTask(name: string): boolean {
@@ -113,42 +112,25 @@ export class SchedulerService {
 
   start(): void {
     if (this.isRunning) {
-      console.log('[Scheduler] Already running');
       return;
     }
 
     this.isRunning = true;
-    console.log('[Scheduler] Starting scheduler service...');
 
     for (const [name] of this.tasks) {
       this.scheduleTask(name);
     }
 
-    console.log('[Scheduler] All tasks scheduled');
 
-    setTimeout(async () => {
-      console.log('[Scheduler] Running initial financial data sync on startup...');
-      const lockName = 'scheduler:job:financial:initial';
-      const acquired = await cacheService.acquireLock(lockName, 600);
-      if (!acquired) {
-        console.log('[Scheduler] Initial financial data sync skipped: lock already held');
-        return;
-      }
-      try {
+    setTimeout(() => {
+      void runJobWithLock('financial:initial', async () => {
         await this.syncStockMaster().catch(() => {});
         await this.syncCryptoMarkets().catch(() => {});
         await this.updateStockPrices().catch(() => {});
         await this.updateCryptoTickers().catch(() => {});
         await this.updateForexRates().catch(() => {});
         await this.updateGlobalIndices().catch(() => {});
-        console.log('[Scheduler] Initial financial data sync completed!');
-      } catch (err) {
-        console.error('[Scheduler] Failed to run initial sync:', err);
-      } finally {
-        setTimeout(() => {
-          cacheService.releaseLock(lockName).catch(() => {});
-        }, 10000);
-      }
+      }, 600).catch((err) => console.error('[Scheduler] Failed to run initial sync:', err));
     }, 5000);
   }
 
@@ -163,7 +145,6 @@ export class SchedulerService {
       }
       task.isRunning = false;
     }
-    console.log('[Scheduler] Stopped');
   }
 
   private scheduleTask(name: string): void {
@@ -178,13 +159,9 @@ export class SchedulerService {
 
       task.isRunning = true;
       task.lastRun = Date.now();
-      console.log(`[Scheduler] Running task: ${name}`);
 
       try {
-        const startTime = Date.now();
         await task.job();
-        const duration = Date.now() - startTime;
-        console.log(`[Scheduler] Task ${name} completed in ${duration}ms`);
       } catch (error) {
         console.error(`[Scheduler] Task ${name} failed:`, error);
         await this.logFetchError(name, error);
@@ -212,9 +189,6 @@ export class SchedulerService {
   }
 
   async updateStockPrices(): Promise<void> {
-    console.log('[Scheduler] Updating stock prices...');
-    const startTime = Date.now();
-
     try {
       await koreaInvestmentService.syncStockMasterToDb();
       const stocks = await koreaInvestmentService.getStockMaster();
@@ -226,7 +200,6 @@ export class SchedulerService {
       const pricesArray = Array.from(prices.values());
       await koreaInvestmentService.saveStockPricesToDb(pricesArray);
 
-      console.log(`[Scheduler] Updated ${pricesArray.length} stock prices in ${Date.now() - startTime}ms`);
     } catch (error) {
       console.error('[Scheduler] Failed to update stock prices:', error);
       throw error;
@@ -234,14 +207,10 @@ export class SchedulerService {
   }
 
   async updateCryptoTickers(): Promise<void> {
-    console.log('[Scheduler] Updating crypto tickers...');
-    const startTime = Date.now();
-
     try {
       const tickers = await upbitService.getAllTickers();
       await upbitService.saveTickersToDb(tickers);
 
-      console.log(`[Scheduler] Updated ${tickers.length} crypto tickers in ${Date.now() - startTime}ms`);
     } catch (error) {
       console.error('[Scheduler] Failed to update crypto tickers:', error);
       throw error;
@@ -249,14 +218,10 @@ export class SchedulerService {
   }
 
   async updateForexRates(): Promise<void> {
-    console.log('[Scheduler] Updating forex rates...');
-    const startTime = Date.now();
-
     try {
       const rates = await marketService.getAllExchangeRates();
       await marketService.saveExchangeRatesToDb(rates);
 
-      console.log(`[Scheduler] Updated ${rates.length} forex rates in ${Date.now() - startTime}ms`);
     } catch (error) {
       console.error('[Scheduler] Failed to update forex rates:', error);
       throw error;
@@ -264,14 +229,10 @@ export class SchedulerService {
   }
 
   async updateGlobalIndices(): Promise<void> {
-    console.log('[Scheduler] Updating global indices...');
-    const startTime = Date.now();
-
     try {
       const indices = await marketService.getGlobalIndices();
       await marketService.saveGlobalIndicesToDb(indices);
 
-      console.log(`[Scheduler] Updated ${indices.length} global indices in ${Date.now() - startTime}ms`);
     } catch (error) {
       console.error('[Scheduler] Failed to update global indices:', error);
       throw error;
@@ -279,10 +240,8 @@ export class SchedulerService {
   }
 
   async syncStockMaster(): Promise<void> {
-    console.log('[Scheduler] Syncing stock master data...');
     try {
       await koreaInvestmentService.syncStockMasterToDb();
-      console.log('[Scheduler] Stock master sync completed');
     } catch (error) {
       console.error('[Scheduler] Failed to sync stock master:', error);
       throw error;
@@ -290,10 +249,8 @@ export class SchedulerService {
   }
 
   async syncCryptoMarkets(): Promise<void> {
-    console.log('[Scheduler] Syncing crypto markets...');
     try {
       await upbitService.syncMarketsToDb();
-      console.log('[Scheduler] Crypto markets sync completed');
     } catch (error) {
       console.error('[Scheduler] Failed to sync crypto markets:', error);
       throw error;
@@ -301,8 +258,6 @@ export class SchedulerService {
   }
 
   async calculateDailyStats(): Promise<void> {
-    console.log('[Scheduler] Calculating daily stats...');
-    const startTime = Date.now();
     const today = new Date();
     today.setHours(0, 0, 0, 0);
 
@@ -426,22 +381,18 @@ export class SchedulerService {
         });
       }
 
-      console.log(`[Scheduler] Daily stats calculated in ${Date.now() - startTime}ms`);
     } catch (error) {
       console.error('[Scheduler] Failed to calculate daily stats:', error);
     }
   }
 
   async cleanupOldData(): Promise<void> {
-    console.log('[Scheduler] Cleaning up old data...');
-    const startTime = Date.now();
-
     try {
       const thirtyDaysAgo = new Date();
       thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
 
       // Clean up old stock prices (keep 30 days)
-      const deletedStockPrices = await prisma.stockPrice.deleteMany({
+      await prisma.stockPrice.deleteMany({
         where: { timestamp: { lt: thirtyDaysAgo } },
       });
 
@@ -449,12 +400,12 @@ export class SchedulerService {
       const sevenDaysAgo = new Date();
       sevenDaysAgo.setDate(sevenDaysAgo.getDate() - 7);
 
-      const deletedCryptoTickers = await prisma.cryptoTicker.deleteMany({
+      await prisma.cryptoTicker.deleteMany({
         where: { timestamp: { lt: sevenDaysAgo } },
       });
 
       // Clean up old fetch logs
-      const deletedLogs = await prisma.financialFetchLog.deleteMany({
+      await prisma.financialFetchLog.deleteMany({
         where: { fetchedAt: { lt: thirtyDaysAgo } },
       });
 
@@ -471,10 +422,6 @@ export class SchedulerService {
         },
       });
 
-      console.log(`[Scheduler] Cleanup completed in ${Date.now() - startTime}ms:`);
-      console.log(`  - Stock prices: ${deletedStockPrices.count} deleted`);
-      console.log(`  - Crypto tickers: ${deletedCryptoTickers.count} deleted`);
-      console.log(`  - Fetch logs: ${deletedLogs.count} deleted`);
     } catch (error) {
       console.error('[Scheduler] Failed to cleanup old data:', error);
     }

@@ -88,6 +88,38 @@ async function getContext(): Promise<BrowserContext> {
       viewport: { width: 1920, height: 1080 },
       locale: 'ko-KR',
       timezoneId: 'Asia/Seoul',
+      extraHTTPHeaders: {
+        'Accept-Language': 'ko-KR,ko;q=0.9,en-US;q=0.8,en;q=0.7',
+        'Sec-Ch-Ua': '"Google Chrome";v="125", "Chromium";v="125", "Not.A/Brand";v="24"',
+        'Sec-Ch-Ua-Mobile': '?0',
+        'Sec-Ch-Ua-Platform': '"Windows"',
+      },
+    });
+
+    await _context.addInitScript(() => {
+      Object.defineProperty(navigator, 'webdriver', {
+        get: () => undefined,
+      });
+
+      const win = window as Window & typeof globalThis & { chrome?: Record<string, unknown> };
+      win.chrome = {
+        runtime: {},
+        loadTimes: function() {},
+        csi: function() {},
+        app: {},
+      };
+
+      Object.defineProperty(navigator, 'plugins', {
+        get: () => [
+          { name: 'PDF Viewer' },
+          { name: 'Chrome PDF Viewer' },
+          { name: 'Chromium PDF Viewer' },
+        ],
+      });
+
+      Object.defineProperty(navigator, 'languages', {
+        get: () => ['ko-KR', 'ko', 'en-US', 'en'],
+      });
     });
   }
   return _context;
@@ -119,7 +151,6 @@ export function registerBrowserShutdown(): void {
   _shutdownRegistered = true;
 
   const shutdown = async () => {
-    console.log('[PlaywrightCrawler] Shutting down browser…');
     await closeBrowser();
     process.exit(0);
   };
@@ -144,15 +175,47 @@ async function extractArticlesFromPage(
   extraction: ExtractionStrategy,
   origin: string,
 ): Promise<CrawledArticle[]> {
-  // Wait for containers to appear
-  await page.waitForSelector(extraction.containerSelector, {
-    timeout: PAGE_LOAD_TIMEOUT,
-    state: 'attached',
-  });
+  try {
+    await page.waitForSelector(extraction.containerSelector, {
+      timeout: PAGE_LOAD_TIMEOUT,
+      state: 'attached',
+    });
+  } catch {
+    console.warn(`[PlaywrightCrawler] Selector failed: ${extraction.containerSelector}`);
+  }
 
   const articles = await page.evaluate(
     ({ extraction: ext, origin: o }: { extraction: ExtractionStrategy; origin: string }) => {
-      const containers = document.querySelectorAll(ext.containerSelector);
+      let containers = document.querySelectorAll(ext.containerSelector);
+      let isHeuristicUsed = false;
+
+      if (containers.length === 0) {
+        const fallbacks = [
+          'article',
+          '[class*="post-card"]',
+          '[class*="post_card"]',
+          '[class*="post-item"]',
+          '[class*="post_item"]',
+          '[class*="article-card"]',
+          '[class*="article-item"]',
+          '[class*="news-card"]',
+          '[class*="news-item"]',
+          '[class*="agent-card"]',
+          '.post',
+          '.article',
+          'li:has(h3), li:has(h2), li:has(h4)',
+        ];
+
+        for (const sel of fallbacks) {
+          const elms = document.querySelectorAll(sel);
+          if (elms.length >= 3) {
+            containers = elms;
+            isHeuristicUsed = true;
+            break;
+          }
+        }
+      }
+
       return Array.from(containers).map((container) => {
         const getText = (sel: string) => {
           const el = container.querySelector(sel);
@@ -163,27 +226,46 @@ async function extractArticlesFromPage(
           return el?.getAttribute(attr)?.trim() ?? '';
         };
 
-        const title = getText(ext.titleSelector);
-        let url = getAttr(ext.linkSelector, 'href');
+        let title = '';
+        let url = '';
+        let description = '';
+        let thumbnail = '';
+
+        if (!isHeuristicUsed) {
+          title = getText(ext.titleSelector);
+          url = getAttr(ext.linkSelector, 'href');
+          description = ext.descriptionSelector ? getText(ext.descriptionSelector) : '';
+          thumbnail = ext.thumbnailSelector ? getAttr(ext.thumbnailSelector, 'src') || getAttr(ext.thumbnailSelector, 'data-src') : '';
+        } else {
+          const heading = container.querySelector('h1, h2, h3, h4, h5, h6, [class*="title"]');
+          title = heading?.textContent?.trim() ?? '';
+
+          const linkEl = container.querySelector('a[href]');
+          url = linkEl?.getAttribute('href')?.trim() ?? '';
+
+          if (!title && linkEl) {
+            title = linkEl.textContent?.trim() ?? '';
+          }
+
+          const pEl = container.querySelector('p, [class*="excerpt"], [class*="description"]');
+          description = pEl?.textContent?.trim() ?? '';
+
+          const imgEl = container.querySelector('img');
+          thumbnail = imgEl?.getAttribute('src') || imgEl?.getAttribute('data-src') || '';
+        }
+
         if (url && !url.startsWith('http')) {
           try {
             url = new URL(url, o).href;
           } catch {
-            console.warn(`[PlaywrightCrawler] Invalid URL: ${url}`);
             url = '';
           }
         }
-        const description = ext.descriptionSelector
-          ? getText(ext.descriptionSelector)
-          : '';
-        let thumbnail = ext.thumbnailSelector
-          ? getAttr(ext.thumbnailSelector, 'src') || getAttr(ext.thumbnailSelector, 'data-src')
-          : '';
+
         if (thumbnail && !thumbnail.startsWith('http')) {
           try {
             thumbnail = new URL(thumbnail, o).href;
           } catch {
-            console.warn(`[PlaywrightCrawler] Invalid thumbnail URL: ${thumbnail}`);
             thumbnail = '';
           }
         }
@@ -223,24 +305,26 @@ async function crawlPagePagination(
     allArticles.push(...batch);
 
     if (i < maxPages - 1) {
-      const nextBtn = basePage.locator(nextPageSelector).first();
-      if (!(await nextBtn.isVisible().catch(() => false))) break;
+      try {
+        const nextBtn = basePage.locator(nextPageSelector).first();
+        if (!(await nextBtn.isVisible().catch(() => false))) break;
 
-      await Promise.all([
-        basePage.waitForLoadState('networkidle', { timeout: 10_000 }).catch(() => {}),
-        nextBtn.click(),
-      ]);
-      await basePage.waitForTimeout(1_000); // let DOM settle
+        await nextBtn.scrollIntoViewIfNeeded().catch(() => {});
+        await basePage.waitForTimeout(500 + Math.random() * 1000);
+
+        await nextBtn.click({ timeout: 5000 });
+        await basePage.waitForLoadState('load', { timeout: 8000 }).catch(() => {});
+        await basePage.waitForTimeout(1500);
+      } catch (err) {
+        console.warn('[PlaywrightCrawler] Pagination failed, stopping early:', err);
+        break;
+      }
     }
   }
 
   return allArticles;
 }
 
-/**
- * Handle infinite-scroll pagination: scroll down until no new content
- * appears or `maxPages` scrolled.
- */
 async function crawlScrollPagination(
   page: Page,
   extraction: ExtractionStrategy,
@@ -254,12 +338,30 @@ async function crawlScrollPagination(
     const batch = await extractArticlesFromPage(page, extraction, origin);
     allArticles.push(...batch);
 
-    // If no new articles appeared, we might have reached the end
     if (allArticles.length === beforeCount && i > 0) break;
 
-    // Scroll down
-    await page.evaluate(() => window.scrollTo(0, document.body.scrollHeight));
-    await page.waitForTimeout(1_500);
+    try {
+      await page.evaluate(async () => {
+        await new Promise<void>((resolve) => {
+          let totalHeight = 0;
+          const distance = 150;
+          const timer = setInterval(() => {
+            const scrollHeight = document.body.scrollHeight;
+            window.scrollBy(0, distance);
+            totalHeight += distance;
+
+            if (totalHeight >= scrollHeight - window.innerHeight) {
+              clearInterval(timer);
+              resolve();
+            }
+          }, 100);
+        });
+      });
+      await page.waitForTimeout(1500 + Math.random() * 1000);
+    } catch (err) {
+      console.warn('[PlaywrightCrawler] Scroll failed:', err);
+      break;
+    }
   }
 
   return allArticles;
@@ -340,11 +442,6 @@ export async function crawlWithPlaywright(
     } else {
       articles = await extractArticlesFromPage(page, extraction, origin);
     }
-
-    const duration = Date.now() - startTime;
-    console.log(
-      `[PlaywrightCrawler] ✓ ${source.name} — ${articles.length} articles in ${duration}ms`,
-    );
 
     return {
       articles,

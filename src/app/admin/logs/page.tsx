@@ -61,7 +61,7 @@ export default function AdminLogsPage() {
   }, [type, status, page]);
 
   useEffect(() => {
-    fetchLogs();
+    void fetchLogs();
   }, [fetchLogs]);
 
   useEffect(() => {

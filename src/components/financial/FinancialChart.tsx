@@ -20,13 +20,18 @@ interface FinancialChartProps {
   showVolume?: boolean;
 }
 
+interface ChartDataPoint {
+  timestamp: number;
+  closePrice: number;
+}
+
 export function FinancialChart({
   symbol,
   type,
   timeframe = '1d',
   height = 300,
 }: FinancialChartProps) {
-  const [data, setData] = useState<any[]>([]);
+  const [data, setData] = useState<ChartDataPoint[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
@@ -97,7 +102,7 @@ export function FinancialChart({
             domain={['auto', 'auto']}
           />
           <Tooltip
-            formatter={(value: any) => [typeof value === 'number' ? value.toLocaleString() : String(value), '가격']}
+            formatter={(value) => [typeof value === 'number' ? value.toLocaleString() : String(value ?? ''), '가격']}
             labelFormatter={(value) => new Date(value).toLocaleString()}
             contentStyle={{ backgroundColor: '#fff', border: '1px solid #e5e7eb', borderRadius: '8px' }}
           />

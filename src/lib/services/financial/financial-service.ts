@@ -36,11 +36,21 @@ interface StockMasterData {
   listingDate?: Date;
 }
 
+interface KoreaInvestmentStockMasterItem {
+  mksc_shrn_iscd: string;
+  hts_kor_isnm: string;
+  mrkt_cls_cd: string;
+  secs_cls_cd?: string;
+  induty_cls_cd?: string;
+  lstn_dt?: string;
+}
+
 export class KoreaInvestmentService {
   private config: KoreaInvestmentConfig;
   private baseUrl: string;
   private accessToken: string | null = null;
   private tokenExpiresAt: number = 0;
+  private isFallbackMock = false;
 
   constructor() {
     this.config = {
@@ -48,9 +58,65 @@ export class KoreaInvestmentService {
       appSecret: process.env.KOREA_INVEST_APP_SECRET || '',
       isMock: process.env.KOREA_INVEST_IS_MOCK === 'true',
     };
+    if (!this.config.appKey || !this.config.appSecret || this.config.appKey === 'placeholder') {
+      this.isFallbackMock = true;
+    }
     this.baseUrl = this.config.isMock
       ? 'https://openapivts.koreainvestment.com:29443'
       : 'https://openapi.koreainvestment.com:9443';
+  }
+
+  private getMockOverview() {
+    return {
+      kospi: { value: 2620.50 + Math.sin(Date.now() / 10000) * 10, change: 12.45, changeRate: 0.48 },
+      kosdaq: { value: 845.20 + Math.cos(Date.now() / 10000) * 4, change: -2.15, changeRate: -0.25 },
+    };
+  }
+
+  private getMockStockMaster(): StockMasterData[] {
+    return [
+      { code: '005930', name: '삼성전자', market: 'KOSPI', sector: '전기전자', industry: '반도체' },
+      { code: '000660', name: 'SK하이닉스', market: 'KOSPI', sector: '전기전자', industry: '반도체' },
+      { code: '373220', name: 'LG에너지솔루션', market: 'KOSPI', sector: '화학', industry: '배터리' },
+      { code: '005380', name: '현대차', market: 'KOSPI', sector: '운수장비', industry: '자동차' },
+      { code: '068270', name: '셀트리온', market: 'KOSPI', sector: '의약품', industry: '바이오' },
+      { code: '035420', name: 'NAVER', market: 'KOSPI', sector: '서비스업', industry: 'IT' },
+      { code: '035720', name: '카카오', market: 'KOSPI', sector: '서비스업', industry: 'IT' },
+      { code: '247540', name: '에코프로비엠', market: 'KOSDAQ', sector: '일반전기전자', industry: '배터리소재' },
+    ];
+  }
+
+  private getMockStockPrice(code: string): StockPriceData {
+    const mockStocks: Record<string, { name: string; basePrice: number }> = {
+      '005930': { name: '삼성전자', basePrice: 78500 },
+      '000660': { name: 'SK하이닉스', basePrice: 185000 },
+      '373220': { name: 'LG에너지솔루션', basePrice: 382000 },
+      '005380': { name: '현대차', basePrice: 245000 },
+      '068270': { name: '셀트리온', basePrice: 195000 },
+      '035420': { name: 'NAVER', basePrice: 182000 },
+      '035720': { name: '카카오', basePrice: 48500 },
+      '247540': { name: '에코프로비엠', basePrice: 215000 },
+    };
+
+    const s = mockStocks[code] || { name: '가상종목', basePrice: 50000 };
+    const variation = Math.sin(Date.now() / 5000) * (s.basePrice * 0.015);
+    const price = Math.round(s.basePrice + variation);
+    const change = Math.round(price - s.basePrice);
+    const changeRate = (change / s.basePrice) * 100;
+
+    return {
+      code,
+      name: s.name,
+      price,
+      change,
+      changeRate,
+      openPrice: s.basePrice,
+      highPrice: Math.round(s.basePrice * 1.02),
+      lowPrice: Math.round(s.basePrice * 0.98),
+      volume: 1500000 + Math.round(Math.random() * 500000),
+      tradingValue: 120000000000,
+      timestamp: new Date(),
+    };
   }
 
   /**
@@ -116,6 +182,9 @@ const data = await response.json();
    * TR_ID: FHKST01010100 (실시간 현재가)
    */
   async getStockPrice(code: string): Promise<StockPriceData | null> {
+    if (this.isFallbackMock) {
+      return this.getMockStockPrice(code);
+    }
     const cacheKey = CacheKeys.stockPrice(code);
     const cached = await cacheService.get<StockPriceData>(cacheKey);
     if (cached) return cached;
@@ -162,6 +231,13 @@ const data = await response.json();
    * TR_ID: FHKST01010200 (실시간 현재가 다중)
    */
   async getStockPrices(codes: string[]): Promise<Map<string, StockPriceData>> {
+    if (this.isFallbackMock) {
+      const mockResult = new Map<string, StockPriceData>();
+      for (const code of codes) {
+        mockResult.set(code, this.getMockStockPrice(code));
+      }
+      return mockResult;
+    }
     const result = new Map<string, StockPriceData>();
     const uncachedCodes: string[] = [];
 
@@ -229,6 +305,9 @@ const data = await response.json();
    * Get stock master data (KOSPI/KOSDAQ listed stocks)
    */
   async getStockMaster(): Promise<StockMasterData[]> {
+    if (this.isFallbackMock) {
+      return this.getMockStockMaster();
+    }
     const cacheKey = CacheKeys.stockMaster();
     const cached = await cacheService.get<StockMasterData[]>(cacheKey);
     if (cached) return cached;
@@ -250,7 +329,7 @@ const data = await response.json();
       return [];
     }
 
-const stocks: StockMasterData[] = data.output.map((item: any) => ({
+const stocks: StockMasterData[] = data.output.map((item: KoreaInvestmentStockMasterItem) => ({
       code: item.mksc_shrn_iscd,
       name: item.hts_kor_isnm,
       market: item.mrkt_cls_cd === 'K' ? 'KOSPI' : 'KOSDAQ',
@@ -270,6 +349,9 @@ const stocks: StockMasterData[] = data.output.map((item: any) => ({
     kospi: { value: number; change: number; changeRate: number };
     kosdaq: { value: number; change: number; changeRate: number };
   }> {
+    if (this.isFallbackMock) {
+      return this.getMockOverview();
+    }
     const cacheKey = 'market:overview';
     const cached = await cacheService.get<{
       kospi: { value: number; change: number; changeRate: number };
@@ -359,7 +441,6 @@ const stocks: StockMasterData[] = data.output.map((item: any) => ({
       });
     }
     
-    console.log(`[KoreaInvestment] Synced ${stocks.length} stocks to database`);
   }
 
   /**

@@ -44,6 +44,37 @@ interface CryptoMarketInfo {
   isActive: boolean;
 }
 
+interface UpbitMarketItem {
+  market: string;
+  english_name: string;
+  korean_name: string;
+}
+
+interface UpbitTickerItem {
+  market: string;
+  trade_price: number;
+  signed_change_price: number;
+  signed_change_rate: number;
+  ask_price: number;
+  bid_price: number;
+  acc_trade_price_24h: number;
+  acc_trade_volume_24h: number;
+  high_price: number;
+  low_price: number;
+  prev_closing_price: number;
+  timestamp: number;
+}
+
+interface UpbitCandleItem {
+  opening_price: number;
+  high_price: number;
+  low_price: number;
+  trade_price: number;
+  candle_acc_trade_volume: number;
+  candle_acc_trade_price: number;
+  candle_date_time_kst: string;
+}
+
 export class UpbitService {
   private config: UpbitConfig;
 
@@ -65,8 +96,8 @@ export class UpbitService {
     const data = await response.json();
 
     const krwMarkets = data
-      .filter((market: any) => market.market.startsWith('KRW-'))
-      .map((market: any) => ({
+      .filter((market: UpbitMarketItem) => market.market.startsWith('KRW-'))
+      .map((market: UpbitMarketItem) => ({
         symbol: market.market.split('-')[1],
         name: market.english_name,
         nameKr: market.korean_name,
@@ -90,7 +121,7 @@ export class UpbitService {
     const response = await fetch(url);
     const data = await response.json();
 
-    const tickers: CryptoTickerData[] = data.map((item: any) => ({
+    const tickers: CryptoTickerData[] = data.map((item: UpbitTickerItem) => ({
       symbol: item.market.split('-')[1],
       name: item.market.replace('KRW-', ''),
       tradePrice: item.trade_price,
@@ -103,7 +134,7 @@ export class UpbitService {
       highPrice24h: item.high_price,
       lowPrice24h: item.low_price,
       prevClosingPrice: item.prev_closing_price,
-      timestamp: new Date(item.timestamp * 1000),
+      timestamp: new Date(item.timestamp),
     }));
 
     tickers.sort((a, b) => b.tradePrice - a.tradePrice);
@@ -138,7 +169,7 @@ export class UpbitService {
       highPrice24h: item.high_price,
       lowPrice24h: item.low_price,
       prevClosingPrice: item.prev_closing_price,
-      timestamp: new Date(item.timestamp * 1000),
+      timestamp: new Date(item.timestamp),
     };
 
     await cacheService.set(cacheKey, result, { ttl: 60 });
@@ -159,7 +190,7 @@ export class UpbitService {
     const response = await fetch(url);
     const data = await response.json();
 
-    const candles: CryptoCandleData[] = data.map((item: any) => ({
+    const candles: CryptoCandleData[] = data.map((item: UpbitCandleItem) => ({
       symbol,
       unit,
       openPrice: item.opening_price,
@@ -263,7 +294,6 @@ export class UpbitService {
       });
     }
 
-    console.log(`[Upbit] Saved ${tickers.length} tickers to database`);
   }
 
   async syncMarketsToDb(): Promise<void> {
@@ -283,7 +313,6 @@ export class UpbitService {
       });
     }
     
-    console.log(`[Upbit] Synced ${markets.length} markets to database`);
   }
 }
 

@@ -3,8 +3,11 @@
  * Provides caching layer for financial data to minimize external API calls
  */
 
+import { prisma } from '@/lib/db';
+import type { Redis } from 'ioredis';
+
 class CacheService {
-  private redis: unknown = null;
+  private redis: Redis | null = null;
   private memoryCache: Map<string, { value: unknown; expiresAt: number }> = new Map();
   private useRedis = false;
   private defaultTtl = 300;
@@ -18,7 +21,7 @@ class CacheService {
     try {
       if (process.env.REDIS_URL) {
         const Redis = (await import('ioredis')).default;
-        this.redis = new Redis(process.env.REDIS_URL, {
+        const redis = new Redis(process.env.REDIS_URL, {
           maxRetriesPerRequest: 3,
           retryStrategy: (times) => {
             if (times > 3) return null;
@@ -26,20 +29,19 @@ class CacheService {
           },
           lazyConnect: true,
         });
+        this.redis = redis;
 
-        (this.redis as any).on('connect', () => {
+        redis.on('connect', () => {
           this.useRedis = true;
-          console.log('[Cache] Redis connected');
         });
 
-        (this.redis as any).on('error', (err: Error) => {
+        redis.on('error', (err: Error) => {
           this.useRedis = false;
           console.warn('[Cache] Redis error, falling back to memory:', err.message);
         });
 
-        await (this.redis as any).connect();
+        await redis.connect();
       } else {
-        console.log('[Cache] Redis URL not configured, using in-memory cache');
       }
     } catch (error) {
       console.warn('[Cache] Failed to initialize Redis, using in-memory cache:', error);
@@ -62,7 +64,7 @@ class CacheService {
 
     if (this.useRedis && this.redis) {
       try {
-        const value = await (this.redis as any).get(fullKey);
+        const value = await this.redis.get(fullKey);
         if (value) return JSON.parse(value) as T;
       } catch (error) {
         console.warn('[Cache] Redis get failed, falling back to memory:', error);
@@ -85,7 +87,7 @@ class CacheService {
 
     if (this.useRedis && this.redis) {
       try {
-        await (this.redis as any).setex(fullKey, ttl, JSON.stringify(value));
+        await this.redis.setex(fullKey, ttl, JSON.stringify(value));
         return;
       } catch (error) {
         console.warn('[Cache] Redis set failed, falling back to memory:', error);
@@ -103,7 +105,7 @@ class CacheService {
 
     if (this.useRedis && this.redis) {
       try {
-        await (this.redis as any).del(fullKey);
+        await this.redis.del(fullKey);
       } catch (error) {
         console.warn('[Cache] Redis delete failed:', error);
       }
@@ -117,9 +119,9 @@ class CacheService {
 
     if (this.useRedis && this.redis) {
       try {
-        const keys = await (this.redis as any).keys(fullPattern);
+        const keys = await this.redis.keys(fullPattern);
         if (keys.length > 0) {
-          await (this.redis as any).del(...keys);
+          await this.redis.del(...keys);
         }
       } catch (error) {
         console.warn('[Cache] Redis deleteByPattern failed:', error);
@@ -149,39 +151,57 @@ class CacheService {
 
     if (this.useRedis && this.redis) {
       try {
-        const result = await (this.redis as any).set(fullKey, uniqueVal, 'NX', 'EX', ttlSeconds);
+        const result = await this.redis.set(fullKey, uniqueVal, 'EX', ttlSeconds, 'NX');
         return result === 'OK';
       } catch (error) {
-        console.warn('[Cache] Redis acquireLock failed, falling back to memory:', error);
+        console.warn('[Cache] Redis acquireLock failed:', error);
       }
     }
 
-    const now = Date.now();
-    const entry = this.memoryCache.get(fullKey);
-    if (entry && entry.expiresAt > now) {
+    try {
+      const now = new Date();
+      const expiresAt = new Date(now.getTime() + ttlSeconds * 1000);
+      const owner = uniqueVal;
+
+      await prisma.distributedLock.deleteMany({
+        where: {
+          lockName,
+          expiresAt: { lt: now },
+        },
+      });
+
+      await prisma.distributedLock.create({
+        data: {
+          lockName,
+          owner,
+          expiresAt,
+        },
+      });
+
+      return true;
+    } catch {
       return false;
     }
-    
-    this.memoryCache.set(fullKey, {
-      value: uniqueVal,
-      expiresAt: now + ttlSeconds * 1000,
-    });
-    return true;
   }
 
-  /**
-   * Release a previously acquired distributed lock
-   */
   async releaseLock(lockName: string): Promise<void> {
     const fullKey = `economy-news:lock:${lockName}`;
     if (this.useRedis && this.redis) {
       try {
-        await (this.redis as any).del(fullKey);
+        await this.redis.del(fullKey);
         return;
       } catch (error) {
         console.warn('[Cache] Redis releaseLock failed:', error);
       }
     }
+
+    try {
+      await prisma.distributedLock.deleteMany({
+        where: { lockName },
+      });
+    } catch {
+    }
+
     this.memoryCache.delete(fullKey);
   }
 }

@@ -25,7 +25,6 @@ export async function seedSources() {
     })
   }
 
-  console.log(`Seeded ${ALL_SOURCES.length} RSS sources`)
 }
 
 export async function getSourceIdByNameEn(nameEn: string): Promise<string | null> {

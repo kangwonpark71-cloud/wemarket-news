@@ -1,7 +1,6 @@
 'use client';
 
 import Link from 'next/link';
-import Image from 'next/image';
 import { formatDistanceToNow } from 'date-fns';
 import { ko, enUS } from 'date-fns/locale';
 interface NewsCardProps {
@@ -20,6 +19,7 @@ interface NewsCardProps {
       icon?: string | null;
     };
     summary?: {
+      translatedTitle?: string | null;
       summary3Line: string;
       keywords: string[];
       relatedCompanies: string[];
@@ -47,13 +47,18 @@ export default function NewsCard({ article, variant = 'default' }: NewsCardProps
     return (
       <article className="flex gap-3 py-3 border-b border-border last:border-0 hover:bg-muted/50 transition-colors">
         {article.thumbnail && (
-          <Link href={`/ai-it/articles/${article.id}`} className="flex-shrink-0 w-20 h-20 rounded-lg overflow-hidden" aria-label={article.title}>
-            <Image src={article.thumbnail} alt="" fill className="object-cover" sizes="80px" />
+          <Link href={`/ai-it/articles/${article.id}`} className="flex-shrink-0 w-20 h-20 rounded-sm overflow-hidden relative" aria-label={article.title}>
+            <img src={article.thumbnail} alt="" className="w-full h-full object-cover" loading="lazy" />
           </Link>
         )}
         <div className="flex-1 min-w-0">
           <Link href={`/ai-it/articles/${article.id}`} className="font-medium text-foreground hover:text-primary line-clamp-2 word-break-keep-all" title={article.title}>
-            {article.title}
+            {article.language === 'en' && summary?.translatedTitle ? (
+              <span className="flex flex-col gap-0.5">
+                <span className="text-primary font-bold">{summary.translatedTitle}</span>
+                <span className="text-xs text-muted-foreground font-normal">{article.title}</span>
+              </span>
+            ) : article.title}
           </Link>
           <div className="mt-1 flex items-center gap-2 text-xs text-muted-foreground">
             <span className="flex items-center gap-1">
@@ -70,10 +75,10 @@ export default function NewsCard({ article, variant = 'default' }: NewsCardProps
 
   if (variant === 'featured') {
     return (
-      <article className="group relative rounded-xl border border-border bg-card overflow-hidden transition-all hover:shadow-lg">
+      <article className="group relative rounded-sm border border-border bg-card overflow-hidden transition-colors duration-200 hover:shadow-sm">
         {article.thumbnail && (
           <Link href={`/ai-it/articles/${article.id}`} className="relative aspect-video overflow-hidden" aria-label={article.title}>
-            <Image src={article.thumbnail} alt="" fill className="object-cover group-hover:scale-105 transition-transform duration-300" sizes="100vw" />
+            <img src={article.thumbnail} alt="" className="absolute inset-0 w-full h-full object-cover group-hover:scale-105 transition-transform duration-300" loading="lazy" />
           </Link>
         )}
         <div className="p-4">
@@ -84,7 +89,12 @@ export default function NewsCard({ article, variant = 'default' }: NewsCardProps
           </div>
           <Link href={`/ai-it/articles/${article.id}`}>
             <h3 className="line-clamp-2 word-break-keep-all font-semibold text-foreground hover:text-primary transition-colors" title={article.title}>
-              {article.title}
+              {article.language === 'en' && summary?.translatedTitle ? (
+                <span className="flex flex-col gap-0.5">
+                  <span className="text-primary font-bold">{summary.translatedTitle}</span>
+                  <span className="text-sm text-muted-foreground font-normal">{article.title}</span>
+                </span>
+              ) : article.title}
             </h3>
           </Link>
           {summary && (
@@ -110,11 +120,11 @@ export default function NewsCard({ article, variant = 'default' }: NewsCardProps
   }
 
   return (
-    <article className="rounded-xl border border-border bg-card p-4 transition-all hover:shadow-md">
+    <article className="rounded-sm border border-border bg-card p-4 transition-colors duration-200 hover:shadow-sm">
       <div className="flex gap-4">
         {article.thumbnail && (
-          <Link href={`/ai-it/articles/${article.id}`} className="flex-shrink-0 w-32 h-32 rounded-lg overflow-hidden" aria-label={article.title}>
-            <Image src={article.thumbnail} alt="" fill className="object-cover" sizes="128px" />
+          <Link href={`/ai-it/articles/${article.id}`} className="flex-shrink-0 w-32 h-32 rounded-sm overflow-hidden relative" aria-label={article.title}>
+            <img src={article.thumbnail} alt="" className="w-full h-full object-cover" loading="lazy" />
           </Link>
         )}
         <div className="flex-1 min-w-0">
@@ -127,7 +137,12 @@ export default function NewsCard({ article, variant = 'default' }: NewsCardProps
           </div>
           <Link href={`/ai-it/articles/${article.id}`}>
             <h3 className="line-clamp-2 word-break-keep-all font-semibold text-foreground hover:text-primary transition-colors mb-2" title={article.title}>
-              {article.title}
+              {article.language === 'en' && summary?.translatedTitle ? (
+                <span className="flex flex-col gap-1">
+                  <span className="text-primary font-bold text-base">{summary.translatedTitle}</span>
+                  <span className="text-xs text-muted-foreground font-normal block">{article.title}</span>
+                </span>
+              ) : article.title}
             </h3>
           </Link>
           {summary?.summary3Line && (

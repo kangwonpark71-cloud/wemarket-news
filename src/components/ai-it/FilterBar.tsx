@@ -85,7 +85,7 @@ export default function FilterBar({ sources, tags, totalCount, currentPage, tota
             <select
               value={currentSource || ''}
               onChange={e => handleSourceChange(e.target.value || null)}
-              className="h-9 rounded-lg border border-border bg-background px-3 py-1.5 text-sm text-foreground focus:outline-none focus:ring-2 focus:ring-primary"
+              className="h-9 rounded-sm border border-border bg-background px-3 py-1.5 text-sm text-foreground focus:outline-none focus:ring-2 focus:ring-primary"
             >
               <option value="">전체 소스</option>
               {sources.map(source => (
@@ -100,7 +100,7 @@ export default function FilterBar({ sources, tags, totalCount, currentPage, tota
             <select
               value={currentLanguage || ''}
               onChange={e => handleLanguageChange(e.target.value || null)}
-              className="h-9 rounded-lg border border-border bg-background px-3 py-1.5 text-sm text-foreground focus:outline-none focus:ring-2 focus:ring-primary"
+              className="h-9 rounded-sm border border-border bg-background px-3 py-1.5 text-sm text-foreground focus:outline-none focus:ring-2 focus:ring-primary"
             >
               <option value="">전체 언어</option>
               <option value="ko">한국어</option>
@@ -112,7 +112,7 @@ export default function FilterBar({ sources, tags, totalCount, currentPage, tota
             <select
               value={currentSort}
               onChange={e => handleSortChange(e.target.value)}
-              className="h-9 rounded-lg border border-border bg-background px-3 py-1.5 text-sm text-foreground focus:outline-none focus:ring-2 focus:ring-primary"
+              className="h-9 rounded-sm border border-border bg-background px-3 py-1.5 text-sm text-foreground focus:outline-none focus:ring-2 focus:ring-primary"
             >
               <option value="publishedAt">최신순</option>
               <option value="fetchedAt">수집순</option>
@@ -130,7 +130,7 @@ export default function FilterBar({ sources, tags, totalCount, currentPage, tota
           <button
             onClick={() => setShowTags(!showTags)}
             className={cn(
-              'h-9 rounded-lg px-3 py-1.5 text-sm font-medium transition-colors',
+              'h-9 rounded-sm px-3 py-1.5 text-sm font-medium transition-colors',
               showTags
                 ? 'bg-primary text-primary-foreground'
                 : 'bg-muted text-foreground hover:bg-muted/80'
@@ -173,7 +173,7 @@ export default function FilterBar({ sources, tags, totalCount, currentPage, tota
             {currentPage > 1 && (
               <button
                 onClick={() => updateParams({ page: String(currentPage - 1) })}
-                className="h-9 w-9 rounded-lg border border-border bg-background text-sm font-medium hover:bg-muted transition-colors"
+                className="h-9 w-9 rounded-sm border border-border bg-background text-sm font-medium hover:bg-muted transition-colors"
                 aria-label="이전 페이지"
               >
                 ←
@@ -185,7 +185,7 @@ export default function FilterBar({ sources, tags, totalCount, currentPage, tota
             {currentPage < totalPages && (
               <button
                 onClick={() => updateParams({ page: String(currentPage + 1) })}
-                className="h-9 w-9 rounded-lg border border-border bg-background text-sm font-medium hover:bg-muted transition-colors"
+                className="h-9 w-9 rounded-sm border border-border bg-background text-sm font-medium hover:bg-muted transition-colors"
                 aria-label="다음 페이지"
               >
                 →

@@ -2,7 +2,11 @@ import crypto from 'crypto';
 import { prisma } from '@/lib/db';
 import type { User, UserRole } from '@prisma/client';
 
-const SECRET = process.env.JWT_SECRET || 'economy-news-super-secret-key-123!';
+const JWT_SECRET_ENV = process.env.JWT_SECRET;
+if (!JWT_SECRET_ENV) {
+  throw new Error('JWT_SECRET environment variable is required but not set. Refusing to start with an insecure fallback secret.');
+}
+const SECRET = JWT_SECRET_ENV;
 
 export type { UserRole };
 
@@ -21,10 +25,14 @@ export function verifySessionToken(token: string): string | null {
     const parts = token.split('.');
     if (parts.length !== 2) return null;
     const payload = Buffer.from(parts[0], 'base64').toString('utf8');
-    const signature = parts[1];
-    const expectedSignature = crypto.createHmac('sha256', SECRET).update(payload).digest('hex');
+    const signature = Buffer.from(parts[1] || '', 'utf8');
+    const expectedSignature = Buffer.from(
+      crypto.createHmac('sha256', SECRET).update(payload).digest('hex'),
+      'utf8',
+    );
 
-    if (signature !== expectedSignature) return null;
+    if (signature.length !== expectedSignature.length) return null;
+    if (!crypto.timingSafeEqual(signature, expectedSignature)) return null;
 
     const parsed = JSON.parse(payload);
     if (parsed.exp < Date.now()) return null;

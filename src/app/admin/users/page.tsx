@@ -15,10 +15,6 @@ export default function AdminUsersPage() {
   const [loading, setLoading] = useState(true);
   const [message, setMessage] = useState<string | null>(null);
 
-  useEffect(() => {
-    fetchUsers();
-  }, []);
-
   const fetchUsers = async () => {
     try {
       const res = await fetch('/api/admin/users');
@@ -32,6 +28,10 @@ export default function AdminUsersPage() {
       setLoading(false);
     }
   };
+
+  useEffect(() => {
+    fetchUsers();
+  }, []);
 
   const handleToggleRole = async (userId: string, currentRole: string) => {
     setMessage(null);

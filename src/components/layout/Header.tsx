@@ -6,12 +6,20 @@ import { usePathname, useSearchParams } from 'next/navigation'
 import { cn } from '@/lib/utils'
 import { ThemeToggle } from '@/components/ui/ThemeToggle'
 
+interface CurrentUser {
+  name?: string
+}
+
 const NAV_ITEMS = [
-  { href: '/', label: '국내 경제', category: 'domestic' },
-  { href: '/overseas', label: '해외 경제', category: 'overseas' },
-  { href: '/all', label: '전체 뉴스', category: 'all' },
-  { href: '/ai-news', label: 'AI News', category: 'ai' },
-  { href: '/it-news', label: 'IT News', category: 'it' },
+  { href: '/all', label: '전체뉴스', category: 'all' },
+  { href: '/', label: '국내뉴스', category: 'domestic' },
+  { href: '/overseas', label: '해외뉴스', category: 'overseas' },
+  { href: '/ai-news', label: 'AI뉴스', category: 'ai' },
+  { href: '/it-news', label: 'IT뉴스', category: 'it' },
+  { href: '/stocks', label: '주식', category: 'stocks' },
+  { href: '/crypto', label: '암호화폐', category: 'crypto' },
+  { href: '/forex', label: '환율', category: 'forex' },
+  { href: '/global', label: '글로벌', category: 'global' },
 ]
 
 export default function Header() {
@@ -20,6 +28,20 @@ export default function Header() {
   const [isSearchOpen, setIsSearchOpen] = useState(false)
   const [searchQuery, setSearchQuery] = useState(searchParams.get('search') || '')
   const [lastCrawled, setLastCrawled] = useState<string>('')
+  const [user, setUser] = useState<CurrentUser | null>(null)
+
+  useEffect(() => {
+    async function checkUser() {
+      try {
+        const res = await fetch('/api/auth/me')
+        if (res.ok) {
+          const json = await res.json()
+          if (json.success) setUser(json.data)
+        }
+      } catch {}
+    }
+    checkUser()
+  }, [])
 
   useEffect(() => {
     const updateTime = () => {
@@ -60,36 +82,19 @@ export default function Header() {
   return (
     <header className="sticky top-0 z-50 w-full border-b border-border bg-background/80 backdrop-blur-md">
       <div className="mx-auto flex h-16 max-w-7xl items-center justify-between px-4 sm:px-6 lg:px-8">
-        <Link href="/" className="flex items-center gap-2" aria-label="위마켓_뉴스 홈">
-          <span className="text-2xl" aria-hidden="true">📰</span>
-          <span className="text-xl font-bold text-foreground">위마켓_뉴스</span>
+        <div className="flex items-center gap-4 min-w-0">
+          <Link href="/" className="flex items-center gap-2 whitespace-nowrap shrink-0" aria-label="위마켓_뉴스 홈">
+            <span className="text-2xl" aria-hidden="true">📰</span>
+            <span className="text-xl font-bold text-foreground">위마켓_뉴스</span>
+          </Link>
           {lastCrawled && (
-            <span className="ml-2 text-xs text-muted-foreground hidden sm:inline">
+            <span className="text-xs text-muted-foreground hidden lg:inline whitespace-nowrap border-l border-border pl-4">
               {lastCrawled}
             </span>
           )}
-        </Link>
+        </div>
 
-        <nav className="hidden items-center gap-1 md:flex" aria-label="주요 내비게이션">
-          {NAV_ITEMS.map((item) => (
-            <Link
-              key={item.href}
-              href={item.href}
-              className={cn(
-                'rounded-sm px-4 py-2 text-sm font-semibold transition-all border-b-2',
-                isActive(item.href)
-                  ? 'border-primary text-foreground bg-primary/5'
-                  : 'border-transparent text-muted-foreground hover:bg-muted/40 hover:text-foreground'
-              )}
-              aria-current={isActive(item.href) ? 'page' : undefined}
-            >
-              {item.label}
-            </Link>
-          ))}
-        </nav>
-
-        <div className="flex items-center gap-2">
-          <ThemeToggle />
+        <div className="flex items-center gap-4 shrink-0">
           <form onSubmit={handleSearchSubmit} className="flex items-center gap-2" role="search">
             <label htmlFor="header-search" className="sr-only">
               뉴스 검색
@@ -97,7 +102,7 @@ export default function Header() {
             <button
               type="button"
               onClick={() => setIsSearchOpen(!isSearchOpen)}
-              className="hidden p-2 rounded-lg text-muted-foreground hover:bg-muted md:flex"
+              className="hidden p-2 rounded-sm text-muted-foreground hover:bg-muted md:flex"
               aria-label={isSearchOpen ? '검색 닫기' : '검색 열기'}
               aria-expanded={isSearchOpen}
             >
@@ -118,7 +123,7 @@ export default function Header() {
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
                 placeholder="기사 제목, 내용 검색..."
-                className="h-10 w-64 rounded-lg border border-border bg-background px-4 py-2 text-sm text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent transition-all"
+                className="h-10 w-48 lg:w-64 rounded-sm border border-border bg-background px-4 py-2 text-sm text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent transition-all"
                 aria-label="뉴스 검색"
               />
               {searchQuery && (
@@ -138,28 +143,73 @@ export default function Header() {
             {isSearchOpen && (
               <button
                 type="submit"
-                className="hidden md:flex h-10 px-4 items-center justify-center gap-2 rounded-lg bg-primary px-4 py-2 text-sm font-medium text-primary-foreground hover:bg-primary-hover transition-colors"
+                className="hidden md:flex h-10 px-4 items-center justify-center gap-2 rounded-sm bg-primary text-primary-foreground text-sm font-medium hover:bg-primary-hover transition-colors"
               >
                 검색
               </button>
             )}
           </form>
 
+          <ThemeToggle />
+
+          {user ? (
+            <Link
+              href="/settings"
+              className="flex items-center gap-1.5 px-3 py-1.5 border border-border bg-muted/20 hover:bg-muted text-xs font-semibold text-foreground rounded-sm transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary"
+            >
+              <span>⚙️</span>
+              <span className="hidden sm:inline">{user.name || '설정'}</span>
+            </Link>
+          ) : (
+            <Link
+              href="/login"
+              className="flex items-center gap-1.5 px-3 py-1.5 border border-border bg-muted/20 hover:bg-muted text-xs font-semibold text-foreground rounded-sm transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary"
+            >
+              <span>👤</span>
+              <span>로그인</span>
+            </Link>
+          )}
+
           <div className="hidden gap-2 sm:flex" aria-hidden="true">
-            <span className="px-3 py-1.5 text-xs text-muted-foreground">
-              3시간마다 자동 갱신
+            <span className="px-3 py-1.5 text-xs text-muted-foreground border border-border rounded-sm bg-muted/40">
+              3시간 자동 갱신
             </span>
           </div>
         </div>
       </div>
 
-      <div className="mx-auto flex items-center gap-2 overflow-x-auto border-t border-border px-4 py-2 md:hidden" role="navigation" aria-label="모바일 내비게이션">
+      <div className="border-t border-border hidden md:block bg-muted/20">
+        <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
+          <nav className="flex h-11 items-center gap-1 overflow-x-auto scrollbar-none py-1" aria-label="주요 내비게이션">
+            {NAV_ITEMS.map((item) => {
+              const active = isActive(item.href);
+              return (
+                <Link
+                  key={item.href}
+                  href={item.href}
+                  className={cn(
+                    'whitespace-nowrap px-4 py-1.5 text-xs font-semibold tracking-tight transition-colors border-b-2 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary',
+                    active
+                      ? 'border-primary text-primary font-bold bg-primary/5'
+                      : 'border-transparent text-muted-foreground hover:bg-muted hover:text-foreground'
+                  )}
+                  aria-current={active ? 'page' : undefined}
+                >
+                  {item.label}
+                </Link>
+              );
+            })}
+          </nav>
+        </div>
+      </div>
+
+      <div className="mx-auto flex items-center gap-2 overflow-x-auto border-t border-border px-4 py-1 md:hidden" role="navigation" aria-label="모바일 내비게이션">
         {NAV_ITEMS.map((item) => (
           <Link
             key={item.href}
             href={item.href}
             className={cn(
-              'whitespace-nowrap rounded-lg px-3 py-1.5 text-sm font-medium transition-colors',
+              'whitespace-nowrap rounded-sm px-3 py-3 text-sm font-medium transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary',
               isActive(item.href)
                 ? 'bg-primary-light text-primary'
                 : 'text-muted-foreground hover:bg-muted'
@@ -183,12 +233,12 @@ export default function Header() {
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
               placeholder="기사 제목, 내용 검색..."
-              className="flex-1 h-10 rounded-lg border border-border bg-background px-4 text-sm text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent"
+              className="flex-1 h-10 rounded-sm border border-border bg-background px-4 text-sm text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent"
               autoFocus
             />
             <button
               type="submit"
-              className="h-10 px-4 rounded-lg bg-primary text-primary-foreground text-sm font-medium hover:bg-primary-hover transition-colors"
+              className="h-10 px-4 rounded-sm bg-primary text-primary-foreground text-sm font-medium hover:bg-primary-hover transition-colors"
             >
               검색
             </button>

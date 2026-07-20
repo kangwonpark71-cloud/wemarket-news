@@ -38,7 +38,7 @@ export default function WeatherWidget() {
 
   if (loading && !weather) {
     return (
-      <div className="flex items-center justify-center p-4 bg-white dark:bg-slate-900 rounded-xl border border-slate-200 dark:border-slate-800 h-28">
+      <div className="flex items-center justify-center p-4 bg-white dark:bg-slate-900 rounded-sm border border-slate-200 dark:border-slate-800 h-28">
         <span className="text-slate-400 dark:text-slate-500 text-xs animate-pulse">☀️ 날씨를 불러오는 중...</span>
       </div>
     )
@@ -53,7 +53,7 @@ export default function WeatherWidget() {
   }
 
   return (
-    <div className="p-4 bg-white dark:bg-slate-900 rounded-xl border border-slate-200 dark:border-slate-800 flex items-center justify-between shadow-sm">
+    <div className="p-4 bg-white dark:bg-slate-900 rounded-sm border border-slate-200 dark:border-slate-800 flex items-center justify-between shadow-sm">
       <div className="flex items-center gap-4">
         <div className="text-4xl">
           {weatherIcons[weather?.status || '맑음'] || '☀️'}
@@ -64,7 +64,7 @@ export default function WeatherWidget() {
             <select
               value={station}
               onChange={(e) => setStation(e.target.value)}
-              className="bg-slate-50 dark:bg-slate-800 border border-slate-300 dark:border-slate-700 rounded text-slate-600 dark:text-slate-300 text-[10px] px-1 py-0.5 focus:outline-none cursor-pointer"
+              className="bg-slate-50 dark:bg-slate-800 border border-slate-300 dark:border-slate-700 rounded-sm text-slate-600 dark:text-slate-300 text-[10px] px-1 py-0.5 focus:outline-none cursor-pointer"
             >
               <option value="108">서울</option>
               <option value="112">인천</option>

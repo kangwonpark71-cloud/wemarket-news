@@ -34,11 +34,39 @@ function identifySource(url: string): string {
 }
 
 function cleanText(text: string): string {
-  return text
+  let cleaned = text
     .replace(/\s+/g, ' ')
     .replace(/\n{3,}/g, '\n\n')
     .replace(/&nbsp;/g, ' ')
-    .trim()
+    .trim();
+
+  cleaned = cleaned.replace(/[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}/g, '');
+
+  cleaned = cleaned
+    .replace(/▶\s*네이버\s*(에서)?\s*(메인)?\s*에서\s*.*구독하기/gi, '')
+    .replace(/▶\s*.*바로가기/g, '')
+    .replace(/무단\s*전재\s*및\s*재배포\s*금지/gi, '')
+    .replace(/저작권자\s*ⓒ\s*.*금지/gi, '')
+    .replace(/Copyrights\s*ⓒ\s*.*All\s*rights\s*reserved/gi, '')
+    .replace(/\[\s*관련\s*기사\s*\]/gi, '');
+
+  return cleaned.replace(/\s+/g, ' ').trim();
+}
+
+function isAdOrIcon(src: string, alt: string, className: string): boolean {
+  const adKeywords = ['/ad/', 'ad-', '-ad', 'banner', 'promo', 'logo', 'button', 'btn', 'icon', 'share', 'widget', 'loader', 'spinner', 'tracking', 'pixel', 'advertisement', 'pop-up', 'popup'];
+  const lowerSrc = src.toLowerCase();
+  const lowerAlt = alt.toLowerCase();
+  const lowerClass = className.toLowerCase();
+
+  const matchKeyword = adKeywords.some(k => lowerSrc.includes(k) || lowerAlt.includes(k) || lowerClass.includes(k));
+  if (matchKeyword) return true;
+
+  if (lowerSrc.includes('spacer.gif') || lowerSrc.includes('pixel.gif') || lowerSrc.includes('blank.gif') || lowerSrc.includes('tracker')) {
+    return true;
+  }
+
+  return false;
 }
 
 function extractFedContent($: cheerio.CheerioAPI): string {
@@ -50,7 +78,7 @@ function extractFedContent($: cheerio.CheerioAPI): string {
   return paragraphs.join('\n\n')
 }
 
-function extractGeneralContent($: cheerio.CheerioAPI, sourceKey: string): string {
+function extractGeneralContent($: cheerio.CheerioAPI, sourceKey: string, articleUrl: string): string {
   const config = SOURCE_PATTERNS[sourceKey] || SOURCE_PATTERNS.default
   const contentEl = $(config.selector).first()
 
@@ -68,9 +96,47 @@ function extractGeneralContent($: cheerio.CheerioAPI, sourceKey: string): string
   }
 
   const paragraphs: string[] = []
-  contentEl.find('p, h1, h2, h3, h4, li').each((_, el) => {
+  contentEl.find('p, h1, h2, h3, h4, li, img, iframe, a').each((_, el) => {
     const tag = $(el).prop('tagName')?.toLowerCase() || ''
     const text = $(el).text().trim()
+
+    if (tag === 'img') {
+      const src = $(el).attr('src') || $(el).attr('data-src') || '';
+      const alt = $(el).attr('alt') || '';
+      const className = $(el).attr('class') || '';
+      const width = parseInt($(el).attr('width') || '100', 10);
+      const height = parseInt($(el).attr('height') || '100', 10);
+
+      if (src && !isAdOrIcon(src, alt, className) && width >= 50 && height >= 50) {
+        try {
+          const resolvedSrc = new URL(src, articleUrl).href;
+          paragraphs.push(`![${alt || '기사이미지'}](${resolvedSrc})`);
+        } catch {}
+      }
+      return;
+    }
+
+    if (tag === 'iframe') {
+      const src = $(el).attr('src') || '';
+      if (src.includes('youtube.com') || src.includes('youtu.be')) {
+        const regExp = /^.*(youtu.be\/|v\/|u\/\w\/|embed\/|watch\?v=|\&v=)([^#\&\?]*).*/;
+        const match = src.match(regExp);
+        const videoId = (match && match[2].length === 11) ? match[2] : null;
+        if (videoId) {
+          paragraphs.push(`[![유튜브 동영상](https://img.youtube.com/vi/${videoId}/0.jpg)](https://www.youtube.com/watch?v=${videoId})`);
+        }
+      }
+      return;
+    }
+
+    if (tag === 'a') {
+      const href = $(el).attr('href') || '';
+      if (href.includes('youtube.com/watch') || href.includes('youtu.be/')) {
+        paragraphs.push(`[🎥 유튜브 영상 링크](${href})`);
+      }
+      return;
+    }
+
     if (text.length < 10) return
 
     if (tag === 'li') {
@@ -122,7 +188,7 @@ export async function scrapeArticleContent(url: string): Promise<ScrapeResult> {
     if (sourceKey === 'fed') {
       content = extractFedContent($)
     } else {
-      content = extractGeneralContent($, sourceKey)
+      content = extractGeneralContent($, sourceKey, url)
     }
 
     const cleaned = cleanText(content)

@@ -12,7 +12,6 @@ export async function POST(request: Request) {
   const url = new URL(request.url)
   const sourceParam = url.searchParams.get('source')
 
-  console.log(`[Cron] Starting RSS fetch${sourceParam ? ` for source: ${sourceParam}` : ''}`)
   const startTime = Date.now()
 
   const results = await runRssFetch(sourceParam || undefined)
@@ -22,7 +21,6 @@ export async function POST(request: Request) {
   const errorCount = results.filter(r => r.status === 'error').length
   const partialCount = results.filter(r => r.status === 'partial').length
 
-  console.log(`[Cron] Completed in ${totalDuration}ms: ${successCount} success, ${partialCount} partial, ${errorCount} errors`)
 
   return NextResponse.json({
     success: true,

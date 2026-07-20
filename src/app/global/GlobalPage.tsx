@@ -42,7 +42,7 @@ export function GlobalPage() {
   };
 
   useEffect(() => {
-    fetchIndices();
+    void fetchIndices();
     const interval = setInterval(fetchIndices, 30000);
     return () => clearInterval(interval);
   }, []);

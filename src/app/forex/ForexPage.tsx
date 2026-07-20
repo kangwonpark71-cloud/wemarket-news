@@ -65,7 +65,7 @@ export function ForexPage() {
   };
 
   useEffect(() => {
-    fetchRates();
+    void fetchRates();
     const interval = setInterval(fetchRates, 30000);
     return () => clearInterval(interval);
   }, []);

@@ -50,6 +50,28 @@ export async function GET(request: NextRequest) {
     const dateFrom = searchParams.get('dateFrom') ? new Date(searchParams.get('dateFrom')!) : undefined;
     const dateTo = searchParams.get('dateTo') ? new Date(searchParams.get('dateTo')!) : undefined;
 
+    const cookieHeader = request.headers.get('cookie') || '';
+    const cookies = Object.fromEntries(
+      cookieHeader.split(';').map((c) => c.trim().split('='))
+    );
+    const token = cookies['session'];
+    let excludeSourceIds: string[] = [];
+
+    if (token) {
+      const { verifySessionToken } = await import('@/lib/utils/auth');
+      const userId = verifySessionToken(token);
+      if (userId) {
+        const { prisma } = await import('@/lib/db');
+        const pref = await prisma.userPreference.findUnique({
+          where: { userId },
+          select: { hiddenSources: true },
+        });
+        if (pref && pref.hiddenSources) {
+          excludeSourceIds = pref.hiddenSources.split(',').map((s) => s.trim()).filter(Boolean);
+        }
+      }
+    }
+
     const result = await getAIITArticles({
       category: category || undefined,
       subcategory: subcategory || undefined,
@@ -62,6 +84,7 @@ export async function GET(request: NextRequest) {
       sourceId: sourceId || undefined,
       dateFrom,
       dateTo,
+      excludeSourceIds,
     });
 
     return NextResponse.json({ success: true, ...result });

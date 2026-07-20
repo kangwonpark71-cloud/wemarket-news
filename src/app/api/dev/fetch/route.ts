@@ -9,7 +9,6 @@ export async function GET(request: Request) {
   const url = new URL(request.url)
   const sourceParam = url.searchParams.get('source')
 
-  console.log(`[Dev Fetch] Triggering RSS fetch ${sourceParam ? `for source: ${sourceParam}` : 'for all sources'}`)
   const startTime = Date.now()
 
   const results = await runRssFetch(sourceParam || undefined)
@@ -18,7 +17,6 @@ export async function GET(request: Request) {
   const successCount = results.filter(r => r.status === 'success').length
   const errorCount = results.filter(r => r.status === 'error').length
 
-  console.log(`[Dev Fetch] Completed in ${totalDuration}ms: ${successCount} success, ${errorCount} errors`)
 
   return NextResponse.json({
     success: true,

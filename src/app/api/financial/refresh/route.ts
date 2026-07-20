@@ -4,7 +4,6 @@ import { schedulerService } from '@/lib/services/scheduler/scheduler-service'
 export async function POST() {
   try {
     const startTime = Date.now()
-    console.log('[Admin] Manual financial data refresh triggered...')
 
     await Promise.all([
       schedulerService.updateStockPrices().catch(err => {
@@ -22,7 +21,6 @@ export async function POST() {
     ])
 
     const duration = Date.now() - startTime
-    console.log(`[Admin] Manual financial data refresh completed in ${duration}ms`)
 
     return NextResponse.json({
       success: true,

@@ -57,10 +57,10 @@ export default function Sidebar({ category }: SidebarProps) {
                     key={item.href}
                     href={item.href}
                     className={cn(
-                      'flex items-center gap-3 rounded-sm px-3 py-2 text-sm font-semibold transition-all',
+                      'flex items-center gap-3 rounded-sm px-3 py-2 text-sm font-medium transition-colors',
                       isActive
-                        ? 'bg-primary/10 text-primary'
-                        : 'text-foreground hover:bg-muted/40'
+                        ? 'bg-primary-light text-primary'
+                        : 'text-foreground hover:bg-muted'
                     )}
                     aria-current={isActive ? 'page' : undefined}
                   >
@@ -72,8 +72,8 @@ export default function Sidebar({ category }: SidebarProps) {
             </nav>
           </div>
 
-          <div className="rounded-sm border border-border bg-muted/30 p-4">
-            <h4 className="mb-2 text-sm font-semibold text-foreground">자동 업데이트</h4>
+          <div className="rounded-sm border border-border bg-muted p-4">
+            <h4 className="mb-2 text-sm font-medium text-foreground">자동 업데이트</h4>
             <p className="text-xs text-muted-foreground">3시간마다 자동으로 새 기사를 수집합니다</p>
           </div>
         </div>
@@ -98,10 +98,10 @@ export default function Sidebar({ category }: SidebarProps) {
                   key={item.href}
                   href={item.href}
                   className={cn(
-                    'flex items-center gap-3 rounded-sm px-3 py-2 text-sm font-semibold transition-all',
+                    'flex items-center gap-3 rounded-sm px-3 py-2 text-sm font-medium transition-colors',
                     isCurrent
-                      ? 'bg-primary/10 text-primary'
-                      : 'text-foreground hover:bg-muted/40'
+                      ? 'bg-primary-light text-primary'
+                      : 'text-foreground hover:bg-muted'
                   )}
                   aria-current={isCurrent ? 'page' : undefined}
                 >
@@ -113,14 +113,14 @@ export default function Sidebar({ category }: SidebarProps) {
           </nav>
         </div>
 
-        <div className="rounded-sm border border-border bg-muted/30 p-4">
-          <h4 className="mb-2 text-sm font-semibold text-foreground">마지막 업데이트</h4>
+        <div className="rounded-sm border border-border bg-muted p-4">
+          <h4 className="mb-2 text-sm font-medium text-foreground">마지막 업데이트</h4>
           <p className="text-xs text-muted-foreground">3시간마다 자동 갱신됩니다</p>
         </div>
 
         {category === 'domestic' && (
-          <div className="rounded-sm border border-border bg-muted/30 p-4">
-            <h4 className="mb-2 text-sm font-semibold text-foreground">검색 팁</h4>
+          <div className="rounded-sm border border-border bg-muted p-4">
+            <h4 className="mb-2 text-sm font-medium text-foreground">검색 팁</h4>
             <ul className="space-y-1 text-xs text-muted-foreground">
               <li>헤더의 검색창으로 기사 검색</li>
               <li>소스별 필터링: 사이드바 메뉴 사용</li>

@@ -11,7 +11,7 @@ function getApiKey(): string {
 }
 
 function buildPrompt(title: string, description?: string, content?: string): string {
-  return `You are an AI/IT news analyst. Summarize the following article in Korean.
+  return `You are an AI/IT news analyst. Translate the title to Korean and summarize the following article in Korean.
 
 Title: ${title}
 Description: ${description || '(none)'}
@@ -19,6 +19,7 @@ Body: ${content || '(none)'}
 
 Respond in JSON only:
 {
+  "translatedTitle": "Korean translated title of the article",
   "summary3Line": "3-line Korean summary, ~80 chars each line",
   "keywords": ["keyword1", "keyword2", ...],
   "relatedCompanies": ["company1", "company2", ...],
@@ -61,6 +62,7 @@ export async function summarizeWithLLM(
   const parsed: AISummaryResult = JSON.parse(data.choices[0].message.content)
 
   return {
+    translatedTitle: parsed.translatedTitle,
     summary3Line: parsed.summary3Line || '요약 실패',
     keywords: parsed.keywords || [],
     relatedCompanies: parsed.relatedCompanies || [],

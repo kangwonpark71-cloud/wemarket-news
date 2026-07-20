@@ -38,13 +38,15 @@ export async function fetchAndProcessSource(sourceId: string): Promise<{ count: 
         if (existing && !existing.summary) {
           const summary = await generateAISummaryWithLLM(article.title, article.description, article.content);
           await upsertSummary(existing.id, {
+            translatedTitle: summary.translatedTitle,
             summary3Line: summary.summary3Line,
             keywords: summary.keywords,
             relatedCompanies: summary.relatedCompanies,
             relatedModels: summary.relatedModels,
             difficulty: summary.difficulty,
-            categories: [],
           });
+          const { sendNotificationWebhook } = await import('@/lib/utils');
+          await sendNotificationWebhook(article.title, article.url, targetSource.name, summary.summary3Line);
         }
       } catch (e) {
         console.warn('[AIITScheduler] Summary generation failed:', e);
@@ -63,14 +65,10 @@ export async function fetchAndProcessSource(sourceId: string): Promise<{ count: 
 }
 
 export async function fetchAllAIITNews(): Promise<{ totalCount: number; totalNew: number; errors: number }> {
-  console.log('[AIITScheduler] Starting AI/IT news fetch...');
-  const startTime = Date.now();
-  
   try {
     const sources = await getActiveAIITSources();
     
     if (sources.length === 0) {
-      console.log('[AIITScheduler] No active sources found');
       return { totalCount: 0, totalNew: 0, errors: 0 };
     }
     
@@ -96,9 +94,6 @@ export async function fetchAllAIITNews(): Promise<{ totalCount: number; totalNew
         }
       }
     }
-    
-    const duration = Date.now() - startTime;
-    console.log(`[AIITScheduler] Completed: ${totalNew} new / ${totalCount} total articles in ${duration}ms (${errors} errors)`);
     
     return { totalCount, totalNew, errors };
   } catch (error) {
@@ -173,7 +168,6 @@ export async function run60MinJob(): Promise<void> {
 
 export async function seedAIITSourcesIfEmpty(): Promise<void> {
   const { seedAIITSources } = await import('./db-service');
-  console.log('[AIITScheduler] Syncing and seeding AI/IT sources...');
   await seedAIITSources();
 }
 

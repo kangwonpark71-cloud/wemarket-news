@@ -26,6 +26,27 @@ interface GlobalIndexData {
   timestamp: Date;
 }
 
+interface MananaExchangeRateItem {
+  name: string;
+  rate: number | string;
+}
+
+interface ForexDailyStat {
+  date: string;
+  usdRate: number;
+  usdChange: number;
+  usdChangeRate: number;
+  jpyRate: number;
+  jpyChange: number;
+  jpyChangeRate: number;
+  eurRate: number;
+  eurChange: number;
+  eurChangeRate: number;
+  cnyRate: number;
+  cnyChange: number;
+  cnyChangeRate: number;
+}
+
 export class MarketService {
   private baseUrl = 'https://api.manana.kr/exchange/rate.json';
   private finnhubBaseUrl = 'https://finnhub.io/api/v1';
@@ -42,8 +63,8 @@ export class MarketService {
       const data = await response.json();
 
       const rates: ExchangeRateData[] = data
-        .filter((item: any) => item.name && item.name !== 'KRW=X')
-        .map((item: any) => {
+        .filter((item: MananaExchangeRateItem) => item.name && item.name !== 'KRW=X')
+        .map((item: MananaExchangeRateItem) => {
           const baseCurrency = item.name.replace('KRW=X', '').replace('=X', '').replace('KRW', '');
           return {
             baseCurrency: baseCurrency || 'USD',
@@ -108,7 +129,6 @@ export class MarketService {
         },
       });
     }
-    console.log(`[MarketService] Saved ${rates.length} exchange rates to database`);
   }
 
   async getGlobalIndices(): Promise<GlobalIndexData[]> {
@@ -152,6 +172,39 @@ export class MarketService {
 
     if (indices.length > 0) {
       await cacheService.set('global:indices:all', indices, { ttl: 300 });
+    } else {
+      try {
+        const dbIndices = await prisma.globalIndex.findMany({
+          include: {
+            quotes: {
+              orderBy: { timestamp: 'desc' },
+              take: 1,
+            },
+          },
+        });
+
+        for (const idx of dbIndices) {
+          const latestQuote = idx.quotes[0];
+          if (latestQuote) {
+            indices.push({
+              symbol: idx.symbol,
+              name: idx.name,
+              nameKr: idx.nameKr || undefined,
+              price: Number(latestQuote.price),
+              change: Number(latestQuote.change),
+              changeRate: Number(latestQuote.changeRate),
+              openPrice: latestQuote.openPrice ? Number(latestQuote.openPrice) : undefined,
+              highPrice: latestQuote.highPrice ? Number(latestQuote.highPrice) : undefined,
+              lowPrice: latestQuote.lowPrice ? Number(latestQuote.lowPrice) : undefined,
+              previousClose: latestQuote.previousClose ? Number(latestQuote.previousClose) : undefined,
+              volume: latestQuote.volume ? Number(latestQuote.volume) : undefined,
+              timestamp: latestQuote.timestamp,
+            });
+          }
+        }
+      } catch (err) {
+        console.error(err);
+      }
     }
 
     return indices;
@@ -210,17 +263,16 @@ export class MarketService {
       });
     }
 
-    console.log(`[MarketService] Saved ${indices.length} global indices to database`);
   }
 
-  async getForexDailyStat(date: string): Promise<any> {
+  async getForexDailyStat(date: string): Promise<ForexDailyStat> {
     const cacheKey = `forex:daily:${date}`;
-    const cached = await cacheService.get(cacheKey);
+    const cached = await cacheService.get<ForexDailyStat>(cacheKey);
     if (cached) return cached;
 
     // This would typically call BOK API
     // For now return mock data structure
-    const result = {
+    const result: ForexDailyStat = {
       date,
       usdRate: 1350,
       usdChange: 5,

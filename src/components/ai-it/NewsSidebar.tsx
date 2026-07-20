@@ -61,7 +61,7 @@ export default function NewsSidebar({ category, subcategories }: NewsSidebarProp
                   key={subcategory}
                   href={`/${category}-news?subcategory=${subcategory}`}
                   className={cn(
-                    'flex items-center gap-3 rounded-lg px-3 py-2 text-sm font-medium transition-colors',
+                    'flex items-center gap-3 rounded-sm px-3 py-2 text-sm font-medium transition-colors',
                     isCurrent
                       ? 'bg-primary-light text-primary'
                       : 'text-foreground hover:bg-muted'
@@ -77,13 +77,13 @@ export default function NewsSidebar({ category, subcategories }: NewsSidebarProp
           </nav>
         </div>
 
-        <div className="rounded-xl border border-border bg-muted p-4">
+        <div className="rounded-sm border border-border bg-muted p-4">
           <h4 className="mb-2 text-sm font-medium text-foreground">필터 옵션</h4>
           <div className="space-y-2">
             <Link
               href={`/${category}-news`}
               className={cn(
-                'flex items-center gap-2 rounded-lg px-3 py-2 text-sm font-medium transition-colors',
+                'flex items-center gap-2 rounded-sm px-3 py-2 text-sm font-medium transition-colors',
                 !currentSubcategory
                   ? 'bg-primary-light text-primary'
                   : 'text-foreground hover:bg-muted'
@@ -93,14 +93,14 @@ export default function NewsSidebar({ category, subcategories }: NewsSidebarProp
             </Link>
             <Link
               href={`/${category}-news?language=ko`}
-              className="flex items-center gap-2 rounded-lg px-3 py-2 text-sm font-medium text-foreground hover:bg-muted transition-colors"
+              className="flex items-center gap-2 rounded-sm px-3 py-2 text-sm font-medium text-foreground hover:bg-muted transition-colors"
             >
               <span>🇰🇷</span>
               <span>한국어</span>
             </Link>
             <Link
               href={`/${category}-news?language=en`}
-              className="flex items-center gap-2 rounded-lg px-3 py-2 text-sm font-medium text-foreground hover:bg-muted transition-colors"
+              className="flex items-center gap-2 rounded-sm px-3 py-2 text-sm font-medium text-foreground hover:bg-muted transition-colors"
             >
               <span>🇺🇸</span>
               <span>English</span>
@@ -108,26 +108,26 @@ export default function NewsSidebar({ category, subcategories }: NewsSidebarProp
           </div>
         </div>
 
-        <div className="rounded-xl border border-border bg-muted p-4">
+        <div className="rounded-sm border border-border bg-muted p-4">
           <h4 className="mb-2 text-sm font-medium text-foreground">시간 필터</h4>
           <div className="space-y-1">
             <Link
               href={`/${category}-news?period=1h`}
-              className="flex items-center gap-2 rounded-lg px-3 py-2 text-sm text-foreground hover:bg-muted transition-colors"
+              className="flex items-center gap-2 rounded-sm px-3 py-2 text-sm text-foreground hover:bg-muted transition-colors"
             >
               <span>⏱</span>
               <span>최근 1시간</span>
             </Link>
             <Link
               href={`/${category}-news?period=24h`}
-              className="flex items-center gap-2 rounded-lg px-3 py-2 text-sm text-foreground hover:bg-muted transition-colors"
+              className="flex items-center gap-2 rounded-sm px-3 py-2 text-sm text-foreground hover:bg-muted transition-colors"
             >
               <span>📅</span>
               <span>오늘</span>
             </Link>
             <Link
               href={`/${category}-news?period=7d`}
-              className="flex items-center gap-2 rounded-lg px-3 py-2 text-sm text-foreground hover:bg-muted transition-colors"
+              className="flex items-center gap-2 rounded-sm px-3 py-2 text-sm text-foreground hover:bg-muted transition-colors"
             >
               <span>📆</span>
               <span>이번 주</span>
@@ -135,7 +135,7 @@ export default function NewsSidebar({ category, subcategories }: NewsSidebarProp
           </div>
         </div>
 
-        <div className="rounded-xl border border-border bg-muted p-4">
+        <div className="rounded-sm border border-border bg-muted p-4">
           <h4 className="mb-2 text-sm font-medium text-foreground">자동 업데이트</h4>
           <p className="text-xs text-muted-foreground">
             {category === 'ai' 

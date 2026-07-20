@@ -1,5 +1,6 @@
 import { NextResponse } from 'next/server'
 import { getArticles, getArticleStats } from '@/lib/rss/db-service'
+import { prisma } from '@/lib/db'
 
 export async function GET(request: Request) {
   const { searchParams } = new URL(request.url)
@@ -15,6 +16,27 @@ export async function GET(request: Request) {
   const includeStats = searchParams.get('stats') === 'true'
 
   try {
+    const cookieHeader = request.headers.get('cookie') || '';
+    const cookies = Object.fromEntries(
+      cookieHeader.split(';').map((c) => c.trim().split('='))
+    );
+    const token = cookies['session'];
+    let excludeSourceIds: string[] = [];
+
+    if (token) {
+      const { verifySessionToken } = await import('@/lib/utils/auth');
+      const userId = verifySessionToken(token);
+      if (userId) {
+        const pref = await prisma.userPreference.findUnique({
+          where: { userId },
+          select: { hiddenSources: true },
+        });
+        if (pref && pref.hiddenSources) {
+          excludeSourceIds = pref.hiddenSources.split(',').map((s) => s.trim()).filter(Boolean);
+        }
+      }
+    }
+
     const result = await getArticles({
       category,
       sourceName: source,
@@ -24,6 +46,7 @@ export async function GET(request: Request) {
       search,
       sortBy,
       sortOrder,
+      excludeSourceIds,
     })
 
     let stats = null

@@ -38,16 +38,18 @@ function Sparkline({ data, color }: { data: number[]; color: string }) {
 }
 
 function useSparklineHistory() {
-  const historyRef = useRef<Record<string, number[]>>({});
+  const [history, setHistory] = useState<Record<string, number[]>>({});
 
   const push = useCallback((key: string, value: number) => {
-    if (!historyRef.current[key]) historyRef.current[key] = [];
-    const arr = historyRef.current[key];
-    arr.push(value);
-    if (arr.length > 20) arr.shift();
+    setHistory((prev) => {
+      const arr = prev[key] ? [...prev[key]] : [];
+      arr.push(value);
+      if (arr.length > 20) arr.shift();
+      return { ...prev, [key]: arr };
+    });
   }, []);
 
-  return { historyRef, push };
+  return { history, push };
 }
 
 export function FinancialDashboard() {
@@ -57,7 +59,10 @@ export function FinancialDashboard() {
   const [retryCount, setRetryCount] = useState(0);
   const [lastUpdate, setLastUpdate] = useState<Date | null>(null);
   const [refreshing, setRefreshing] = useState(false);
-  const { historyRef, push } = useSparklineHistory();
+  const retryCountRef = useRef(0);
+  const { history, push } = useSparklineHistory();
+
+  const fetchDataRef = useRef<() => Promise<void>>(() => Promise.resolve());
 
   const fetchData = useCallback(async () => {
     try {
@@ -66,11 +71,12 @@ export function FinancialDashboard() {
       if (json.success) {
         setData(json.data);
         setError(null);
+        retryCountRef.current = 0;
         setRetryCount(0);
         const now = new Date();
         setLastUpdate(now);
 
-        const dash = json.data as DashboardData;
+        const dash = json.data;
         push('kospi', dash.kospi.value);
         push('nasdaq', dash.nasdaq?.price || 0);
         push('btc', dash.btc?.price || 0);
@@ -79,13 +85,21 @@ export function FinancialDashboard() {
       }
     } catch {
       setError('데이터를 불러오는데 실패했습니다.');
-      if (retryCount < 3) {
-        setTimeout(() => setRetryCount(c => c + 1), 5000);
+      if (retryCountRef.current < 3) {
+        retryCountRef.current += 1;
+        setRetryCount(retryCountRef.current);
+        setTimeout(() => {
+          void fetchDataRef.current();
+        }, 5000 * retryCountRef.current);
       }
     } finally {
       setLoading(false);
     }
-  }, [push, retryCount]);
+  }, [push]);
+
+  useEffect(() => {
+    fetchDataRef.current = fetchData;
+  }, [fetchData]);
 
   const handleRefresh = async () => {
     try {
@@ -105,7 +119,7 @@ export function FinancialDashboard() {
   };
 
   useEffect(() => {
-    fetchData();
+    void fetchData();
     const interval = setInterval(fetchData, 30000);
     return () => clearInterval(interval);
   }, [fetchData]);
@@ -137,7 +151,7 @@ export function FinancialDashboard() {
     return (
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
         {[...Array(6)].map((_, i) => (
-          <div key={i} className="animate-pulse rounded-xl border border-border bg-card p-4 h-28" />
+          <div key={i} className="animate-pulse rounded-none border border-border bg-card p-4 h-28" />
         ))}
       </div>
     );
@@ -145,7 +159,7 @@ export function FinancialDashboard() {
 
   if (error && !data) {
     return (
-      <div className="rounded-xl border border-danger-light bg-danger-light/50 p-4 text-center">
+      <div className="rounded-none border border-danger-light bg-danger-light/50 p-4 text-center">
         <p className="text-sm text-danger">{error}</p>
         {retryCount < 3 && (
           <p className="mt-1 text-xs text-muted-foreground">
@@ -154,7 +168,7 @@ export function FinancialDashboard() {
         )}
         <button
           onClick={() => { setLoading(true); setRetryCount(0); fetchData(); }}
-          className="mt-2 rounded-lg bg-primary px-3 py-1 text-xs text-white hover:bg-primary-hover"
+          className="mt-2 rounded-none bg-primary px-3 py-1 text-xs text-white hover:bg-primary-hover"
         >
           다시 시도
         </button>
@@ -220,7 +234,7 @@ export function FinancialDashboard() {
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-2">
           <h2 className="text-lg font-bold text-foreground">금융 대시보드</h2>
-          <span className="text-[10px] px-2 py-0.5 rounded-full bg-emerald-100 dark:bg-emerald-950/30 text-emerald-700 dark:text-emerald-400 font-medium">
+          <span className="text-[10px] px-2 py-0.5 rounded-sm bg-emerald-100 dark:bg-emerald-950/30 text-emerald-700 dark:text-emerald-400 font-medium">
             3시간 간격 자동갱신
           </span>
         </div>
@@ -231,7 +245,7 @@ export function FinancialDashboard() {
           <button
             onClick={handleRefresh}
             disabled={refreshing}
-            className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 text-xs font-semibold text-slate-700 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-800 transition-all cursor-pointer disabled:bg-slate-100 disabled:cursor-not-allowed"
+            className="flex items-center gap-1.5 px-3 py-1.5 rounded-none border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 text-xs font-semibold text-slate-700 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-800 transition-all cursor-pointer disabled:bg-slate-100 disabled:cursor-not-allowed"
           >
             {refreshing ? '🔄 갱신 중...' : '🔄 시장 갱신'}
           </button>
@@ -252,11 +266,11 @@ export function FinancialDashboard() {
           return (
             <div
               key={index}
-              className={`rounded-xl border ${borderClass} ${bgClass} p-3 transition-all hover:shadow-md`}
+              className={`rounded-none border ${borderClass} ${bgClass} p-3 transition-all hover:shadow-md`}
             >
               <div className="flex items-center justify-between">
                 <span className="text-xs font-medium text-muted-foreground">{card.title}</span>
-                <Sparkline data={historyRef.current[card.sparkKey] || []} color={card.color} />
+                <Sparkline data={history[card.sparkKey] || []} color={card.color} />
               </div>
               <p className="mt-1 text-lg font-bold text-foreground tabular-nums">{card.value}</p>
               <div className={`mt-1 flex items-center gap-1 text-xs font-medium ${changeColor}`}>

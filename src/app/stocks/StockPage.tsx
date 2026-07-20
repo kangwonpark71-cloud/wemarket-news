@@ -31,6 +31,20 @@ interface StockMasterData {
   listingDate?: string;
 }
 
+interface StockPriceData {
+  code: string;
+  price?: number;
+  change?: number;
+  changeRate?: number;
+  openPrice?: number;
+  highPrice?: number;
+  lowPrice?: number;
+  volume?: number;
+  tradingValue?: number;
+  marketCap?: number;
+  timestamp?: string;
+}
+
 export function StockPage() {
   const [stocks, setStocks] = useState<StockData[]>([]);
   const [masterData, setMasterData] = useState<StockMasterData[]>([]);
@@ -57,7 +71,7 @@ export function StockPage() {
   };
 
   useEffect(() => {
-    fetchMasterData();
+    void fetchMasterData();
     const interval = setInterval(fetchMasterData, 60000);
     return () => clearInterval(interval);
   }, [market]);
@@ -83,7 +97,7 @@ export function StockPage() {
         const res = await fetch(`/api/financial/stocks?action=prices&codes=${codes.join(',')}`);
         const json = await res.json();
         if (json.success) {
-          const priceMap = new Map(json.data.map((s: any) => [s.code, s]));
+          const priceMap = new Map(json.data.map((s: StockPriceData) => [s.code, s]));
           const stocksWithPrices = filtered.map((stock) => {
             const priceData = priceMap.get(stock.code);
             return priceData ? { ...stock, ...priceData } : stock;
@@ -114,7 +128,7 @@ export function StockPage() {
     }
   };
 
-  const handleRowClick = (stock: any) => {
+  const handleRowClick = (stock: StockData) => {
     setSelectedStock(stock);
   };
 

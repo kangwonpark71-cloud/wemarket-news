@@ -17,7 +17,7 @@ export async function upsertArticles(
       })
 
       if (!existing) {
-        await prisma.article.create({
+        const created = await prisma.article.create({
           data: {
             sourceId,
             guid: article.guid,
@@ -30,8 +30,11 @@ export async function upsertArticles(
             category: article.category,
             language: article.language,
           },
+          include: { source: true },
         })
         newCount++
+        const { sendNotificationWebhook } = await import('@/lib/utils');
+        await sendNotificationWebhook(created.title, created.url, created.source.name, created.description || undefined);
       }
     } catch (err) {
       console.warn(`[RSS DB] Skipping article "${article.title?.substring(0, 50)}":`, err instanceof Error ? err.message : err)
@@ -50,6 +53,7 @@ export async function getArticles(params: {
   search?: string
   sortBy?: string
   sortOrder?: 'asc' | 'desc'
+  excludeSourceIds?: string[]
 }): Promise<{ articles: ArticleWithSource[]; total: number; page: number; totalPages: number }> {
   const {
     category,
@@ -60,9 +64,14 @@ export async function getArticles(params: {
     search,
     sortBy = 'publishedAt',
     sortOrder = 'desc',
+    excludeSourceIds,
   } = params
 
   const where: Prisma.ArticleWhereInput = {}
+
+  if (excludeSourceIds && excludeSourceIds.length > 0) {
+    where.sourceId = { notIn: excludeSourceIds };
+  }
 
   const sourceFilter: Prisma.SourceWhereInput = {}
   if (category && category !== 'all') {

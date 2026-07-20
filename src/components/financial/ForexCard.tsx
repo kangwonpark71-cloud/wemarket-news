@@ -30,7 +30,7 @@ export function ForexCard({ forex }: ForexCardProps) {
   };
 
   return (
-    <div className="bg-white rounded-xl border border-gray-200 p-4 hover:shadow-md transition-all cursor-pointer">
+    <div className="bg-white rounded-none border border-gray-200 p-4 hover:shadow-md transition-all cursor-pointer">
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-3">
           <span className="text-2xl">{flags[forex.baseCurrency] || '🏳️'}</span>

@@ -66,7 +66,7 @@ export default function AdminArticlesPage() {
   }, [search, sourceId, category, sourceType, status, page]);
 
   useEffect(() => {
-    fetchArticles();
+    void fetchArticles();
   }, [fetchArticles]);
 
   const handleSearch = (e: React.FormEvent) => {

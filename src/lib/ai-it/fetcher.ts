@@ -1,6 +1,7 @@
 import Parser from 'rss-parser';
 import { AIITSourceConfig } from './sources';
 import { crawlWithPlaywright } from './playwright-crawler';
+import { extractThumbnail, extractCategory, fetchWithRetry } from '../utils/rss-helper';
 
 export interface AIITParsedArticle {
   guid?: string;
@@ -40,26 +41,6 @@ const parser = new Parser({
   },
 });
 
-function extractThumbnail(item: Record<string, unknown>): string | undefined {
-  const mediaContent = item.mediaContent as { $?: { url?: string } } | undefined;
-  const mediaThumbnail = item.mediaThumbnail as { $?: { url?: string } } | undefined;
-
-  if (mediaContent?.$?.url) return mediaContent.$.url;
-  if (mediaThumbnail?.$?.url) return mediaThumbnail.$.url;
-  return undefined;
-}
-
-function extractCategory(item: Record<string, unknown>): string | undefined {
-  const categories = item.categories;
-  if (Array.isArray(categories) && categories.length > 0) {
-    return categories[0];
-  }
-  if (typeof categories === 'string') {
-    return categories;
-  }
-  return undefined;
-}
-
 function extractContent(item: Record<string, unknown>): string | undefined {
   const contentEncoded = item.contentEncoded as string | undefined;
   if (contentEncoded && contentEncoded.length > 100) {
@@ -72,32 +53,6 @@ function extractContent(item: Record<string, unknown>): string | undefined {
   return undefined;
 }
 
-async function fetchWithRetry(
-  url: string,
-  retries: number = 3,
-  baseDelay: number = 1000
-): Promise<{ feed: Parser.Output<unknown> } | null> {
-  let lastError: Error | null = null;
-
-  for (let attempt = 0; attempt <= retries; attempt++) {
-    try {
-      const feed = await parser.parseURL(url);
-      return { feed };
-    } catch (error) {
-      lastError = error instanceof Error ? error : new Error(String(error));
-
-      if (attempt < retries) {
-        const delay = baseDelay * Math.pow(2, attempt) + Math.random() * 1000;
-        console.warn(`[AIIT RSS Fetcher] Attempt ${attempt + 1} failed for ${url}: ${lastError.message}. Retrying in ${Math.round(delay)}ms...`);
-        await new Promise(resolve => setTimeout(resolve, delay));
-      }
-    }
-  }
-
-  console.error(`[AIIT RSS Fetcher] All ${retries + 1} attempts failed for ${url}: ${lastError?.message}`);
-  return null;
-}
-
 export async function fetchAIITFeed(
   source: AIITSourceConfig
 ): Promise<AIITFetchResult> {
@@ -108,7 +63,7 @@ export async function fetchAIITFeed(
       return await fetchWithCrawler(source);
     }
 
-    const result = await fetchWithRetry(source.url, 3, 2000);
+    const result = await fetchWithRetry(parser, source.url, 'AIIT RSS Fetcher', 3, 2000);
 
     if (!result) {
       return {
@@ -156,9 +111,6 @@ export async function fetchAIITFeed(
         sourceNameEn: source.nameEn,
       });
     }
-
-    const duration = Date.now() - startTime;
-    console.log(`[AIIT RSS Fetcher] Successfully fetched ${articles.length} articles from ${source.name} (${source.nameEn}) in ${duration}ms`);
 
     return {
       articles,

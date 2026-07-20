@@ -4,7 +4,7 @@ import { upsertArticles } from './db-service'
 import { getSourceIdByNameEn, logFetch, seedSources } from './service'
 import { ALL_SOURCES } from './sources'
 import { fetchProgressPubSub } from '@/lib/sse/pubsub'
-import { cacheService } from '@/lib/services/cache/cache-service'
+import { runJobWithLock } from '@/lib/utils/lock'
 
 export interface FetchResult {
   source: string
@@ -25,14 +25,12 @@ export async function runRssFetch(sourceNameEn?: string): Promise<FetchResult[]>
   const anySource = sourcesToFetch.length > 0
     ? await getSourceIdByNameEn(sourcesToFetch[0].nameEn) : null
   if (!anySource) {
-    console.log('[Scheduler] No sources in DB, seeding...')
     await seedSources()
   }
 
   const results: FetchResult[] = []
   const totalSources = sourcesToFetch.length
 
-  console.log(`[Scheduler] Fetching ${totalSources} sources`)
   fetchProgressPubSub.publish('fetch-progress', {
     phase: 'start',
     system: 'rss',
@@ -96,19 +94,11 @@ export async function runRssFetch(sourceNameEn?: string): Promise<FetchResult[]>
 }
 
 async function runRssFetchWithLock(): Promise<FetchResult[]> {
-  const lockName = 'scheduler:job:rss';
-  const acquired = await cacheService.acquireLock(lockName, 600);
-  if (!acquired) {
-    console.log('[Scheduler] RSS job skipped: lock already held by another instance');
-    return [];
-  }
-  try {
-    return await runRssFetch();
-  } finally {
-    setTimeout(() => {
-      cacheService.releaseLock(lockName).catch(() => {});
-    }, 10000);
-  }
+  let results: FetchResult[] = [];
+  const acquired = await runJobWithLock('rss', async () => {
+    results = await runRssFetch();
+  }, 600);
+  return acquired ? results : [];
 }
 
 export function startRssScheduler() {
@@ -116,19 +106,13 @@ export function startRssScheduler() {
   initialized = true
 
   cron.schedule('0 */3 * * *', () => {
-    console.log('[Scheduler] Cron trigger (3-hour interval)')
     runRssFetchWithLock().catch(err => console.error('[Scheduler] Cron error:', err))
   })
 
   setTimeout(() => {
-    console.log('[Scheduler] Initial fetch on startup')
     runRssFetchWithLock().then(results => {
       if (results.length === 0) return;
-      const ok = results.filter(r => r.status === 'success' || r.status === 'partial').length
-      const err = results.filter(r => r.status === 'error').length
-      console.log(`[Scheduler] Initial fetch complete: ${ok} ok, ${err} errors`)
     }).catch(err => console.error('[Scheduler] Initial fetch error:', err))
   }, 2000)
 
-  console.log('[Scheduler] RSS scheduler started (every 3 hours with distributed locking)')
 }
