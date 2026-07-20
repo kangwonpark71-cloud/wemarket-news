@@ -1,14 +1,15 @@
 'use client';
 
 import { useState, useEffect, useCallback } from 'react';
+import { AD_TYPES, AD_POSITIONS, type AdType, type AdPosition } from '@/lib/constants/ads';
 
 interface Ad {
   id: string;
   title: string;
-  adType: string;
+  adType: AdType;
   content: string;
   linkUrl: string | null;
-  position: string;
+  position: AdPosition;
   isActive: boolean;
   startDate: string | null;
   endDate: string | null;
@@ -17,25 +18,14 @@ interface Ad {
   createdAt: string;
 }
 
-const AD_TYPES = [
-  { value: 'image', label: '이미지' },
-  { value: 'text', label: '텍스트' },
-  { value: 'html', label: 'HTML' },
-];
-
-const POSITIONS = [
-  { value: 'sidebar', label: '사이드바' },
-  { value: 'in-content', label: '컨텐츠 내' },
-  { value: 'header', label: '헤더' },
-  { value: 'footer', label: '푸터' },
-];
+const POSITIONS = AD_POSITIONS;
 
 const EMPTY_FORM = {
   title: '',
-  adType: 'image',
+  adType: 'image' as AdType,
   content: '',
   linkUrl: '',
-  position: 'sidebar',
+  position: 'sidebar' as AdPosition,
   isActive: true,
   startDate: '',
   endDate: '',
@@ -67,7 +57,9 @@ export default function AdminAdsPage() {
     }
   }, []);
 
-  useEffect(() => { fetchAds(); }, [fetchAds]);
+  useEffect(() => {
+    void fetchAds();
+  }, [fetchAds]);
 
   const openCreate = () => {
     setForm(EMPTY_FORM);
@@ -239,7 +231,7 @@ export default function AdminAdsPage() {
                 <label className="block text-xs font-semibold text-slate-500 mb-1">광고 유형</label>
                 <select
                   value={form.adType}
-                  onChange={(e) => setForm((f) => ({ ...f, adType: e.target.value }))}
+                  onChange={(e) => setForm((f) => ({ ...f, adType: e.target.value as AdType }))}
                   className="h-9 w-full rounded-sm border border-slate-300 px-3 text-xs focus:outline-none focus:ring-2 focus:ring-indigo-500"
                 >
                   {AD_TYPES.map((t) => (
@@ -251,7 +243,7 @@ export default function AdminAdsPage() {
                 <label className="block text-xs font-semibold text-slate-500 mb-1">노출 위치</label>
                 <select
                   value={form.position}
-                  onChange={(e) => setForm((f) => ({ ...f, position: e.target.value }))}
+                  onChange={(e) => setForm((f) => ({ ...f, position: e.target.value as AdPosition }))}
                   className="h-9 w-full rounded-sm border border-slate-300 px-3 text-xs focus:outline-none focus:ring-2 focus:ring-indigo-500"
                 >
                   {POSITIONS.map((p) => (

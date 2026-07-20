@@ -1,13 +1,14 @@
 'use client';
 
 import { useState, useEffect, useCallback } from 'react';
+import { BANNER_POSITIONS, type BannerPosition } from '@/lib/constants/banner';
 
 interface Banner {
   id: string;
   title: string;
   imageUrl: string;
   linkUrl: string | null;
-  position: string;
+  position: BannerPosition;
   sortOrder: number;
   isActive: boolean;
   startDate: string | null;
@@ -15,11 +16,7 @@ interface Banner {
   createdAt: string;
 }
 
-const POSITIONS = [
-  { value: 'top', label: '상단' },
-  { value: 'sidebar', label: '사이드바' },
-  { value: 'bottom', label: '하단' },
-];
+const POSITIONS = BANNER_POSITIONS;
 
 const EMPTY_FORM = {
   title: '',
@@ -52,7 +49,9 @@ export default function AdminBannersPage() {
     }
   }, []);
 
-  useEffect(() => { fetchBanners(); }, [fetchBanners]);
+  useEffect(() => {
+    void fetchBanners();
+  }, [fetchBanners]);
 
   const openCreate = () => {
     setForm(EMPTY_FORM);

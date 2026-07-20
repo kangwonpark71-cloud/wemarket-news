@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server';
 import { prisma } from '@/lib/db';
 import { getSessionUser } from '@/lib/utils/auth';
+import { isBannerPosition } from '@/lib/constants/banner';
 
 async function requireAdmin(request: Request) {
   const user = await getSessionUser(request);
@@ -49,12 +50,14 @@ export async function POST(request: Request) {
       );
     }
 
+    const resolvedPosition = isBannerPosition(position) ? position : 'top';
+
     const banner = await prisma.banner.create({
       data: {
         title,
         imageUrl,
         linkUrl: linkUrl || null,
-        position: position || 'top',
+        position: resolvedPosition,
         sortOrder: sortOrder ?? 0,
         isActive: isActive ?? true,
         startDate: startDate ? new Date(startDate) : null,
@@ -88,7 +91,9 @@ export async function PATCH(request: Request) {
         ...(title !== undefined && { title }),
         ...(imageUrl !== undefined && { imageUrl }),
         ...(linkUrl !== undefined && { linkUrl: linkUrl || null }),
-        ...(position !== undefined && { position }),
+        ...(position !== undefined && {
+          position: isBannerPosition(position) ? position : 'top',
+        }),
         ...(sortOrder !== undefined && { sortOrder }),
         ...(isActive !== undefined && { isActive }),
         ...(startDate !== undefined && { startDate: startDate ? new Date(startDate) : null }),

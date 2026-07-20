@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server';
 import { prisma } from '@/lib/db';
 import { getSessionUser } from '@/lib/utils/auth';
+import { isAdType, isAdPosition } from '@/lib/constants/ads';
 
 async function requireAdmin(request: Request) {
   const user = await getSessionUser(request);
@@ -62,10 +63,10 @@ export async function POST(request: Request) {
     const ad = await prisma.advertisement.create({
       data: {
         title,
-        adType: adType || 'image',
+        adType: isAdType(adType) ? adType : 'image',
         content,
         linkUrl: linkUrl || null,
-        position: position || 'sidebar',
+        position: isAdPosition(position) ? position : 'sidebar',
         isActive: isActive ?? true,
         startDate: startDate ? new Date(startDate) : null,
         endDate: endDate ? new Date(endDate) : null,
@@ -96,10 +97,10 @@ export async function PATCH(request: Request) {
       where: { id },
       data: {
         ...(title !== undefined && { title }),
-        ...(adType !== undefined && { adType }),
+        ...(adType !== undefined && { adType: isAdType(adType) ? adType : 'image' }),
         ...(content !== undefined && { content }),
         ...(linkUrl !== undefined && { linkUrl: linkUrl || null }),
-        ...(position !== undefined && { position }),
+        ...(position !== undefined && { position: isAdPosition(position) ? position : 'sidebar' }),
         ...(isActive !== undefined && { isActive }),
         ...(startDate !== undefined && { startDate: startDate ? new Date(startDate) : null }),
         ...(endDate !== undefined && { endDate: endDate ? new Date(endDate) : null }),

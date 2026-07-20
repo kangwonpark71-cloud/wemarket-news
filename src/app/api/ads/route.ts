@@ -1,5 +1,6 @@
 import { NextResponse } from 'next/server'
 import { prisma } from '@/lib/db'
+import { sanitizeAdHtml } from '@/lib/utils/sanitize'
 
 export async function GET() {
   const now = new Date()
@@ -25,5 +26,9 @@ export async function GET() {
     },
   })
 
-  return NextResponse.json({ success: true, ads })
+  const safeAds = ads.map((ad) =>
+    ad.adType === 'html' ? { ...ad, content: sanitizeAdHtml(ad.content) } : ad,
+  )
+
+  return NextResponse.json({ success: true, ads: safeAds })
 }

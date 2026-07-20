@@ -1,5 +1,7 @@
 import { prisma } from '@/lib/db'
 import { AdDisplay } from './AdDisplay'
+import { sanitizeAdHtml } from '@/lib/utils/sanitize'
+import { isAdType, type AdType } from '@/lib/constants/ads'
 
 export async function SidebarAds() {
   const now = new Date()
@@ -28,9 +30,9 @@ export async function SidebarAds() {
         <AdDisplay
           key={ad.id}
           id={ad.id}
-          adType={ad.adType}
+          adType={(isAdType(ad.adType) ? ad.adType : 'image') as AdType}
           title={ad.title}
-          content={ad.content}
+          content={ad.adType === 'html' ? sanitizeAdHtml(ad.content) : ad.content}
           linkUrl={ad.linkUrl}
         />
       ))}

@@ -1,10 +1,11 @@
 'use client'
 
 import { useEffect, useRef } from 'react'
+import type { AdType } from '@/lib/constants/ads'
 
 interface AdDisplayProps {
   id: string
-  adType: string
+  adType: AdType
   title: string
   content: string
   linkUrl: string | null
@@ -40,7 +41,7 @@ export function AdDisplay({ id, adType, title, content, linkUrl }: AdDisplayProp
         onClick={handleClick}
         className="group block overflow-hidden rounded-sm border border-border bg-card transition-shadow hover:shadow-md"
       >
-        <div className="aspect-[16/9] w-full overflow-hidden bg-muted">
+        <div className="aspect-[16/9] w-full overflow-hidden bg-muted" style={{ maxHeight: '180px' }}>
           <img src={content} alt={title} className="h-full w-full object-cover" loading="lazy" />
         </div>
         <div className="p-2">
@@ -50,6 +51,23 @@ export function AdDisplay({ id, adType, title, content, linkUrl }: AdDisplayProp
           <span className="text-[10px] text-muted-foreground uppercase tracking-wider">광고</span>
         </div>
       </a>
+    )
+  }
+
+  if (adType === 'html') {
+    return (
+      <div
+        onClick={handleClick}
+        className="group block overflow-hidden rounded-sm border border-border bg-card p-3 transition-shadow hover:shadow-md"
+      >
+        <p className="mb-2 text-xs font-bold text-foreground">{title}</p>
+        {/* content is sanitized server-side via sanitizeAdHtml before reaching the client */}
+        <div
+          className="text-xs text-muted-foreground [&_a]:text-primary [&_a]:underline"
+          dangerouslySetInnerHTML={{ __html: content }}
+        />
+        <span className="mt-2 block text-[10px] text-muted-foreground uppercase tracking-wider">광고</span>
+      </div>
     )
   }
 

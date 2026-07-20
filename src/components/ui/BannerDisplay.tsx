@@ -1,10 +1,13 @@
 import { prisma } from '@/lib/db'
+import { isBannerPosition, type BannerPosition } from '@/lib/constants/banner'
 
 interface BannerDisplayProps {
-  position: 'top' | 'sidebar' | 'bottom'
+  position: BannerPosition
 }
 
 export async function BannerDisplay({ position }: BannerDisplayProps) {
+  if (!isBannerPosition(position)) return null
+
   const now = new Date()
 
   const banners = await prisma.banner.findMany({
@@ -32,9 +35,9 @@ export async function BannerDisplay({ position }: BannerDisplayProps) {
             href={banner.linkUrl || '#'}
             target={banner.linkUrl ? '_blank' : undefined}
             rel={banner.linkUrl ? 'noopener noreferrer' : undefined}
-            className="group relative overflow-hidden rounded-sm border border-border bg-card transition-shadow hover:shadow-md"
+            className="group relative flex flex-col overflow-hidden rounded-sm border border-border bg-card transition-shadow hover:shadow-md"
           >
-            <div className="aspect-[16/7] w-full overflow-hidden bg-muted">
+            <div className="relative w-full overflow-hidden bg-muted" style={{ aspectRatio: '24 / 7', maxHeight: '200px' }}>
               <img
                 src={banner.imageUrl}
                 alt={banner.title}
@@ -79,17 +82,18 @@ export async function BannerDisplay({ position }: BannerDisplayProps) {
     )
   }
 
-  return (
-    <div className="mt-8 grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
+  if (position === 'bottom') {
+    return (
+    <div className="mt-8 grid grid-cols-2 gap-4 sm:grid-cols-2 lg:grid-cols-2">
       {banners.map((banner) => (
         <a
           key={banner.id}
           href={banner.linkUrl || '#'}
           target={banner.linkUrl ? '_blank' : undefined}
           rel={banner.linkUrl ? 'noopener noreferrer' : undefined}
-          className="group relative overflow-hidden rounded-sm border border-border bg-card transition-shadow hover:shadow-md"
+          className="group relative flex flex-col overflow-hidden rounded-sm border border-border bg-card transition-shadow hover:shadow-md"
         >
-          <div className="aspect-[16/7] w-full overflow-hidden bg-muted">
+          <div className="relative w-full overflow-hidden bg-muted" style={{ aspectRatio: '24 / 7', maxHeight: '180px' }}>
             <img
               src={banner.imageUrl}
               alt={banner.title}
@@ -103,5 +107,6 @@ export async function BannerDisplay({ position }: BannerDisplayProps) {
         </a>
       ))}
     </div>
-  )
+    )
+  }
 }
