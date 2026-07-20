@@ -431,6 +431,8 @@ export async function seedAIITSources(): Promise<number> {
         language: src.language,
         icon: src.icon,
         fetchInterval: src.fetchInterval,
+        fetchType: src.type,
+        crawlerConfig: src.crawlerConfig,
       })
       count++
     } catch (e) {
@@ -456,10 +458,17 @@ export async function upsertAIITSource(source: {
   language: 'ko' | 'en';
   icon?: string;
   fetchInterval?: number;
+  fetchType?: 'rss' | 'crawler';
+  crawlerConfig?: unknown;
 }): Promise<string> {
   const existing = await prisma.source.findUnique({
     where: { nameEn: source.nameEn },
   });
+
+  const fetchType = source.fetchType ?? 'rss';
+  const crawlerConfig = source.crawlerConfig as
+    | Prisma.InputJsonValue
+    | undefined;
 
   let sourceId: string;
 
@@ -469,7 +478,8 @@ export async function upsertAIITSource(source: {
       data: {
         ...source,
         sourceType: 'AI_IT',
-        fetchType: 'rss',
+        fetchType,
+        crawlerConfig,
       },
     });
     sourceId = existing.id;
@@ -479,7 +489,8 @@ export async function upsertAIITSource(source: {
         ...source,
         sourceType: 'AI_IT',
         fetchInterval: source.fetchInterval ?? 60,
-        fetchType: 'rss',
+        fetchType,
+        crawlerConfig,
       },
     });
     sourceId = created.id;

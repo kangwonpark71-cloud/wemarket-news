@@ -46,7 +46,7 @@ export const AI_OFFICIAL_SOURCES: AIITSourceConfig[] = [
   {
     name: 'Anthropic News',
     nameEn: 'anthropic_news',
-    url: 'https://www.anthropic.com/news/rss.xml',
+    url: 'https://rsshub.bestblogs.dev/anthropic/news',
     category: 'ai',
     subcategory: 'anthropic',
     language: 'en',
@@ -303,7 +303,7 @@ export const AI_TECH_SOURCES: AIITSourceConfig[] = [
   {
     name: 'AI News Hub',
     nameEn: 'ai_news_hub',
-    url: 'https://www.artificialintelligence-news.com/',
+    url: 'https://www.artificialintelligence-news.com/feed/',
     category: 'ai',
     subcategory: 'ai_industry',
     language: 'en',
