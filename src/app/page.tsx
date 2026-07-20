@@ -1,4 +1,3 @@
-import Sidebar from '@/components/layout/Sidebar'
 import NewsList from '@/components/news/NewsList'
 import { FinancialDashboard } from '@/components/financial/FinancialDashboard'
 import WeatherWidget from '@/components/layout/WeatherWidget'
@@ -7,6 +6,7 @@ import { getArticles } from '@/lib/rss/db-service'
 import { NewsletterWidget } from '@/components/ui/NewsletterWidget'
 import { BannerDisplay } from '@/components/ui/BannerDisplay'
 import { SidebarAds } from '@/components/ui/SidebarAds'
+import { getSidebarNavItems } from '@/lib/constants/nav'
 
 interface HomePageProps {
   searchParams: Promise<{ source?: string; page?: string }>
@@ -24,9 +24,11 @@ export default async function HomePage({ searchParams }: HomePageProps) {
     limit: 20,
   })
 
+  const sourceFilters = getSidebarNavItems('domestic').items
+
   return (
     <div className="mx-auto max-w-7xl px-4 py-6 sm:px-6 lg:px-8">
-      <div className="mb-8">
+      <div className="mb-6">
         <div className="flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
           <div>
             <div className="flex items-center gap-2 mb-2">
@@ -75,60 +77,91 @@ export default async function HomePage({ searchParams }: HomePageProps) {
             </Link>
           </div>
         </div>
+
+        <nav
+          className="mt-4 flex gap-2 overflow-x-auto scrollbar-none"
+          aria-label="국내 경제 소스 필터"
+        >
+          <Link
+            href="/"
+            aria-current={source ? undefined : 'page'}
+            className={`shrink-0 rounded-full border px-4 py-1.5 text-sm font-medium transition-colors ${
+              source
+                ? 'border-border text-muted-foreground hover:bg-muted'
+                : 'border-primary bg-primary text-primary-foreground'
+            }`}
+          >
+            전체
+          </Link>
+          {sourceFilters.map((item) => {
+            const itemSource = item.href.split('=')[1]
+            const isActive = source === itemSource
+            return (
+              <Link
+                key={item.href}
+                href={item.href}
+                aria-current={isActive ? 'page' : undefined}
+                className={`shrink-0 rounded-full border px-4 py-1.5 text-sm font-medium transition-colors ${
+                  isActive
+                    ? 'border-primary bg-primary text-primary-foreground'
+                    : 'border-border text-muted-foreground hover:bg-muted'
+                }`}
+              >
+                <span aria-hidden="true">{item.icon} </span>
+                {item.label}
+              </Link>
+            )
+          })}
+        </nav>
       </div>
 
-      <div className="mb-6 max-w-lg">
+      <section aria-label="날씨" className="mb-6">
         <WeatherWidget />
-      </div>
+      </section>
 
-      <div className="flex gap-8 mt-8">
-        <div className="w-72 shrink-0 space-y-6">
-          <Sidebar category="domestic" />
+      <section aria-label="뉴스 기사" className="space-y-4">
+        <NewsList articles={articles} emptyMessage="아직 수집된 뉴스가 없습니다" />
+
+        {totalPages > 1 && (
+          <nav className="mt-6 flex items-center justify-center gap-2" aria-label="페이지네이션">
+            {page > 1 && (
+              <Link
+                href={`/?page=${page - 1}${source ? `&source=${source}` : ''}`}
+                className="rounded-none border border-gray-300 bg-white px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50 transition-colors"
+              >
+                이전
+              </Link>
+            )}
+            <span className="px-4 py-2 text-sm text-gray-500" aria-current="page">
+              {page} / {totalPages}
+            </span>
+            {page < totalPages && (
+              <Link
+                href={`/?page=${page + 1}${source ? `&source=${source}` : ''}`}
+                className="rounded-none border border-gray-300 bg-white px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50 transition-colors"
+              >
+                다음
+              </Link>
+            )}
+          </nav>
+        )}
+
+        <div className="mt-4 text-center text-xs text-gray-400">
+          총 {total}건의 뉴스
         </div>
 
-        <div className="min-w-0 flex-1">
-          <NewsList articles={articles} emptyMessage="아직 수집된 뉴스가 없습니다" />
+        <NewsletterWidget />
+      </section>
 
-          {totalPages > 1 && (
-            <nav className="mt-6 flex items-center justify-center gap-2" aria-label="페이지네이션">
-              {page > 1 && (
-                <Link
-                  href={`/?page=${page - 1}${source ? `&source=${source}` : ''}`}
-                  className="rounded-none border border-gray-300 bg-white px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50 transition-colors"
-                >
-                  이전
-                </Link>
-              )}
-              <span className="px-4 py-2 text-sm text-gray-500" aria-current="page">
-                {page} / {totalPages}
-              </span>
-              {page < totalPages && (
-                <Link
-                  href={`/?page=${page + 1}${source ? `&source=${source}` : ''}`}
-                  className="rounded-none border border-gray-300 bg-white px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50 transition-colors"
-                >
-                  다음
-                </Link>
-              )}
-            </nav>
-          )}
+      <section aria-label="금융 대시보드" className="mt-8">
+        <FinancialDashboard />
+      </section>
 
-          <div className="mt-4 text-center text-xs text-gray-400">
-            총 {total}건의 뉴스
-          </div>
-
-          <NewsletterWidget />
-
-          <FinancialDashboard />
-
-          <div className="mt-8">
-            <SidebarAds />
-            <BannerDisplay position="top" />
-          </div>
-
-          <BannerDisplay position="bottom" />
-        </div>
-      </div>
+      <section aria-label="광고 및 배너" className="mt-8 space-y-6">
+        <SidebarAds />
+        <BannerDisplay position="top" />
+        <BannerDisplay position="bottom" />
+      </section>
     </div>
   )
 }
