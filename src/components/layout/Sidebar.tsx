@@ -3,43 +3,15 @@
 import Link from 'next/link'
 import { usePathname, useSearchParams } from 'next/navigation'
 import { cn } from '@/lib/utils'
+import { getSidebarNavItems } from '@/lib/constants/nav'
 
 interface SidebarProps {
   category: 'domestic' | 'overseas' | 'all'
 }
 
-interface SidebarItem {
-  label: string
-  href: string
-  icon: string
-  count?: number
-}
-
-const DOMESTIC_ITEMS: SidebarItem[] = [
-  { label: '한국 경제', href: '/?source=hankyung', icon: '🏦' },
-  { label: '매일 경제', href: '/?source=mk', icon: '📊' },
-]
-
-const OVERSEAS_ITEMS: SidebarItem[] = [
-  { label: 'Press Releases', href: '/overseas?source=fed_press', icon: '🏛️' },
-  { label: 'Monetary Policy', href: '/overseas?source=fed_monetary', icon: '💰' },
-  { label: 'Speeches & Testimony', href: '/overseas?source=fed_speeches', icon: '🎤' },
-  { label: 'FEDS Notes', href: '/overseas?source=fed_notes', icon: '📝' },
-  { label: 'Interest Rates', href: '/overseas?source=fed_interest_rates', icon: '📈' },
-  { label: 'Exchange Rates', href: '/overseas?source=fed_exchange_rates', icon: '💱' },
-]
-
-const ALL_QUICK_FILTERS = [
-  { label: '전체 뉴스', href: '/all', icon: '📋' },
-  { label: '국내 뉴스만', href: '/all?language=ko', icon: '🇰🇷' },
-  { label: '해외 뉴스만', href: '/all?language=en', icon: '🇺🇸' },
-]
-
 export default function Sidebar({ category }: SidebarProps) {
   const pathname = usePathname()
   const searchParams = useSearchParams()
-
-  const items = category === 'domestic' ? DOMESTIC_ITEMS : category === 'overseas' ? OVERSEAS_ITEMS : []
 
   if (category === 'all') {
     return (
@@ -47,10 +19,10 @@ export default function Sidebar({ category }: SidebarProps) {
         <div className="sticky top-24 space-y-6">
           <div>
             <h3 className="mb-3 text-xs font-semibold uppercase tracking-wider text-muted-foreground">
-              빠른 필터
+              {getSidebarNavItems('all').title}
             </h3>
             <nav className="space-y-1" aria-label="빠른 필터">
-              {ALL_QUICK_FILTERS.map((item) => {
+              {getSidebarNavItems('all').items.map((item) => {
                 const isActive = pathname === item.href
                 return (
                   <Link
@@ -82,16 +54,17 @@ export default function Sidebar({ category }: SidebarProps) {
   }
 
   const currentSource = searchParams.get('source')
+  const sidebar = getSidebarNavItems(category)
 
   return (
     <aside className="hidden w-64 shrink-0 lg:block" aria-label={`${category === 'domestic' ? '국내' : '해외'} 경제 소스`}>
       <div className="sticky top-24 space-y-6">
         <div>
           <h3 className="mb-3 text-xs font-semibold uppercase tracking-wider text-muted-foreground">
-            {category === 'domestic' ? '국내 경제 소스' : '해외 경제 소스'}
+            {sidebar.title}
           </h3>
           <nav className="space-y-1" aria-label={`${category === 'domestic' ? '국내' : '해외'} 소스 목록`}>
-            {items.map((item) => {
+            {sidebar.items.map((item) => {
               const isCurrent = currentSource === item.href.split('=')[1]
               return (
                 <Link

@@ -5,27 +5,18 @@ import Link from 'next/link'
 import { usePathname, useSearchParams } from 'next/navigation'
 import { cn } from '@/lib/utils'
 import { ThemeToggle } from '@/components/ui/ThemeToggle'
+import { NAV_ITEMS } from '@/lib/constants/nav'
+import { MobileNav } from '@/components/layout/MobileNav'
 
 interface CurrentUser {
   name?: string
 }
 
-const NAV_ITEMS = [
-  { href: '/all', label: '전체뉴스', category: 'all' },
-  { href: '/', label: '국내뉴스', category: 'domestic' },
-  { href: '/overseas', label: '해외뉴스', category: 'overseas' },
-  { href: '/ai-news', label: 'AI뉴스', category: 'ai' },
-  { href: '/it-news', label: 'IT뉴스', category: 'it' },
-  { href: '/stocks', label: '주식', category: 'stocks' },
-  { href: '/crypto', label: '암호화폐', category: 'crypto' },
-  { href: '/forex', label: '환율', category: 'forex' },
-  { href: '/global', label: '글로벌', category: 'global' },
-]
-
 export default function Header() {
   const pathname = usePathname()
   const searchParams = useSearchParams()
   const [isSearchOpen, setIsSearchOpen] = useState(false)
+  const [isMobileNavOpen, setIsMobileNavOpen] = useState(false)
   const [searchQuery, setSearchQuery] = useState(searchParams.get('q') || searchParams.get('search') || '')
   const [lastCrawled, setLastCrawled] = useState<string>('')
   const [user, setUser] = useState<CurrentUser | null>(null)
@@ -80,6 +71,18 @@ export default function Header() {
     <header className="sticky top-0 z-50 w-full border-b border-border bg-background/80 backdrop-blur-md">
       <div className="mx-auto flex h-16 max-w-7xl items-center justify-between px-4 sm:px-6 lg:px-8">
         <div className="flex items-center gap-4 min-w-0">
+          <button
+            type="button"
+            onClick={() => setIsMobileNavOpen(true)}
+            className="rounded-sm p-2 text-muted-foreground hover:bg-muted hover:text-foreground md:hidden focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary"
+            aria-label="메뉴 열기"
+            aria-expanded={isMobileNavOpen}
+            aria-controls="mobile-nav"
+          >
+            <svg className="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 12h16M4 18h16" />
+            </svg>
+          </button>
           <Link href="/" className="flex items-center gap-2 whitespace-nowrap shrink-0" aria-label="위마켓_뉴스 홈">
             <span className="text-2xl" aria-hidden="true">📰</span>
             <span className="text-xl font-bold text-foreground">위마켓_뉴스</span>
@@ -200,24 +203,6 @@ export default function Header() {
         </div>
       </div>
 
-      <div className="mx-auto flex items-center gap-2 overflow-x-auto border-t border-border px-4 py-1 md:hidden" role="navigation" aria-label="모바일 내비게이션">
-        {NAV_ITEMS.map((item) => (
-          <Link
-            key={item.href}
-            href={item.href}
-            className={cn(
-              'whitespace-nowrap rounded-sm px-3 py-3 text-sm font-medium transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary',
-              isActive(item.href)
-                ? 'bg-primary-light text-primary'
-                : 'text-muted-foreground hover:bg-muted'
-            )}
-            aria-current={isActive(item.href) ? 'page' : undefined}
-          >
-            {item.label}
-          </Link>
-        ))}
-      </div>
-
       {isSearchOpen && (
         <div className="border-t border-border px-4 py-3 md:hidden">
           <form onSubmit={handleSearchSubmit} className="flex gap-2">
@@ -242,6 +227,8 @@ export default function Header() {
           </form>
         </div>
       )}
+
+      <MobileNav open={isMobileNavOpen} onClose={() => setIsMobileNavOpen(false)} />
     </header>
   )
 }
