@@ -6,44 +6,31 @@ import { NewsletterWidget } from '@/components/ui/NewsletterWidget'
 import { BannerDisplay } from '@/components/ui/BannerDisplay'
 import { SidebarAds } from '@/components/ui/SidebarAds'
 
-interface HomePageProps {
-  searchParams: Promise<{ page?: string; language?: string; search?: string }>
+interface DomesticPageProps {
+  searchParams: Promise<{ page?: string }>
 }
 
-export default async function HomePage({ searchParams }: HomePageProps) {
+export default async function DomesticPage({ searchParams }: DomesticPageProps) {
   const params = await searchParams
   const page = parseInt(params.page || '1', 10)
-  const language = params.language
-  const search = params.search
 
   const { articles, total, totalPages } = await getArticles({
-    language,
+    category: 'domestic',
     page,
     limit: 20,
-    search,
   })
 
   return (
     <div className="mx-auto max-w-7xl px-4 py-6 sm:px-6 lg:px-8">
       <div className="mb-6">
         <div className="flex items-center gap-2 mb-2">
-          <h1 className="text-2xl font-bold text-foreground">전체 뉴스</h1>
+          <h1 className="text-2xl font-bold text-foreground">국내 경제</h1>
           <span className="text-xs px-2 py-0.5 rounded-sm bg-primary text-primary-foreground">
             실시간 금융 데이터
           </span>
         </div>
         <p className="mt-1 text-sm text-muted-foreground">
-          국내외 경제 뉴스를 한 곳에서
-          {language && (
-            <span className="ml-2 inline-flex rounded-sm bg-primary-light px-2 py-0.5 text-xs font-medium text-primary">
-              {language === 'ko' ? '국내만' : '해외만'}
-            </span>
-          )}
-          {search && (
-            <span className="ml-2 inline-flex rounded-sm bg-secondary/20 px-2 py-0.5 text-xs font-medium text-secondary">
-              검색: {search}
-            </span>
-          )}
+          한국경제, 매일경제의 최신 경제 뉴스
         </p>
       </div>
 
@@ -58,7 +45,7 @@ export default async function HomePage({ searchParams }: HomePageProps) {
           <nav className="mt-6 flex items-center justify-center gap-2" aria-label="페이지네이션">
             {page > 1 && (
               <a
-                href={`/?page=${page - 1}${language ? `&language=${language}` : ''}${search ? `&search=${encodeURIComponent(search)}` : ''}`}
+                href={`/domestic?page=${page - 1}`}
                 className="rounded-sm border border-border bg-background px-4 py-2 text-sm font-medium text-foreground hover:bg-muted transition-colors"
               >
                 이전
@@ -69,7 +56,7 @@ export default async function HomePage({ searchParams }: HomePageProps) {
             </span>
             {page < totalPages && (
               <a
-                href={`/?page=${page + 1}${language ? `&language=${language}` : ''}${search ? `&search=${encodeURIComponent(search)}` : ''}`}
+                href={`/domestic?page=${page + 1}`}
                 className="rounded-sm border border-border bg-background px-4 py-2 text-sm font-medium text-foreground hover:bg-muted transition-colors"
               >
                 다음

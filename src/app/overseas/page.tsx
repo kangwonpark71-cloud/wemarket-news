@@ -1,4 +1,3 @@
-import Sidebar from '@/components/layout/Sidebar'
 import NewsList from '@/components/news/NewsList'
 import { getArticles } from '@/lib/rss/db-service'
 
@@ -23,12 +22,8 @@ export default async function OverseasPage({ searchParams }: OverseasPageProps) 
 
   return (
     <div className="mx-auto max-w-7xl px-4 py-6 sm:px-6 lg:px-8">
-      <div className="flex gap-8">
-        <Sidebar category="overseas" />
-
-        <div className="min-w-0 flex-1">
-          <div className="mb-6">
-            <h1 className="text-2xl font-bold text-foreground">해외 경제</h1>
+      <div className="mb-6">
+        <h1 className="text-2xl font-bold text-foreground">해외 경제</h1>
             <p className="mt-1 text-sm text-muted-foreground">
               연준(Fed) 발표, 연설, 경제 지표 등
               {source && (
@@ -73,8 +68,6 @@ export default async function OverseasPage({ searchParams }: OverseasPageProps) 
           <div className="mt-4 text-center text-xs text-muted-foreground">
             총 {total}건의 뉴스
           </div>
-        </div>
       </div>
-    </div>
   )
 }

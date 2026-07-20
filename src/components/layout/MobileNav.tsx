@@ -3,20 +3,12 @@
 import { useEffect, useRef } from 'react'
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
-import { NAV_ITEMS, getSidebarNavItems, type NavItem } from '@/lib/constants/nav'
+import { NAV_ITEMS, type NavItem } from '@/lib/constants/nav'
 import { cn } from '@/lib/utils'
 
 interface MobileNavProps {
   open: boolean
   onClose: () => void
-  category?: 'domestic' | 'overseas' | 'all'
-}
-
-function resolveCategory(pathname: string): 'domestic' | 'overseas' | 'all' {
-  if (pathname === '/' || pathname.startsWith('/?')) return 'domestic'
-  if (pathname.startsWith('/overseas')) return 'overseas'
-  if (pathname.startsWith('/all')) return 'all'
-  return 'all'
 }
 
 function isActive(href: string, pathname: string): boolean {
@@ -25,12 +17,10 @@ function isActive(href: string, pathname: string): boolean {
   return pathname === base || pathname.startsWith(`${base}/`)
 }
 
-export function MobileNav({ open, onClose, category }: MobileNavProps) {
+export function MobileNav({ open, onClose }: MobileNavProps) {
   const pathname = usePathname()
   const panelRef = useRef<HTMLDivElement>(null)
   const closeRef = useRef<HTMLButtonElement>(null)
-  const effectiveCategory = category ?? resolveCategory(pathname)
-  const sidebar = getSidebarNavItems(effectiveCategory)
 
   useEffect(() => {
     if (!open) return
@@ -107,26 +97,6 @@ export function MobileNav({ open, onClose, category }: MobileNavProps) {
                 </li>
               )
             })}
-          </ul>
-
-          <div className="my-4 border-t border-border" />
-
-          <p className="mb-2 px-3 text-xs font-semibold uppercase tracking-wider text-muted-foreground">
-            {sidebar.title}
-          </p>
-          <ul className="space-y-1">
-            {sidebar.items.map((item) => (
-              <li key={item.href}>
-                <Link
-                  href={item.href}
-                  onClick={onClose}
-                  className="flex items-center gap-3 rounded-sm px-3 py-2.5 text-sm text-foreground transition-colors hover:bg-muted focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary"
-                >
-                  <span aria-hidden="true">{item.icon}</span>
-                  <span>{item.label}</span>
-                </Link>
-              </li>
-            ))}
           </ul>
         </nav>
       </div>
