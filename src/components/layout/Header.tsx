@@ -26,7 +26,7 @@ export default function Header() {
   const pathname = usePathname()
   const searchParams = useSearchParams()
   const [isSearchOpen, setIsSearchOpen] = useState(false)
-  const [searchQuery, setSearchQuery] = useState(searchParams.get('search') || '')
+  const [searchQuery, setSearchQuery] = useState(searchParams.get('q') || searchParams.get('search') || '')
   const [lastCrawled, setLastCrawled] = useState<string>('')
   const [user, setUser] = useState<CurrentUser | null>(null)
 
@@ -70,13 +70,10 @@ export default function Header() {
 
   const handleSearchSubmit = (e: React.FormEvent) => {
     e.preventDefault()
-    const params = new URLSearchParams(searchParams.toString())
-    if (searchQuery.trim()) {
-      params.set('search', searchQuery.trim())
-    } else {
-      params.delete('search')
-    }
-    window.location.href = `${pathname}?${params.toString()}`
+    const query = searchQuery.trim()
+    const params = new URLSearchParams()
+    if (query) params.set('q', query)
+    window.location.href = `/search${query ? `?${params.toString()}` : ''}`
   }
 
   return (
