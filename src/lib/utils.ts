@@ -4,6 +4,18 @@ export function cn(...inputs: ClassValue[]) {
   return clsx(inputs)
 }
 
+export function getSiteUrl(): string {
+  const base = process.env.NEXT_PUBLIC_BASE_URL
+  if (base) return base.replace(/\/$/, '')
+  return ''
+}
+
+export function absoluteUrl(path: string): string {
+  const base = getSiteUrl()
+  if (!base || /^https?:\/\//.test(path)) return path
+  return `${base}${path.startsWith('/') ? '' : '/'}${path}`
+}
+
 export function formatDate(date: Date | string, language: 'ko' | 'en' = 'ko'): string {
   const d = new Date(date)
   const now = new Date()

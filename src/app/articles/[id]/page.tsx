@@ -1,6 +1,8 @@
 import { getArticleById, getRelatedArticles, saveArticleContent } from '@/lib/rss/db-service'
 import { scrapeArticleContent } from '@/lib/rss/content-scraper'
+import type { Metadata } from 'next'
 import { notFound } from 'next/navigation'
+import { absoluteUrl } from '@/lib/utils'
 import {
   ArticleReader,
   ArticleHeader,
@@ -16,9 +18,35 @@ interface Props {
   params: Promise<{ id: string }>
 }
 
-export const metadata = {
-  title: '기사 상세 - 경제뉴스',
-  description: '경제 뉴스 기사 전문 보기',
+export async function generateMetadata({ params }: Props): Promise<Metadata> {
+  const { id } = await params
+  const article = await getArticleById(id)
+  if (!article) {
+    return { title: '기사를 찾을 수 없습니다 - 경제뉴스' }
+  }
+
+  const description = article.description || '경제 뉴스 기사 전문을 확인하세요.'
+  const url = absoluteUrl(`/articles/${article.id}`)
+
+  return {
+    title: `${article.title} - 경제뉴스`,
+    description,
+    openGraph: {
+      type: 'article',
+      title: article.title,
+      description,
+      url,
+      siteName: '경제뉴스',
+      publishedTime: article.publishedAt.toISOString(),
+      images: article.thumbnail ? [{ url: article.thumbnail }] : undefined,
+    },
+    twitter: {
+      card: 'summary_large_image',
+      title: article.title,
+      description,
+      images: article.thumbnail ? [article.thumbnail] : undefined,
+    },
+  }
 }
 
 export default async function ArticleDetailPage({ params }: Props) {
@@ -45,6 +73,7 @@ export default async function ArticleDetailPage({ params }: Props) {
     title: rel.title,
     publishedAt: rel.publishedAt,
     source: { name: rel.source.name },
+    hrefBase: '/articles',
   }))
 
   return (

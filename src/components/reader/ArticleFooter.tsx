@@ -1,5 +1,6 @@
 import Link from 'next/link'
 import { formatDate } from '@/lib/utils'
+import { ShareButton } from './ShareButton'
 import type { ReaderArticle, ReaderRelatedArticle, ReaderLanguage } from './types'
 
 interface ArticleFooterProps {
@@ -13,7 +14,7 @@ export function ArticleFooter({ article, related, language }: ArticleFooterProps
 
   return (
     <footer className="mt-12 border-t border-border pt-8 lg:mt-16">
-      <div className="mb-8">
+      <div className="mb-8 flex flex-wrap items-center gap-4">
         <a
           href={article.url}
           target="_blank"
@@ -25,6 +26,12 @@ export function ArticleFooter({ article, related, language }: ArticleFooterProps
           </svg>
           {isKorean ? '원문 출처에서 보기' : 'View original source'}
         </a>
+        <ShareButton
+          url={article.url}
+          title={article.title}
+          language={language}
+          className="ml-auto"
+        />
       </div>
 
       {related.length > 0 && (
@@ -36,7 +43,7 @@ export function ArticleFooter({ article, related, language }: ArticleFooterProps
             {related.map((rel) => (
               <Link
                 key={rel.id}
-                href={`/articles/${rel.id}`}
+                href={`${rel.hrefBase ?? '/articles'}/${rel.id}`}
                 className="group flex flex-col rounded-sm border border-border bg-card p-4 transition-colors hover:bg-muted/30 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary"
               >
                 <span className="mb-1.5 text-[10px] font-semibold uppercase tracking-wider text-muted-foreground">
@@ -56,3 +63,4 @@ export function ArticleFooter({ article, related, language }: ArticleFooterProps
     </footer>
   )
 }
+

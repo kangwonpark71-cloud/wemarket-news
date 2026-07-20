@@ -44,6 +44,7 @@ export interface ReaderRelatedArticle {
   title: string
   publishedAt: Date
   source: ReaderSource
+  hrefBase?: string
 }
 
 export type ReaderLanguage = 'ko' | 'en'
