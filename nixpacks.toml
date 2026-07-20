@@ -9,3 +9,4 @@ cmds = ["npx prisma generate", "rm -rf .next/cache", "npm run build", "echo BUIL
 
 [start]
 cmd = "npm run start"
+
