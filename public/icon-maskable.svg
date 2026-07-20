@@ -1,0 +1,9 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" role="img" aria-label="경제뉴스">
+  <rect width="512" height="512" fill="#2563eb"/>
+  <rect x="156" y="128" width="200" height="40" rx="8" fill="#ffffff"/>
+  <rect x="156" y="196" width="200" height="24" rx="6" fill="#dbeafe"/>
+  <rect x="156" y="240" width="200" height="24" rx="6" fill="#dbeafe"/>
+  <rect x="156" y="284" width="200" height="24" rx="6" fill="#dbeafe"/>
+  <rect x="156" y="340" width="120" height="64" rx="10" fill="#ffffff"/>
+  <path d="M292 396 L336 340 L376 372 L408 332 L428 396 Z" fill="#ffffff"/>
+</svg>

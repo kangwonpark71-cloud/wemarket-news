@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
 import HeaderWrapper from "@/components/layout/HeaderWrapper";
 import { FetchStatusBar } from "@/components/news/FetchStatusBar";
+import { ServiceWorkerRegister } from "@/components/layout/ServiceWorkerRegister";
 import "./globals.css";
 
 const geistSans = Geist({
@@ -49,6 +50,7 @@ export default function RootLayout({
         <HeaderWrapper />
         <main className="flex-1">{children}</main>
         <FetchStatusBar />
+        <ServiceWorkerRegister />
       </body>
     </html>
   );
