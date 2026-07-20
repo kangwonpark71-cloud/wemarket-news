@@ -1,7 +1,6 @@
-import { getArticleById, saveArticleContent } from '@/lib/rss/db-service'
+import { getArticleById, getRelatedArticles, saveArticleContent } from '@/lib/rss/db-service'
 import { scrapeArticleContent } from '@/lib/rss/content-scraper'
 import { notFound } from 'next/navigation'
-import { prisma } from '@/lib/db'
 import {
   ArticleReader,
   ArticleHeader,
@@ -39,18 +38,7 @@ export default async function ArticleDetailPage({ params }: Props) {
   const language: ReaderLanguage = isEnglish ? 'en' : 'ko'
   const source = article.source
 
-  const relatedRaw = await prisma.article.findMany({
-    where: {
-      id: { not: id },
-      OR: [
-        { category: article.category || undefined },
-        { sourceId: article.sourceId },
-      ],
-    },
-    take: 3,
-    orderBy: { publishedAt: 'desc' },
-    include: { source: true },
-  })
+  const relatedRaw = await getRelatedArticles(id, 4)
 
   const related: ReaderRelatedArticle[] = relatedRaw.map((rel) => ({
     id: rel.id,

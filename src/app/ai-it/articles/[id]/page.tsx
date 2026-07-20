@@ -1,4 +1,4 @@
-import { getAIITArticleById, toReaderSummary } from '@/lib/ai-it/db-service'
+import { getAIITArticleById, getRelatedAIITArticles, toReaderSummary } from '@/lib/ai-it/db-service'
 import { notFound } from 'next/navigation'
 import {
   ArticleReader,
@@ -58,7 +58,14 @@ export default async function AIITArticleDetailPage({ params }: Props) {
     summary: toReaderSummary(article.summary),
   }
 
-  const related: ReaderRelatedArticle[] = []
+  const relatedRaw = await getRelatedAIITArticles(id, 4)
+
+  const related: ReaderRelatedArticle[] = relatedRaw.map((rel) => ({
+    id: rel.id,
+    title: rel.title,
+    publishedAt: rel.publishedAt,
+    source: { name: rel.source.name },
+  }))
 
   return (
     <ArticleReader language={language}>

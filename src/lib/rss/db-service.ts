@@ -137,6 +137,50 @@ export async function getArticleById(id: string): Promise<ArticleWithSource | nu
   return article as ArticleWithSource | null
 }
 
+export async function getRelatedArticles(
+  id: string,
+  limit = 4,
+): Promise<ArticleWithSource[]> {
+  const current = await prisma.article.findUnique({
+    where: { id },
+    select: { category: true, sourceId: true },
+  })
+  if (!current) return []
+
+  const candidates = await prisma.article.findMany({
+    where: {
+      id: { not: id },
+      isBookmarked: false,
+      OR: [
+        { sourceId: current.sourceId },
+        ...(current.category ? [{ category: current.category }] : []),
+      ],
+    },
+    include: { source: true },
+    orderBy: { publishedAt: 'desc' },
+    take: limit * 2,
+  })
+
+  // Prefer same-source matches first, then fill with same-category.
+  const sameSource = candidates.filter((a) => a.sourceId === current.sourceId)
+  const sameCategory = candidates.filter(
+    (a) => a.sourceId !== current.sourceId && a.category === current.category,
+  )
+
+  const ranked = [...sameSource, ...sameCategory].slice(0, limit)
+  if (ranked.length >= limit) return ranked as ArticleWithSource[]
+
+  // Fallback: most recent articles so the section is never empty.
+  const fallback = await prisma.article.findMany({
+    where: { id: { not: id }, isBookmarked: false },
+    include: { source: true },
+    orderBy: { publishedAt: 'desc' },
+    take: limit,
+  })
+  const seen = new Set(ranked.map((a) => a.id))
+  return [...ranked, ...fallback.filter((a) => !seen.has(a.id))].slice(0, limit) as ArticleWithSource[]
+}
+
 export async function saveArticleContent(id: string, content: string): Promise<void> {
   await prisma.article.update({
     where: { id },

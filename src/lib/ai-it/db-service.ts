@@ -143,6 +143,60 @@ export async function getAIITArticleById(id: string): Promise<AINewsWithSource |
   return article as AINewsWithSource | null;
 }
 
+export async function getRelatedAIITArticles(
+  id: string,
+  limit = 4,
+): Promise<AINewsWithSource[]> {
+  const current = await prisma.article.findUnique({
+    where: { id },
+    include: { summary: true },
+  });
+  if (!current) return [];
+
+  const keywords = (current.summary?.keywords ?? '')
+    .split(',')
+    .map((k) => k.trim())
+    .filter(Boolean);
+
+  const candidates = await prisma.article.findMany({
+    where: {
+      id: { not: id },
+      sourceType: 'AI_IT',
+      OR: [
+        { sourceId: current.sourceId },
+        ...(keywords.length > 0
+          ? [{ summary: { keywords: { contains: keywords[0] } } }]
+          : []),
+      ],
+    },
+    include: { source: true, tags: { include: { tag: true } }, summary: true },
+    orderBy: { publishedAt: 'desc' },
+    take: limit * 2,
+  });
+
+  const sameSource = candidates.filter((a) => a.sourceId === current.sourceId);
+  const keywordMatches = candidates.filter((a) => {
+    if (a.sourceId === current.sourceId) return false;
+    const otherKeywords = (a.summary?.keywords ?? '')
+      .split(',')
+      .map((k) => k.trim())
+      .filter(Boolean);
+    return keywords.some((k) => otherKeywords.includes(k));
+  });
+
+  const ranked = [...sameSource, ...keywordMatches].slice(0, limit);
+  if (ranked.length >= limit) return ranked as AINewsWithSource[];
+
+  const fallback = await prisma.article.findMany({
+    where: { id: { not: id }, sourceType: 'AI_IT' },
+    include: { source: true, tags: { include: { tag: true } }, summary: true },
+    orderBy: { publishedAt: 'desc' },
+    take: limit,
+  });
+  const seen = new Set(ranked.map((a) => a.id));
+  return [...ranked, ...fallback.filter((a) => !seen.has(a.id))].slice(0, limit) as AINewsWithSource[];
+}
+
 export async function getAIITArticleByUrl(url: string): Promise<AINewsWithSource | null> {
   const article = await prisma.article.findUnique({
     where: { url },
