@@ -153,7 +153,8 @@ export async function getRelatedAIITArticles(
   });
   if (!current) return [];
 
-  const keywords = (current.summary?.keywords ?? '')
+  const keywordRaw = current.summary?.keywords ?? '';
+  const keywords = (Array.isArray(keywordRaw) ? keywordRaw.join(',') : keywordRaw)
     .split(',')
     .map((k) => k.trim())
     .filter(Boolean);
@@ -165,7 +166,7 @@ export async function getRelatedAIITArticles(
       OR: [
         { sourceId: current.sourceId },
         ...(keywords.length > 0
-          ? [{ summary: { keywords: { contains: keywords[0] } } }]
+          ? [{ summary: { keywords: { hasSome: keywords } } }]
           : []),
       ],
     },
@@ -177,7 +178,8 @@ export async function getRelatedAIITArticles(
   const sameSource = candidates.filter((a) => a.sourceId === current.sourceId);
   const keywordMatches = candidates.filter((a) => {
     if (a.sourceId === current.sourceId) return false;
-    const otherKeywords = (a.summary?.keywords ?? '')
+    const otherRaw = a.summary?.keywords ?? '';
+    const otherKeywords = (Array.isArray(otherRaw) ? otherRaw.join(',') : otherRaw)
       .split(',')
       .map((k) => k.trim())
       .filter(Boolean);
@@ -319,18 +321,18 @@ export async function upsertSummary(
     update: {
       translatedTitle: summaryData.translatedTitle,
       summary3Line: summaryData.summary3Line,
-      keywords: summaryData.keywords.join(','),
-      relatedCompanies: summaryData.relatedCompanies.join(','),
-      relatedModels: summaryData.relatedModels.join(','),
+      keywords: summaryData.keywords,
+      relatedCompanies: summaryData.relatedCompanies,
+      relatedModels: summaryData.relatedModels,
       difficulty: summaryData.difficulty,
     },
     create: {
       articleId: newsId,
       translatedTitle: summaryData.translatedTitle,
       summary3Line: summaryData.summary3Line,
-      keywords: summaryData.keywords.join(','),
-      relatedCompanies: summaryData.relatedCompanies.join(','),
-      relatedModels: summaryData.relatedModels.join(','),
+      keywords: summaryData.keywords,
+      relatedCompanies: summaryData.relatedCompanies,
+      relatedModels: summaryData.relatedModels,
       difficulty: summaryData.difficulty,
     },
   });
@@ -348,13 +350,13 @@ export async function getSummariesForNews(newsIds: string[]): Promise<NewsSummar
   });
 }
 
-// NewsSummary stores keywords/companies/models as comma-joined strings (SQLite has
-// no native array type), but the reader UI expects string[]. Convert at the boundary.
-function parseList(value: string | null | undefined): string[] {
+// NewsSummary stores keywords/companies/models as scalar string[] (Prisma String[]).
+// Normalize both array and legacy comma-string forms at the boundary for the reader UI.
+function parseList(value: string[] | string | null | undefined): string[] {
   if (!value) return [];
-  return value
-    .split(',')
-    .map(item => item.trim())
+  const items = Array.isArray(value) ? value : value.split(',');
+  return items
+    .map(item => String(item).trim())
     .filter(item => item.length > 0);
 }
 
