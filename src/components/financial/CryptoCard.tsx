@@ -19,13 +19,13 @@ export function CryptoCard({ crypto }: CryptoCardProps) {
   const bgColor = crypto.signedChangeRate >= 0 ? 'bg-red-50' : 'bg-blue-50';
 
   return (
-    <div className="bg-white rounded-none border border-gray-200 p-4 hover:shadow-md transition-all cursor-pointer">
+    <div className="bg-background rounded-none border border-border p-4 hover:shadow-md transition-all cursor-pointer">
       <div className="flex items-start justify-between">
         <div className="flex-1 min-w-0">
-          <p className="text-sm font-medium text-gray-900">{crypto.nameKr || crypto.name}</p>
+          <p className="text-sm font-medium text-foreground">{crypto.nameKr || crypto.name}</p>
           <div className="flex items-baseline gap-2 mt-1">
             <span className="text-2xl font-bold tabular-nums">{crypto.tradePrice.toLocaleString()}</span>
-            <span className="text-xs text-gray-500">KRW</span>
+            <span className="text-xs text-muted-foreground">KRW</span>
           </div>
           <div className={`flex items-center gap-1 mt-1 ${changeColor}`}>
             {crypto.signedChangeRate >= 0 ? '▲' : '▼'}

@@ -19,10 +19,10 @@ export function GlobalIndexCard({ index }: GlobalIndexCardProps) {
   const bgColor = isPositive ? 'bg-red-50' : 'bg-blue-50';
 
   return (
-    <div className="bg-white rounded-none border border-gray-200 p-4 hover:shadow-md transition-all cursor-pointer">
+    <div className="bg-background rounded-none border border-border p-4 hover:shadow-md transition-all cursor-pointer">
       <div className="flex items-start justify-between">
         <div className="flex-1 min-w-0">
-          <p className="text-sm font-medium text-gray-900">{index.nameKr || index.name}</p>
+          <p className="text-sm font-medium text-foreground">{index.nameKr || index.name}</p>
           <div className="flex items-baseline gap-2 mt-1">
             <span className="text-2xl font-bold tabular-nums">{index.price.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</span>
           </div>

@@ -268,7 +268,7 @@ export function ForexPage() {
 
               <button
                 onClick={() => setSelectedForex(null)}
-                className="w-full py-2.5 px-4 rounded-none border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 text-xs font-semibold text-slate-700 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-800 transition-all cursor-pointer"
+                className="w-full py-2.5 px-4 rounded-none border border-slate-200 dark:border-slate-800 bg-background dark:bg-slate-900 text-xs font-semibold text-slate-700 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-800 transition-all cursor-pointer"
               >
                 닫기
               </button>

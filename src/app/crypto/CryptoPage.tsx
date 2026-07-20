@@ -171,7 +171,7 @@ export function CryptoPage() {
               className={`px-3 py-1.5 rounded-sm text-xs font-semibold border transition-all cursor-pointer ${
                 filter === f
                   ? 'bg-primary border-primary text-primary-foreground'
-                  : 'bg-white dark:bg-slate-900 border-slate-200 dark:border-slate-800 text-slate-700 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-800'
+                  : 'bg-background dark:bg-slate-900 border-slate-200 dark:border-slate-800 text-slate-700 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-800'
               }`}
             >
               {f === 'ALL' ? '전체' : f === 'VOLUME' ? '거래량 순' : f === 'GAINERS' ? '상승 종목' : '하락 종목'}
@@ -331,7 +331,7 @@ export function CryptoPage() {
 
               <button
                 onClick={() => setSelectedStock(null)}
-                className="w-full py-2.5 px-4 rounded-none border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 text-xs font-semibold text-slate-700 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-800 transition-all cursor-pointer"
+                className="w-full py-2.5 px-4 rounded-none border border-slate-200 dark:border-slate-800 bg-background dark:bg-slate-900 text-xs font-semibold text-slate-700 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-800 transition-all cursor-pointer"
               >
                 닫기
               </button>
