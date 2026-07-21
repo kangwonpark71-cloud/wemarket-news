@@ -47,7 +47,7 @@ export default function Header() {
         hour: '2-digit',
         minute: '2-digit',
       })
-      setLastCrawled(`${dateStr} · 크롤링: ${timeStr}`)
+      setLastCrawled(`${dateStr} · 반영: ${timeStr}`)
     }
     updateTime()
     const interval = setInterval(updateTime, 60000)
@@ -68,7 +68,7 @@ export default function Header() {
   }
 
   return (
-    <header className="sticky top-0 z-50 w-full border-b border-border bg-background/80 backdrop-blur-md">
+    <header className="sticky top-0 z-[60] w-full border-b border-border bg-background">
       <div className="mx-auto flex h-16 max-w-7xl items-center justify-between px-4 sm:px-6 lg:px-8">
         <div className="flex items-center gap-4 min-w-0">
           <button
@@ -170,11 +170,6 @@ export default function Header() {
             </Link>
           )}
 
-          <div className="hidden gap-2 sm:flex" aria-hidden="true">
-            <span className="px-3 py-1.5 text-xs text-muted-foreground border border-border rounded-sm bg-muted/40">
-              3시간 자동 갱신
-            </span>
-          </div>
         </div>
       </div>
 

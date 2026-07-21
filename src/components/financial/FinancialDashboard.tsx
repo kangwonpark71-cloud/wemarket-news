@@ -10,6 +10,7 @@ interface DashboardData {
   usdKrw: { rate: number; change: number; changeRate: number } | null;
   nasdaq: { price: number; change: number; changeRate: number } | null;
   lastUpdated: string;
+  simulated?: boolean;
 }
 
 function Sparkline({ data, color }: { data: number[]; color: string }) {
@@ -234,9 +235,15 @@ export function FinancialDashboard() {
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-2">
           <h2 className="text-lg font-bold text-foreground">금융 대시보드</h2>
-          <span className="text-[10px] px-2 py-0.5 rounded-sm bg-emerald-100 dark:bg-emerald-950/30 text-emerald-700 dark:text-emerald-400 font-medium">
-            3시간 간격 자동갱신
-          </span>
+          {data.simulated ? (
+            <span className="text-[10px] px-2 py-0.5 rounded-sm bg-amber-100 dark:bg-amber-950/30 text-amber-700 dark:text-amber-400 font-medium">
+              시뮬레이션 데이터
+            </span>
+          ) : (
+            <span className="text-[10px] px-2 py-0.5 rounded-sm bg-emerald-100 dark:bg-emerald-950/30 text-emerald-700 dark:text-emerald-400 font-medium">
+              3시간 간격 자동갱신
+            </span>
+          )}
         </div>
         <div className="flex items-center gap-3">
           <span className="text-xs text-muted-foreground">

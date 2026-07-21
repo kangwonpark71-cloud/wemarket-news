@@ -52,6 +52,15 @@ export class KoreaInvestmentService {
   private tokenExpiresAt: number = 0;
   private isFallbackMock = false;
 
+  /**
+   * True when the service is running without real KIS credentials and is
+   * returning simulated (Math.sin-based) market data. UI must surface this
+   * so users are not misled into treating fake oscillations as live quotes.
+   */
+  get isSimulated(): boolean {
+    return this.isFallbackMock;
+  }
+
   constructor() {
     this.config = {
       appKey: process.env.KOREA_INVEST_APP_KEY || '',
@@ -343,14 +352,16 @@ const stocks: StockMasterData[] = data.output.map((item: KoreaInvestmentStockMas
   }
 
   /**
-   * Get market overview (KOSPI/KOSDAQ indices)
+   * Get market overview (KOSPI/KOSDAQ indices), tagged with a `simulated`
+   * flag so API consumers / UI can render a demo badge when data is synthetic.
    */
   async getMarketOverview(): Promise<{
     kospi: { value: number; change: number; changeRate: number };
     kosdaq: { value: number; change: number; changeRate: number };
+    simulated?: boolean;
   }> {
     if (this.isFallbackMock) {
-      return this.getMockOverview();
+      return { ...this.getMockOverview(), simulated: true };
     }
     const cacheKey = 'market:overview';
     const cached = await cacheService.get<{
@@ -391,12 +402,29 @@ const stocks: StockMasterData[] = data.output.map((item: KoreaInvestmentStockMas
 
   /**
    * Save stock prices to database
+   *
+   * StockPrice.stockId is a FK to Stock.id (uuid), NOT the ticker code.
+   * We resolve codes -> Stock.id by upserting each stock (so the master row
+   * exists) and reading back its generated id. This avoids the prior FK
+   * violation where the raw code (e.g. "005930") was written into a uuid FK.
    */
   async saveStockPricesToDb(prices: StockPriceData[]): Promise<void> {
     for (const price of prices) {
+      const stock = await prisma.stock.upsert({
+        where: { code: price.code },
+        update: { name: price.name, isActive: true },
+        create: {
+          code: price.code,
+          name: price.name,
+          market: 'UNKNOWN',
+          isActive: true,
+        },
+        select: { id: true },
+      });
+
       await prisma.stockPrice.create({
         data: {
-          stockId: price.code, // This would need proper stock ID mapping
+          stockId: stock.id,
           price: price.price,
           change: price.change,
           changeRate: price.changeRate,

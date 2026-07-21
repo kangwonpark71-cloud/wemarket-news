@@ -114,9 +114,9 @@ export function StockPage() {
       } catch (error) {
         console.error('Failed to fetch prices:', error);
       }
+    };
 
-      fetchPrices();
-    }
+    void fetchPrices();
   }, [masterData, market, search, sortBy, sortOrder]);
 
   const handleSort = (field: 'changeRate' | 'volume' | 'price') => {

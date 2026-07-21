@@ -3,6 +3,7 @@ import { fetchAllAIITNews, run15MinJob, run30MinJob, run60MinJob, seedAIITSource
 import { schedulerService } from '@/lib/services/scheduler/scheduler-service'
 import { runJobWithLock } from '@/lib/utils/lock'
 import cron from 'node-cron'
+import { createDefaultSchedulers } from '@/lib/scheduler/scheduler-manager'
 
 let started = false
 
@@ -14,6 +15,11 @@ export async function startAllSchedulers() {
     return
   }
 
+  const schedulerManager = createDefaultSchedulers()
+  await schedulerManager.startAll()
+
+  // Legacy: Keep existing scheduler code for backward compatibility
+  // TODO: Migrate all schedulers to the new manager system
 
   // 1. RSS Scheduler (3시간 간격 + 서버 시작 시)
   startRssScheduler()

@@ -30,7 +30,8 @@ export async function GET(request: Request) {
             { status: 400 }
           );
         }
-        result = await koreaInvestmentService.getStockPrices(codes);
+        const priceMap = await koreaInvestmentService.getStockPrices(codes);
+        result = Array.from(priceMap.values());
         break;
 
       case 'market-overview':

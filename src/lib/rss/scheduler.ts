@@ -5,6 +5,7 @@ import { getSourceIdByNameEn, logFetch, seedSources } from './service'
 import { ALL_SOURCES } from './sources'
 import { fetchProgressPubSub } from '@/lib/sse/pubsub'
 import { runJobWithLock } from '@/lib/utils/lock'
+import { logSchedulerError, logSchedulerSuccess, withSchedulerErrorHandling, createSafeSchedulerJob } from '@/lib/utils/scheduler-error-handler'
 
 export interface FetchResult {
   source: string
@@ -30,6 +31,7 @@ export async function runRssFetch(sourceNameEn?: string): Promise<FetchResult[]>
 
   const results: FetchResult[] = []
   const totalSources = sourcesToFetch.length
+  const startTime = Date.now()
 
   fetchProgressPubSub.publish('fetch-progress', {
     phase: 'start',
@@ -72,6 +74,10 @@ export async function runRssFetch(sourceNameEn?: string): Promise<FetchResult[]>
       })
     } catch (err) {
       const errorMessage = err instanceof Error ? err.message : String(err)
+      logSchedulerError('rss', config.nameEn, err instanceof Error ? err : new Error(errorMessage), {
+        sourceIndex: i,
+        totalSources,
+      })
       results.push({ source: config.nameEn, status: 'error', error: errorMessage, duration: Date.now() - start })
       fetchProgressPubSub.publish('fetch-progress', {
         phase: 'progress', system: 'rss', source: config.nameEn, status: 'error', error: errorMessage,
@@ -80,8 +86,16 @@ export async function runRssFetch(sourceNameEn?: string): Promise<FetchResult[]>
     }
   }
 
+  const totalDuration = Date.now() - startTime
   const ok = results.filter(r => r.status === 'success' || r.status === 'partial').length
   const err = results.filter(r => r.status === 'error').length
+  
+  logSchedulerSuccess('rss', 'runRssFetch', totalDuration, {
+    totalSources: totalSources,
+    successful: ok,
+    errors: err,
+  })
+
   fetchProgressPubSub.publish('fetch-complete', {
     system: 'rss',
     total: results.length,
@@ -105,12 +119,20 @@ export function startRssScheduler() {
   if (initialized) return
   initialized = true
 
+  const safeRssFetch = createSafeSchedulerJob('rss', 'cron-fetch', runRssFetchWithLock, {
+    retryCount: 2,
+    retryDelay: 5000,
+    onError: (error) => {
+      console.error('[Scheduler] Cron error:', error.message)
+    },
+  })
+
   cron.schedule('0 */3 * * *', () => {
-    runRssFetchWithLock().catch(err => console.error('[Scheduler] Cron error:', err))
+    safeRssFetch().catch(err => console.error('[Scheduler] Cron error:', err))
   })
 
   setTimeout(() => {
-    runRssFetchWithLock().then(results => {
+    safeRssFetch().then(results => {
       if (results.length === 0) return;
     }).catch(err => console.error('[Scheduler] Initial fetch error:', err))
   }, 2000)

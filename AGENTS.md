@@ -65,13 +65,13 @@ economy-news/
 
 ## Prisma DB Schema Architecture
 
-The project has three distinct data systems with SEPARATE models:
+The schema is **unified**, not three separate silos. Defined in `prisma/schema.prisma` (PostgreSQL, production) with a parallel `prisma/schema.sqlite.prisma` (SQLite, local dev — see Drift Risk below).
 
-1. **RSS system** (Source, Article, FetchLog) — for hankyung/mk/feeds economy news
-2. **AI/IT system** (NewsSource, NewsArticle, NewsTag, NewsSummary, etc.) — for AI/IT blog/news aggregation
-3. **Financial system** (Stock, StockPrice, Cryptocurrency, ExchangeRate, GlobalIndex, etc.)
+1. **News system (shared)** — `Source` + `Article` + `FetchLog`. A single `Article`/`Source` pair serves BOTH pipelines, distinguished by `Source.sourceType` (`RSS` | `AI_IT`). AI/IT-only辅助 tables (`NewsCategory`, `NewsTag`, `NewsTagRelation`, `NewsSummary`) reference `Article` by id. RSS and AI/IT queries are the same tables filtered by `sourceType`, NOT separate models.
+2. **User system** — `User`, `UserPreference`, `Banner`, `Advertisement`, `NewsletterSubscription`.
+3. **Financial system** (separate domain models) — `Stock`, `StockPrice`, `Cryptocurrency`, `CryptoTicker`, `CryptoCandle`, `ExchangeRate`, `GlobalIndex`, `PriceHistory`, `FinancialFetchLog`, `DistributedLock`. These do not share rows with the news tables but live in the same database and use the same Prisma client.
 
-These systems do not share models or queries.
+> **Drift risk**: `prisma/schema.prisma` (prod/PG) and `prisma/schema.sqlite.prisma` (dev/SQLite) are maintained separately. Any model change must be applied to BOTH and regeneration run for each (`npm run db:generate` for PG, `npm run db:dev:generate` for SQLite) — otherwise dev and prod schemas diverge.
 
 ## Commands
 

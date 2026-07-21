@@ -30,21 +30,28 @@ export async function GET() {
       }),
     ]);
 
-    // Get latest tickers from DB for volume
-    const [btcTicker, ethTicker] = await Promise.all([
-      prisma.cryptoTicker.findFirst({
-        where: { crypto: { symbol: 'BTC' } },
-        orderBy: { timestamp: 'desc' },
-      }),
-      prisma.cryptoTicker.findFirst({
-        where: { crypto: { symbol: 'ETH' } },
-        orderBy: { timestamp: 'desc' },
-      }),
-    ]);
+    // Get latest tickers from DB for volume (gracefully handle DB errors)
+    let btcTicker = null;
+    let ethTicker = null;
+    try {
+      [btcTicker, ethTicker] = await Promise.all([
+        prisma.cryptoTicker.findFirst({
+          where: { crypto: { symbol: 'BTC' } },
+          orderBy: { timestamp: 'desc' },
+        }),
+        prisma.cryptoTicker.findFirst({
+          where: { crypto: { symbol: 'ETH' } },
+          orderBy: { timestamp: 'desc' },
+        }),
+      ]);
+    } catch (dbErr) {
+      console.warn('[Dashboard] DB ticker query failed:', dbErr);
+    }
 
     const dashboard = {
       kospi: stockPrices.kospi,
       kosdaq: stockPrices.kosdaq,
+      simulated: stockPrices.simulated ?? false,
       btc: btcTicker
         ? {
             price: btcTicker.tradePrice,

@@ -23,6 +23,7 @@
     "db:seed": "tsx prisma/seed.ts",
     "db:studio": "prisma studio",
     "worker": "tsx worker/index.ts",
+    "cron-worker": "tsx worker/cron-worker.ts",
     "dev:fetch": "tsx scripts/dev-fetch.ts",
     "dev:fetch:source": "tsx scripts/dev-fetch.ts",
     "fetch": "curl -X POST http://localhost:3000/api/cron"

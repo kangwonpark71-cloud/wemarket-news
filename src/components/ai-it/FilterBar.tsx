@@ -64,7 +64,7 @@ export default function FilterBar({ sources, tags, totalCount, currentPage, tota
   const hasActiveFilters = currentSource || currentLanguage || currentTags.length > 0;
 
   return (
-    <div className="sticky top-16 z-40 w-full border-b border-border bg-background/80 backdrop-blur-md">
+    <div className="sticky top-16 z-40 w-full border-b border-border bg-background">
       <div className="mx-auto flex flex-col gap-3 px-4 py-3 sm:flex-row sm:items-center sm:justify-between lg:px-6 lg:py-2">
         <div className="flex items-center gap-3">
           <p className="text-sm font-medium text-foreground">

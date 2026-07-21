@@ -14,8 +14,37 @@ function getSecret(): string {
 
 export type { UserRole };
 
+const SCRYPT_KEYLEN = 64;
+const SALT_BYTES = 16;
+
+/**
+ * Hash a password with crypto.scrypt + a per-user random salt.
+ * Format: `scrypt$<saltHex>$<hashHex>`. A fixed server secret is intentionally
+ * NOT used as salt — each user gets a unique random salt so identical passwords
+ * produce different hashes (rainbow-table resistant).
+ */
 export function hashPassword(password: string): string {
-  return crypto.createHash('sha256').update(password + getSecret()).digest('hex');
+  const salt = crypto.randomBytes(SALT_BYTES);
+  const hash = crypto.scryptSync(password, salt, SCRYPT_KEYLEN);
+  return `scrypt$${salt.toString('hex')}$${hash.toString('hex')}`;
+}
+
+/**
+ * Verify a password against a stored scrypt hash. Returns false (never throws)
+ * for malformed/legacy inputs so callers can treat them as auth failures.
+ */
+export function verifyPassword(password: string, storedHash: string | null | undefined): boolean {
+  if (!storedHash) return false;
+  const parts = storedHash.split('$');
+  if (parts.length !== 3 || parts[0] !== 'scrypt') return false;
+
+  const salt = Buffer.from(parts[1], 'hex');
+  const expected = Buffer.from(parts[2], 'hex');
+  if (salt.length === 0 || expected.length === 0) return false;
+
+  const actual = crypto.scryptSync(password, salt, expected.length);
+  if (actual.length !== expected.length) return false;
+  return crypto.timingSafeEqual(actual, expected);
 }
 
 export function createSessionToken(userId: string): string {

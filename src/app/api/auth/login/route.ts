@@ -1,6 +1,6 @@
 import { NextResponse } from 'next/server';
 import { prisma } from '@/lib/db';
-import { hashPassword, createSessionToken } from '@/lib/utils/auth';
+import { verifyPassword, createSessionToken } from '@/lib/utils/auth';
 
 export async function POST(request: Request) {
   try {
@@ -24,9 +24,7 @@ export async function POST(request: Request) {
       );
     }
 
-    const hashedPassword = hashPassword(password);
-
-    if (user.password !== hashedPassword) {
+    if (!verifyPassword(password, user.password)) {
       return NextResponse.json(
         { success: false, error: '이메일 또는 비밀번호가 일치하지 않습니다.' },
         { status: 400 }

@@ -119,7 +119,21 @@ class CacheService {
 
     if (this.useRedis && this.redis) {
       try {
-        const keys = await this.redis.keys(fullPattern);
+        // SCAN instead of KEYS to avoid blocking Redis on large key spaces.
+        const keys: string[] = [];
+        let cursor = '0';
+        do {
+          const [nextCursor, found] = await this.redis.scan(
+            cursor,
+            'MATCH',
+            fullPattern,
+            'COUNT',
+            100,
+          );
+          cursor = nextCursor;
+          if (found.length > 0) keys.push(...found);
+        } while (cursor !== '0');
+
         if (keys.length > 0) {
           await this.redis.del(...keys);
         }
@@ -170,16 +184,25 @@ class CacheService {
         },
       });
 
-      await prisma.distributedLock.create({
-        data: {
-          lockName,
-          owner,
-          expiresAt,
-        },
-      });
-
-      return true;
-    } catch {
+      try {
+        await prisma.distributedLock.create({
+          data: {
+            lockName,
+            owner,
+            expiresAt,
+          },
+        });
+        return true;
+      } catch (createErr) {
+        // Unique constraint (P2002): another instance already holds the lock.
+        // This is the expected "lock not acquired" case, not an error.
+        if ((createErr as { code?: string })?.code === 'P2002') {
+          return false;
+        }
+        throw createErr;
+      }
+    } catch (err) {
+      console.warn('[Cache] Non-Redis acquireLock failed:', err);
       return false;
     }
   }
