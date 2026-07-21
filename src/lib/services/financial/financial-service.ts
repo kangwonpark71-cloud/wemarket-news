@@ -409,34 +409,57 @@ const stocks: StockMasterData[] = data.output.map((item: KoreaInvestmentStockMas
    * violation where the raw code (e.g. "005930") was written into a uuid FK.
    */
   async saveStockPricesToDb(prices: StockPriceData[]): Promise<void> {
-    for (const price of prices) {
-      const stock = await prisma.stock.upsert({
-        where: { code: price.code },
-        update: { name: price.name, isActive: true },
-        create: {
-          code: price.code,
-          name: price.name,
-          market: 'UNKNOWN',
-          isActive: true,
-        },
-        select: { id: true },
-      });
+    let saved = 0;
+    let failed = 0;
 
-      await prisma.stockPrice.create({
-        data: {
-          stockId: stock.id,
-          price: price.price,
-          change: price.change,
-          changeRate: price.changeRate,
-          openPrice: price.openPrice,
-          highPrice: price.highPrice,
-          lowPrice: price.lowPrice,
-          volume: price.volume,
-          tradingValue: price.tradingValue,
-          marketCap: price.marketCap,
-          timestamp: price.timestamp,
-        },
-      });
+    for (const price of prices) {
+      try {
+        // Guard: required Decimal fields must not be null/undefined
+        if (
+          price.price == null || price.change == null || price.changeRate == null ||
+          price.openPrice == null || price.highPrice == null || price.lowPrice == null
+        ) {
+          console.warn(`[FinancialService] Skipping ${price.code} — missing required price fields`);
+          failed++;
+          continue;
+        }
+
+        const stock = await prisma.stock.upsert({
+          where: { code: price.code },
+          update: { name: price.name, isActive: true },
+          create: {
+            code: price.code,
+            name: price.name,
+            market: 'UNKNOWN',
+            isActive: true,
+          },
+          select: { id: true },
+        });
+
+        await prisma.stockPrice.create({
+          data: {
+            stockId: stock.id,
+            price: price.price,
+            change: price.change,
+            changeRate: price.changeRate,
+            openPrice: price.openPrice,
+            highPrice: price.highPrice,
+            lowPrice: price.lowPrice,
+            volume: BigInt(price.volume ?? 0),
+            tradingValue: price.tradingValue ?? 0,
+            marketCap: price.marketCap,
+            timestamp: price.timestamp,
+          },
+        });
+        saved++;
+      } catch (error) {
+        console.error(`[FinancialService] Failed to save price for ${price.code}:`, error);
+        failed++;
+      }
+    }
+
+    if (failed > 0) {
+      console.warn(`[FinancialService] saveStockPricesToDb: ${saved} saved, ${failed} failed out of ${prices.length}`);
     }
   }
 

@@ -166,7 +166,7 @@ export async function getRelatedAIITArticles(
       OR: [
         { sourceId: current.sourceId },
         ...(keywords.length > 0
-          ? [{ summary: { keywords: { hasSome: keywords } } }]
+          ? [{ summary: { is: { keywords: { hasSome: keywords } } } }]
           : []),
       ],
     },

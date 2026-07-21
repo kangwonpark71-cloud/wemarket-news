@@ -60,7 +60,14 @@ export class MarketService {
 
     try {
       const response = await fetch(`${this.baseUrl}?base=KRW`);
-      const data = await response.json();
+      if (!response.ok) {
+        console.warn(`[MarketService] Exchange rate API returned ${response.status}`);
+        return [];
+      }
+      const text = await response.text();
+      if (!text || text.trim().length === 0) return [];
+      const data = JSON.parse(text);
+      if (!Array.isArray(data)) return [];
 
       const rates: ExchangeRateData[] = data
         .filter((item: MananaExchangeRateItem) => item.name && item.name !== 'KRW=X')
@@ -92,7 +99,10 @@ export class MarketService {
 
     try {
       const response = await fetch(`${this.baseUrl}?base=${base}&quote=${quote}`);
-      const data = await response.json();
+      if (!response.ok) return null;
+      const text = await response.text();
+      if (!text || text.trim().length === 0) return null;
+      const data = JSON.parse(text);
 
       if (!data || data.length === 0) return null;
 
@@ -117,17 +127,21 @@ export class MarketService {
 
   async saveExchangeRatesToDb(rates: ExchangeRateData[]): Promise<void> {
     for (const rate of rates) {
-      await prisma.exchangeRate.create({
-        data: {
-          baseCurrency: rate.baseCurrency,
-          quoteCurrency: rate.quoteCurrency,
-          rate: rate.rate,
-          change: rate.change,
-          changeRate: rate.changeRate,
-          source: rate.source,
-          timestamp: rate.timestamp,
-        },
-      });
+      try {
+        await prisma.exchangeRate.create({
+          data: {
+            baseCurrency: rate.baseCurrency,
+            quoteCurrency: rate.quoteCurrency,
+            rate: rate.rate,
+            change: rate.change,
+            changeRate: rate.changeRate,
+            source: rate.source,
+            timestamp: rate.timestamp,
+          },
+        });
+      } catch (error) {
+        console.error(`[MarketService] Failed to save exchange rate ${rate.baseCurrency}/${rate.quoteCurrency}:`, error);
+      }
     }
   }
 

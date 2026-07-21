@@ -164,7 +164,7 @@ export class SchedulerService {
         await task.job();
       } catch (error) {
         console.error(`[Scheduler] Task ${name} failed:`, error);
-        await this.logFetchError(name, error);
+        await this.logFetchError(name, error).catch(() => {});
       } finally {
         task.isRunning = false;
         this.scheduleNext(name);

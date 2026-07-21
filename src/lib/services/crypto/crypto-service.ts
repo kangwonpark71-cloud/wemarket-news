@@ -253,17 +253,21 @@ export class UpbitService {
 
   async saveTickersToDb(tickers: CryptoTickerData[]): Promise<void> {
     for (const ticker of tickers) {
-      await prisma.cryptocurrency.upsert({
-        where: { symbol: ticker.symbol },
-        update: { name: ticker.name, nameKr: ticker.nameKr },
-        create: {
-          symbol: ticker.symbol,
-          name: ticker.name,
-          nameKr: ticker.nameKr,
-          market: 'UPBIT',
-          isActive: true,
-        },
-      });
+      try {
+        await prisma.cryptocurrency.upsert({
+          where: { symbol: ticker.symbol },
+          update: { name: ticker.name, nameKr: ticker.nameKr },
+          create: {
+            symbol: ticker.symbol,
+            name: ticker.name,
+            nameKr: ticker.nameKr,
+            market: 'UPBIT',
+            isActive: true,
+          },
+        });
+      } catch (error) {
+        console.error(`[CryptoService] Failed to upsert cryptocurrency ${ticker.symbol}:`, error);
+      }
     }
 
     const cryptoRecords = await prisma.cryptocurrency.findMany({
@@ -276,22 +280,26 @@ export class UpbitService {
       const cryptoId = cryptoMap.get(ticker.symbol);
       if (!cryptoId) continue;
 
-      await prisma.cryptoTicker.create({
-        data: {
-          cryptoId,
-          tradePrice: ticker.tradePrice,
-          signedChangePrice: ticker.signedChangePrice,
-          signedChangeRate: ticker.signedChangeRate,
-          askPrice: ticker.askPrice,
-          bidPrice: ticker.bidPrice,
-          accTradePrice24h: ticker.accTradePrice24h,
-          accTradeVolume24h: ticker.accTradeVolume24h,
-          highPrice24h: ticker.highPrice24h,
-          lowPrice24h: ticker.lowPrice24h,
-          prevClosingPrice: ticker.prevClosingPrice,
-          timestamp: ticker.timestamp,
-        },
-      });
+      try {
+        await prisma.cryptoTicker.create({
+          data: {
+            cryptoId,
+            tradePrice: ticker.tradePrice,
+            signedChangePrice: ticker.signedChangePrice,
+            signedChangeRate: ticker.signedChangeRate,
+            askPrice: ticker.askPrice ?? ticker.tradePrice,
+            bidPrice: ticker.bidPrice ?? ticker.tradePrice,
+            accTradePrice24h: ticker.accTradePrice24h,
+            accTradeVolume24h: ticker.accTradeVolume24h,
+            highPrice24h: ticker.highPrice24h,
+            lowPrice24h: ticker.lowPrice24h,
+            prevClosingPrice: ticker.prevClosingPrice,
+            timestamp: ticker.timestamp,
+          },
+        });
+      } catch (error) {
+        console.error(`[CryptoService] Failed to create ticker for ${ticker.symbol}:`, error);
+      }
     }
 
   }

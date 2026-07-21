@@ -4,7 +4,7 @@
  */
 
 import { BaseScheduler, SchedulerMetrics } from './base-scheduler'
-import { RSSScheduler, RSSSchedulerConfig } from './rss-scheduler'
+import { RSSScheduler } from './rss-scheduler'
 
 export interface SchedulerManagerConfig {
   enabled: boolean

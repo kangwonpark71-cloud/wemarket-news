@@ -5,7 +5,7 @@ import { getSourceIdByNameEn, logFetch, seedSources } from './service'
 import { ALL_SOURCES } from './sources'
 import { fetchProgressPubSub } from '@/lib/sse/pubsub'
 import { runJobWithLock } from '@/lib/utils/lock'
-import { logSchedulerError, logSchedulerSuccess, withSchedulerErrorHandling, createSafeSchedulerJob } from '@/lib/utils/scheduler-error-handler'
+import { logSchedulerError, logSchedulerSuccess, createSafeSchedulerJob } from '@/lib/utils/scheduler-error-handler'
 
 export interface FetchResult {
   source: string
@@ -133,7 +133,7 @@ export function startRssScheduler() {
 
   setTimeout(() => {
     safeRssFetch().then(results => {
-      if (results.length === 0) return;
+      if (!results || results.length === 0) return;
     }).catch(err => console.error('[Scheduler] Initial fetch error:', err))
   }, 2000)
 

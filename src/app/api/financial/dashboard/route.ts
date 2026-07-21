@@ -14,7 +14,7 @@ export async function GET() {
     const [stockPrices, , forexRates, globalIndices] = await Promise.all([
       koreaInvestmentService.getMarketOverview().catch(err => {
         console.warn('[Dashboard] KOSPI/KOSDAQ overview failed:', err);
-        return { kospi: { value: 0, change: 0, changeRate: 0 }, kosdaq: { value: 0, change: 0, changeRate: 0 } };
+        return { kospi: { value: 0, change: 0, changeRate: 0 }, kosdaq: { value: 0, change: 0, changeRate: 0 }, simulated: false };
       }),
       upbitService.getAllTickers().catch(err => {
         console.warn('[Dashboard] Upbit tickers failed:', err);
