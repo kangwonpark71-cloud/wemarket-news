@@ -31,7 +31,7 @@ export async function POST(request: Request) {
     const normalizedPhone = phoneValidation.normalized;
 
     // Verify the code
-    const isValid = verifyCode(normalizedPhone, code);
+    const isValid = await verifyCode(normalizedPhone, code);
     if (!isValid) {
       return NextResponse.json(
         { success: false, error: '인증 코드가 올바르지 않거나 만료되었습니다.' },

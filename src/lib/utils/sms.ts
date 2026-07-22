@@ -1,15 +1,12 @@
 'use strict';
 
-// SMS Verification Utilities
-// 관리자가 설정해야 하는 SMS 서비스 키 (Twilio, AWS SNS 등)
+import { prisma } from '@/lib/db';
+
 export interface SMSConfig {
-  provider: 'twilio' | 'aws-sns' | 'mock'; // mock for dev/test
+  provider: 'twilio' | 'aws-sns' | 'mock';
   accountSid?: string;
   authToken?: string;
   fromNumber?: string;
-  awsRegion?: string;
-  awsAccessKeyId?: string;
-  awsSecretAccessKey?: string;
 }
 
 export function isMockMode(): boolean {
@@ -58,115 +55,63 @@ export async function sendSMS(phone: string, message: string): Promise<boolean> 
   return true;
 }
 
-// In-memory store for verification codes (Redis나 Database로 대체 권장)
-// Production에서는 Redis나 Database 사용을 권장하며, 테스트용 모의 메모리 저장소입니다.
-interface VerificationStore {
-  [phone: string]: {
-    code: string;
-    expiresAt: number;
-    attempts: number;
-    userId?: string; // Pending user creation 시 필요
-    createdAt: number;
-  };
-}
+// DB-based verification code storage (User 모델의 verificationCode/verificationExpires 필드 활용)
+// In-memory store는 더 이상 사용하지 않음 (서버 재시작 시 코드 유실 방지)
 
-// Development/Test용 메모리 저장소
-const verificationStore: VerificationStore = {};
-
-/**
- * 6자리 숫자 인증 코드 생성 (고유한 문자열을 생성합니다.)
- */
 export function generateVerificationCode(): string {
-  return Math.floor(100000 + Math.random() * 900000).toString(); // 100000 - 999999
+  return Math.floor(100000 + Math.random() * 900000).toString();
 }
 
-/**
- * 전화번호 인증 코드 저장 (코인틱성과 만료시간 포함)
- */
-export function storeVerificationCode(
-  phone: string,
+export async function storeVerificationCode(
+  _phone: string,
   code: string,
   userId?: string
-): void {
-  // 1일치 실패마다 지연 시간 증가 (무차별 시도 방지)
-  const existing = verificationStore[phone];
-  const delay = existing ? Math.min(existing.attempts, 3) * 1000 : 0;
-  
-  verificationStore[phone] = {
-    code,
-    expiresAt: Date.now() + 5 * 60 * 1000, // 5분 유효 (300000ms)
-    attempts: existing ? existing.attempts + 1 : 0,
-    userId,
-    createdAt: Date.now() + delay,
-  };
+): Promise<void> {
+  const expiresAt = new Date(Date.now() + 5 * 60 * 1000);
+
+  if (userId) {
+    await prisma.user.update({
+      where: { id: userId },
+      data: {
+        verificationCode: code,
+        verificationExpires: expiresAt,
+      },
+    });
+  }
 }
 
-/**
- * 전화번호로 인증 코드 조회
- */
-export function getStoredVerificationCode(phone: string): {
-  code: string;
-  expiresAt: number;
-  attempts: number;
-  userId?: string;
-  createdAt: number;
-} | null {
-  const data = verificationStore[phone];
-  if (!data) return null;
-  
-  // 만료되지 않았는지 확인
-  if (Date.now() > data.expiresAt) {
-    delete verificationStore[phone];
-    return null;
-  }
-  
-  return data;
-}
+export async function verifyCode(phone: string, inputCode: string): Promise<boolean> {
+  const user = await prisma.user.findFirst({
+    where: { phone },
+    select: {
+      id: true,
+      verificationCode: true,
+      verificationExpires: true,
+    },
+  });
 
-/**
- * 인증 코드 검증 및 삭제 (검증 성공 후)
- */
-export function verifyCode(phone: string, inputCode: string): boolean {
-  const data = verificationStore[phone];
-  if (!data) return false;
-  
-  // 만료 여부 확인
-  if (Date.now() > data.expiresAt) {
-    delete verificationStore[phone];
+  if (!user || !user.verificationCode || !user.verificationExpires) {
     return false;
   }
-  
-  // 시도 횟수 제한 (최대 5회)
-  if (data.attempts >= 5) {
-    delete verificationStore[phone];
+
+  if (new Date() > user.verificationExpires) {
+    await prisma.user.update({
+      where: { id: user.id },
+      data: { verificationCode: null, verificationExpires: null },
+    });
     return false;
   }
-  
-  // 타이밍 공격 방지 (timing-safe 비교)
-  const isValid = codeTimingsafeEqual(inputCode, data.code);
-  
+
+  const isValid = codeTimingsafeEqual(inputCode, user.verificationCode);
+
   if (isValid) {
-    // 성공 시 삭제 (한 번만 사용 가능)
-    delete verificationStore[phone];
+    await prisma.user.update({
+      where: { id: user.id },
+      data: { verificationCode: null, verificationExpires: null },
+    });
   }
-  
+
   return isValid;
-}
-
-/**
- * 사용자 전화번호 업데이트 및 인증 상태 설정
- */
-export async function verifyAndUpdatePhone(
-  phone: string,
-  inputCode: string,
-  updateFn: (phone: string, verified: boolean) => Promise<void>
-): Promise<boolean> {
-  const isValid = verifyCode(phone, inputCode);
-  if (isValid) {
-    await updateFn(phone, true);
-    return true;
-  }
-  return false;
 }
 
 /**
@@ -201,77 +146,42 @@ export function validatePhoneNumber(phone: string): {
   };
 }
 
-/**
- * 인증 상태 확인 (rate limiting 포함)
- */
-export function canRequestVerification(phone: string): {
+export async function canRequestVerification(phone: string): Promise<{
   canRequest: boolean;
   reason?: string;
   waitTime?: number;
-} {
-  const data = verificationStore[phone];
-  if (!data) {
+}> {
+  const user = await prisma.user.findFirst({
+    where: { phone },
+    select: {
+      verificationCode: true,
+      verificationExpires: true,
+    },
+  });
+
+  if (!user || !user.verificationCode || !user.verificationExpires) {
     return { canRequest: true };
   }
-  
-  // 코드가 아직 유효한 경우 (재전송 방지)
-  if (Date.now() < data.expiresAt) {
-    const waitTime = Math.max(0, data.expiresAt - Date.now());
+
+  if (new Date() < user.verificationExpires) {
+    const waitTime = Math.max(0, user.verificationExpires.getTime() - Date.now());
     return {
       canRequest: false,
       reason: `인증 코드가 발송되었습니다. ${Math.ceil(waitTime / 1000)}초 후 재전송 가능합니다.`,
-      waitTime: waitTime,
+      waitTime,
     };
   }
-  
-  // 시도 횟수 제한 확인
-  const attempts = data.attempts;
-  if (attempts >= 5) {
-    // 30분 동안 차단
-    const blockEnd = data.createdAt + 30 * 60 * 1000;
-    if (Date.now() < blockEnd) {
-      const waitTime = Math.max(0, blockEnd - Date.now());
-      return {
-        canRequest: false,
-        reason: `너무 많은 시도 횟수입니다. ${Math.ceil(waitTime / 1000)}초 후 다시 시도하세요.`,
-        waitTime: waitTime,
-      };
-    } else {
-      // 차단 해제, 재시도 가능
-      delete verificationStore[phone];
-    }
-  }
-  
+
   return { canRequest: true };
 }
 
-/**
- * 타이밍 공격 방지를 위한 안전한 문자열 비교
- */
 function codeTimingsafeEqual(a: string, b: string): boolean {
   if (a.length !== b.length) return false;
-  
+
   let result = 0;
   for (let i = 0; i < a.length; i++) {
     result |= a.charCodeAt(i) ^ b.charCodeAt(i);
   }
-  
-  return result === 0;
-}
 
-/**
- * 저장소 정리 (만료된 항목 정리)
- */
-export function cleanupExpiredCodes(): number {
-  const now = Date.now();
-  let cleaned = 0;
-  
-  for (const phone of Object.keys(verificationStore)) {
-    if (now > verificationStore[phone].expiresAt) {
-      delete verificationStore[phone];
-      cleaned++;
-    }
-  }
-  
-  return cleaned;
+  return result === 0;
 }

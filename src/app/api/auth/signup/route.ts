@@ -51,7 +51,7 @@ export async function POST(request: Request) {
     }
 
     // Rate limiting check for phone verification
-    const canRequest = canRequestVerification(phone);
+    const canRequest = await canRequestVerification(phone);
     if (!canRequest.canRequest) {
       return NextResponse.json(
         { success: false, error: canRequest.reason },
@@ -90,7 +90,7 @@ export async function POST(request: Request) {
     });
 
     const verificationCode = generateVerificationCode();
-    storeVerificationCode(phoneValidation.normalized, verificationCode, user.id);
+    await storeVerificationCode(phoneValidation.normalized, verificationCode, user.id);
     
     const smsMessage = `[위마켓뉴스] 인증번호: ${verificationCode}\n이 번호는 5분간 유효합니다.`;
     const smsSent = await sendSMS(phoneValidation.normalized, smsMessage);

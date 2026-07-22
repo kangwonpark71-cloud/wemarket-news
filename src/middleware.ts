@@ -163,18 +163,10 @@ export function middleware(request: NextRequest) {
       try {
         const originUrl = new URL(origin)
         if (originUrl.host !== host) {
-          // Allow Railway domains
-          const isRailwayDomain =
-            host.includes('.up.railway.app') || host.includes('.railway.app')
-          const originIsRailway =
-            originUrl.host.includes('.up.railway.app') || originUrl.host.includes('.railway.app')
-
-          if (!(isRailwayDomain && originIsRailway)) {
-            return NextResponse.json(
-              { error: 'CSRF validation failed' },
-              { status: 403 }
-            )
-          }
+          return NextResponse.json(
+            { error: 'CSRF validation failed' },
+            { status: 403 }
+          )
         }
       } catch {
         // Invalid origin header
