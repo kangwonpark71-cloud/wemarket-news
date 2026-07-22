@@ -3,16 +3,14 @@ import { prisma } from '@/lib/db';
 import { getSessionUser } from '@/lib/utils/auth';
 import { z } from 'zod';
 
-// Profile completion validation schema
 const profileCompletionSchema = z.object({
-  name: z.string().min(2, '이름은 최소 2자 이상이어야 합니다.').max(50, '이름은 50자를 초과할 수 없습니다.'),
-  email: z.string().email('올바른 이메일 주소가 아닙니다.'),
+  name: z.string().min(2, '이름은 최소 2자 이상이어야 합니다.').max(50),
   phone: z.string()
     .min(10, '올바른 휴대폰 번호를 입력하세요.')
     .regex(/^(010|011|016|017|018|019)-?\d{3,4}-?\d{4}$/, '유효한 휴대폰 번호를 입력하세요.'),
   birthDate: z.string().regex(/^\d{4}-\d{2}-\d{2}$/, '올바른 날짜 형식을 입력하세요.'),
   gender: z.enum(['male', 'female', 'other'], {
-    errorMap: () => ({ message: '성별은 남, 여, 기타 중 하나여야 합니다.' }),
+    error: '성별은 남, 여, 기타 중 하나여야 합니다.',
   }),
   address: z.object({
     street: z.string().min(1, '도로명 주소를 입력해주세요.'),
@@ -32,38 +30,16 @@ const profileCompletionSchema = z.object({
 export async function POST(request: Request) {
   try {
     const body = await request.json();
-    
-    // Server-side validation
     const validationResult = profileCompletionSchema.safeParse(body);
     if (!validationResult.success) {
       return NextResponse.json(
-        { success: false, error: validationResult.error.errors.map(err => err.message).join(', ') },
+        { success: false, error: validationResult.error.issues.map(err => err.message).join(', ') },
         { status: 400 }
       );
     }
 
-    const {
-      name,
-      email,
-      phone,
-      birthDate,
-      gender,
-      address,
-      interests,
-      notifications,
-    } = validationResult.data;
+    const { name } = validationResult.data;
 
-    // Validate phone number format
-    const phoneRegex = /^(010|011|016|017|018|019)-?\d{3,4}-?\d{4}$/;
-    const cleanPhone = phone.replace(/[-\s]/g, '');
-    if (!phoneRegex.test(cleanPhone)) {
-      return NextResponse.json(
-        { success: false, error: '유효한 휴대폰 번호를 입력하세요.' },
-        { status: 400 }
-      );
-    }
-
-    // Get current session user
     const sessionUser = await getSessionUser(request);
     if (!sessionUser) {
       return NextResponse.json(
@@ -72,13 +48,10 @@ export async function POST(request: Request) {
       );
     }
 
-    // Update user with profile information
     const updatedUser = await prisma.user.update({
       where: { id: sessionUser.id },
       data: {
         name,
-        // Note: email/phone verification should be handled separately
-        // This profile completion is for additional user preferences
         preferences: {
           upsert: {
             where: { userId: sessionUser.id },
@@ -87,14 +60,8 @@ export async function POST(request: Request) {
               language: 'all',
               hiddenSources: '',
               pinnedSources: '',
-              // Store profile-specific data in preferences
-              profileCompleted: true,
-              profileCompletedAt: new Date(),
             },
-            update: {
-              profileCompleted: true,
-              profileCompletedAt: new Date(),
-            },
+            update: {},
           },
         },
       },
@@ -107,12 +74,6 @@ export async function POST(request: Request) {
         role: true,
       },
     });
-
-    // Note: In a real application, you would also:
-    // 1. Save interests to a separate user interests table
-    // 2. Save address to a user addresses table
-    // 3. Create notification preferences
-    // 4. Send welcome email or notifications
 
     return NextResponse.json({
       success: true,

@@ -1,4 +1,4 @@
-"use strict';
+'use strict';
 
 // SMS Verification Utilities
 // 관리자가 설정해야 하는 SMS 서비스 키 (Twilio, AWS SNS 등)
@@ -26,10 +26,6 @@ interface VerificationStore {
 
 // Development/Test용 메모리 저장소
 const verificationStore: VerificationStore = {};
-
-// 고정된 SMS_SECRET (환경변수로 설정 권장)
-// 전화번호 인증 코드 생성을 위한 비밀키입니다.
-const SMS_SECRET = process.env.SMS_SECRET || 'dev-secret-change-in-production';
 
 /**
  * 6자리 숫자 인증 코드 생성 (고유한 문자열을 생성합니다.)

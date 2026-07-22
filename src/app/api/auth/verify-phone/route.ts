@@ -21,7 +21,7 @@ export async function POST(request: Request) {
     const validationResult = verifyPhoneSchema.safeParse(body);
     if (!validationResult.success) {
       return NextResponse.json(
-        { success: false, error: validationResult.error.errors.map(err => err.message).join(', ') },
+        { success: false, error: validationResult.error.issues.map(err => err.message).join(', ') },
         { status: 400 }
       );
     }
@@ -39,8 +39,7 @@ export async function POST(request: Request) {
       );
     }
 
-    // Find the user by phone
-    const user = await prisma.user.findUnique({
+    const user = await prisma.user.findFirst({
       where: { phone: normalizedPhone },
     });
 

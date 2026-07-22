@@ -1,6 +1,6 @@
-import { NextResponse } as NextResponse from 'next/server';
+import { NextResponse } from 'next/server';
 import { prisma } from '@/lib/db';
-import { hashPassword, createSessionToken } from '@/lib/utils/auth';
+import { hashPassword } from '@/lib/utils/auth';
 import { z } from 'zod';
 import { validatePhoneNumber, generateVerificationCode, storeVerificationCode, canRequestVerification } from '@/lib/utils/sms';
 
@@ -24,7 +24,7 @@ export async function POST(request: Request) {
     const validationResult = signupSchema.safeParse(body);
     if (!validationResult.success) {
       return NextResponse.json(
-        { success: false, error: validationResult.error.errors.map(err => err.message).join(', ') },
+        { success: false, error: validationResult.error.issues.map(err => err.message).join(', ') },
         { status: 400 }
       );
     }
@@ -52,8 +52,7 @@ export async function POST(request: Request) {
       );
     }
 
-    // Check if phone number already exists (unique field)
-    const existingPhone = await prisma.user.findUnique({
+    const existingPhone = await prisma.user.findFirst({
       where: { phone: phoneValidation.normalized },
     });
 

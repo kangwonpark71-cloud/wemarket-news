@@ -86,7 +86,7 @@ export function getSessionFromCookie(request: Request): string | null {
   return cookies['session'] || null;
 }
 
-export type SessionUser = Pick<User, 'id' | 'email' | 'name' | 'role'>;
+export type SessionUser = Pick<User, 'id' | 'email' | 'name' | 'role' | 'phone' | 'phoneVerified'>;
 
 export async function getSessionUser(request: Request): Promise<SessionUser | null> {
   const token = getSessionFromCookie(request);
@@ -97,7 +97,7 @@ export async function getSessionUser(request: Request): Promise<SessionUser | nu
 
   const user = await prisma.user.findUnique({
     where: { id: userId },
-    select: { id: true, email: true, name: true, role: true },
+    select: { id: true, email: true, name: true, role: true, phone: true, phoneVerified: true },
   });
 
   return user;

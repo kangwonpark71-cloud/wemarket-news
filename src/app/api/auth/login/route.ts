@@ -28,7 +28,7 @@ export async function POST(request: Request) {
         );
       }
 
-      user = await prisma.user.findUnique({
+      user = await prisma.user.findFirst({
         where: { phone: phoneValidation.normalized },
       });
       isPhoneLogin = true;
