@@ -298,7 +298,7 @@ export function CryptoPage() {
                 <div>
                   <p className="text-[10px] text-muted-foreground">24H 등락률</p>
                   <p className={`text-base font-black mt-0.5 tabular-nums ${selectedCrypto.signedChangeRate >= 0 ? 'text-red-600' : 'text-blue-600'}`}>
-                    {selectedCrypto.signedChangeRate >= 0 ? '+' : ''}{selectedCrypto.signedChangeRate.toFixed(2)}%
+                    {selectedCrypto.signedChangeRate >= 0 ? '+' : ''}{Number(selectedCrypto.signedChangeRate ?? 0).toFixed(2)}%
                   </p>
                 </div>
                 <div>

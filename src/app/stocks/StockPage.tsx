@@ -288,7 +288,7 @@ export function StockPage() {
                     <div>
                       <p className="text-sm text-muted-foreground">등락률</p>
                       <p className={`text-2xl font-bold ${selectedStock.changeRate && selectedStock.changeRate >= 0 ? 'text-red-500' : 'text-blue-500'}`}>
-                        {selectedStock.changeRate && selectedStock.changeRate >= 0 ? '+' : ''}{selectedStock.changeRate?.toFixed(2)}%
+                        {selectedStock.changeRate && selectedStock.changeRate >= 0 ? '+' : ''}{Number(selectedStock.changeRate ?? 0).toFixed(2)}%
                       </p>
                     </div>
                     <div>
