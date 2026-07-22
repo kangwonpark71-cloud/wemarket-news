@@ -71,11 +71,10 @@ export async function POST(request: Request) {
     const { createSessionToken } = await import('@/lib/utils/auth');
     const token = createSessionToken(updatedUser.id);
 
-    // Set secure cookie
     const response = NextResponse.json({
       success: true,
       data: updatedUser,
-      message: '휴대폰 인증이 성공적으로 완료되었습니다.',
+      message: '휴대폰 인증이 완료되었습니다. 프로필을 완성해주세요.',
     });
 
     response.cookies.set('session', token, {

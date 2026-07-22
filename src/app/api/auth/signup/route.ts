@@ -4,16 +4,14 @@ import { hashPassword } from '@/lib/utils/auth';
 import { z } from 'zod';
 import { validatePhoneNumber, generateVerificationCode, storeVerificationCode, canRequestVerification } from '@/lib/utils/sms';
 
-// Server-side validation schema
+// 회원가입: 전화번호 + 비밀번호만 필요 (이름/이메일은 가입 후 프로필에서 입력)
 const signupSchema = z.object({
-  email: z.string().email('올바른 이메일 주소가 아닙니다.'),
   password: z.string()
     .min(6, '비밀번호는 최소 6자리 이상이어야 합니다.')
     .regex(/^[0-9]+$/, '비밀번호는 숫자만 포함해야 합니다.'),
   phone: z.string()
     .min(10, '올바른 휴대폰 번호를 입력하세요.')
     .regex(/^(010|011|016|017|018|019)-?\d{3,4}-?\d{4}$/, '유효한 휴대폰 번호를 입력하세요.'),
-  name: z.string().min(2, '이름은 최소 2자 이상이어야 합니다.').max(50, '이름은 50자를 초과할 수 없습니다.'),
 });
 
 export async function POST(request: Request) {
@@ -29,9 +27,9 @@ export async function POST(request: Request) {
       );
     }
 
-    const { email, password, phone, name } = validationResult.data;
+    const { password, phone } = validationResult.data;
 
-    // Validate phone number format using our new SMS utilities
+    // Validate phone number format
     const phoneValidation = validatePhoneNumber(phone);
     if (!phoneValidation.isValid) {
       return NextResponse.json(
@@ -40,18 +38,7 @@ export async function POST(request: Request) {
       );
     }
 
-    // Check if user already exists by email
-    const existingEmail = await prisma.user.findUnique({
-      where: { email },
-    });
-
-    if (existingEmail) {
-      return NextResponse.json(
-        { success: false, error: '이미 등록된 이메일입니다.' },
-        { status: 409 }
-      );
-    }
-
+    // Check if user already exists by phone
     const existingPhone = await prisma.user.findFirst({
       where: { phone: phoneValidation.normalized },
     });
@@ -68,7 +55,7 @@ export async function POST(request: Request) {
     if (!canRequest.canRequest) {
       return NextResponse.json(
         { success: false, error: canRequest.reason },
-        { status: 429 } // Too Many Requests
+        { status: 429 }
       );
     }
 
@@ -76,11 +63,10 @@ export async function POST(request: Request) {
     const hashedPassword = hashPassword(password);
 
     // Create a temporary user record (pending phone verification)
+    // email, name, gender, birthDate는 가입 후 프로필 완성 단계에서 입력
     const user = await prisma.user.create({
       data: {
-        email,
         password: hashedPassword,
-        name,
         phone: phoneValidation.normalized,
         phoneVerified: false,
         emailVerified: false,
@@ -90,13 +76,12 @@ export async function POST(request: Request) {
             language: 'all',
             hiddenSources: '',
             pinnedSources: '',
+            interests: '',
           },
         },
       },
       select: {
         id: true,
-        email: true,
-        name: true,
         phone: true,
         phoneVerified: true,
         role: true,
@@ -108,16 +93,13 @@ export async function POST(request: Request) {
     const verificationCode = generateVerificationCode();
     storeVerificationCode(phoneValidation.normalized, verificationCode, user.id);
     
-    // TODO: 실제로 SMS 서비스를 호출해야 합니다.
-    // 개발 환경에서는 로그만 출력하고, 프로덕션 환경에서는 실제 SMS 서비스를 호출해야 합니다.
     console.log(`[SMS Verification] ${phoneValidation.normalized}로 인증 코드 ${verificationCode}를 전송했습니다.`);
 
-    // Return user data without password, with verification status
     return NextResponse.json({
       success: true,
       data: {
         ...user,
-        isPhoneVerified: false, // 이메일 인증 단계
+        isPhoneVerified: false,
       },
       message: '인증 코드가 휴대전화로 발송되었습니다. 번호를 인증해주세요.',
     }, {
@@ -126,10 +108,9 @@ export async function POST(request: Request) {
   } catch (error) {
     console.error('Signup error:', error);
     
-    // Handle specific Prisma errors
     if (error instanceof Error && error.message.includes('P2002')) {
       return NextResponse.json(
-        { success: false, error: '이미 등록된 이메일입니다.' },
+        { success: false, error: '이미 등록된 정보입니다.' },
         { status: 409 }
       );
     }

@@ -5,20 +5,11 @@ import { z } from 'zod';
 
 const profileCompletionSchema = z.object({
   name: z.string().min(2, '이름은 최소 2자 이상이어야 합니다.').max(50),
-  phone: z.string()
-    .min(10, '올바른 휴대폰 번호를 입력하세요.')
-    .regex(/^(010|011|016|017|018|019)-?\d{3,4}-?\d{4}$/, '유효한 휴대폰 번호를 입력하세요.'),
-  birthDate: z.string().regex(/^\d{4}-\d{2}-\d{2}$/, '올바른 날짜 형식을 입력하세요.'),
+  email: z.string().email('올바른 이메일 주소가 아닙니다.').optional().or(z.literal('')),
   gender: z.enum(['male', 'female', 'other'], {
     error: '성별은 남, 여, 기타 중 하나여야 합니다.',
   }),
-  address: z.object({
-    street: z.string().min(1, '도로명 주소를 입력해주세요.'),
-    city: z.string().min(1, '시/군/구를 입력해주세요.'),
-    state: z.string().min(1, '시/도를 입력해주세요.'),
-    zipCode: z.string().min(1, '우편번호를 입력해주세요.'),
-    country: z.string().min(1, '국가를 입력해주세요.'),
-  }),
+  birthDate: z.string().regex(/^\d{4}-\d{2}-\d{2}$/, '올바른 날짜 형식을 입력하세요.'),
   interests: z.array(z.string()).min(1, '적어도 하나의 관심 분야를 선택해주세요.'),
   notifications: z.object({
     email: z.boolean(),
@@ -38,7 +29,7 @@ export async function POST(request: Request) {
       );
     }
 
-    const { name } = validationResult.data;
+    const { name, email, gender, birthDate, interests } = validationResult.data;
 
     const sessionUser = await getSessionUser(request);
     if (!sessionUser) {
@@ -48,10 +39,33 @@ export async function POST(request: Request) {
       );
     }
 
+    const updateData: Record<string, unknown> = {
+      name,
+      gender,
+      birthDate: new Date(birthDate),
+    };
+
+    if (email && email.trim() !== '') {
+      if (email !== sessionUser.email) {
+        const existingEmail = await prisma.user.findUnique({
+          where: { email },
+        });
+        if (existingEmail && existingEmail.id !== sessionUser.id) {
+          return NextResponse.json(
+            { success: false, error: '이미 사용 중인 이메일입니다.' },
+            { status: 409 }
+          );
+        }
+      }
+      updateData.email = email;
+    }
+
+    const interestsStr = interests.join(',');
+
     const updatedUser = await prisma.user.update({
       where: { id: sessionUser.id },
       data: {
-        name,
+        ...updateData,
         preferences: {
           upsert: {
             where: { userId: sessionUser.id },
@@ -60,8 +74,11 @@ export async function POST(request: Request) {
               language: 'all',
               hiddenSources: '',
               pinnedSources: '',
+              interests: interestsStr,
             },
-            update: {},
+            update: {
+              interests: interestsStr,
+            },
           },
         },
       },
@@ -71,6 +88,8 @@ export async function POST(request: Request) {
         name: true,
         phone: true,
         phoneVerified: true,
+        gender: true,
+        birthDate: true,
         role: true,
       },
     });

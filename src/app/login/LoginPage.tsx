@@ -3,7 +3,7 @@
 import { useState, useEffect, useCallback, useRef } from 'react';
 
 type AuthMode = 'login' | 'signup';
-type SignupStep = 1 | 2 | 3;
+type SignupStep = 1 | 2;
 
 interface PhoneValidation {
   isValid: boolean;
@@ -48,8 +48,6 @@ export function LoginPage() {
   const [loginPassword, setLoginPassword] = useState('');
 
   // --- Signup fields ---
-  const [name, setName] = useState('');
-  const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [phone, setPhone] = useState('');
   const [phoneTouched, setPhoneTouched] = useState(false);
@@ -68,7 +66,7 @@ export function LoginPage() {
 
   // --- Timer countdown ---
   useEffect(() => {
-    if (signupStep === 3 && signupSuccess) {
+    if (signupStep === 2 && signupSuccess) {
       setTimerSeconds(300);
       timerRef.current = setInterval(() => {
         setTimerSeconds((prev) => {
@@ -85,13 +83,9 @@ export function LoginPage() {
     };
   }, [signupStep, signupSuccess]);
 
-  const resetToLogin = useCallback(() => {
-    setAuthMode('login');
-    setSignupStep(1);
+  const resetAll = useCallback(() => {
     setLoginInput('');
     setLoginPassword('');
-    setName('');
-    setEmail('');
     setPassword('');
     setPhone('');
     setPhoneTouched(false);
@@ -99,25 +93,19 @@ export function LoginPage() {
     setError(null);
     setLoading(false);
     setSignupSuccess(false);
+    setSignupStep(1);
     if (timerRef.current) clearInterval(timerRef.current);
   }, []);
 
+  const resetToLogin = useCallback(() => {
+    setAuthMode('login');
+    resetAll();
+  }, [resetAll]);
+
   const switchToSignup = useCallback(() => {
     setAuthMode('signup');
-    setSignupStep(1);
-    setLoginInput('');
-    setLoginPassword('');
-    setName('');
-    setEmail('');
-    setPassword('');
-    setPhone('');
-    setPhoneTouched(false);
-    setVerificationCode('');
-    setError(null);
-    setLoading(false);
-    setSignupSuccess(false);
-    if (timerRef.current) clearInterval(timerRef.current);
-  }, []);
+    resetAll();
+  }, [resetAll]);
 
   // --- Login submit ---
   const handleLogin = async (e: React.FormEvent) => {
@@ -149,51 +137,35 @@ export function LoginPage() {
     }
   };
 
-  // --- Signup Step 1 → 2 ---
-  const handleSignupStep1 = (e: React.FormEvent) => {
+  // --- Signup Step 1 → Step 2 (전화번호 + 비밀번호 → 인증번호 발송) ---
+  const handleSignupStep1 = async (e: React.FormEvent) => {
     e.preventDefault();
     setError(null);
-    if (!name.trim() || name.trim().length < 2) {
-      setError('이름은 2자 이상 입력해주세요.');
+
+    const pv = validatePhoneRaw(phone);
+    if (!pv.isValid) {
+      setPhoneTouched(true);
+      setError(pv.message);
       return;
     }
-    if (!email || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
-      setError('올바른 이메일 주소를 입력해주세요.');
-      return;
-    }
+
     const pwError = validatePassword(password);
     if (pwError) {
       setError(pwError);
       return;
     }
-    setSignupStep(2);
-  };
 
-  // --- Signup Step 2 → 3 (call signup API) ---
-  const handleSignupStep2 = async () => {
-    setError(null);
-    setPhoneTouched(true);
-    const pv = validatePhoneRaw(phone);
-    if (!pv.isValid) {
-      setError(pv.message);
-      return;
-    }
     setLoading(true);
     try {
       const res = await fetch('/api/auth/signup', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          email,
-          password,
-          name: name.trim(),
-          phone,
-        }),
+        body: JSON.stringify({ password, phone }),
       });
       const json = await res.json();
       if (json.success) {
         setSignupSuccess(true);
-        setSignupStep(3);
+        setSignupStep(2);
       } else {
         setError(json.error || '회원가입 중 오류가 발생했습니다.');
       }
@@ -220,7 +192,8 @@ export function LoginPage() {
       });
       const json = await res.json();
       if (json.success) {
-        window.location.href = '/settings';
+        // 인증 성공 → 프로필 완성 페이지로 이동
+        window.location.href = '/profile-completion';
       } else {
         setError(json.error || '인증에 실패했습니다.');
         setVerificationCode('');
@@ -240,12 +213,7 @@ export function LoginPage() {
       const res = await fetch('/api/auth/signup', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          email,
-          password,
-          name: name.trim(),
-          phone,
-        }),
+        body: JSON.stringify({ password, phone }),
       });
       const json = await res.json();
       if (json.success) {
@@ -300,7 +268,7 @@ export function LoginPage() {
                 required
                 value={loginInput}
                 onChange={(e) => setLoginInput(e.target.value)}
-                placeholder="example@news.com 또는 010-0000-0000"
+                placeholder="010-1234-5678"
                 className="h-10 w-full rounded-sm border border-border bg-background px-3 text-xs text-foreground focus:outline-none focus:ring-2 focus:ring-primary"
               />
             </div>
@@ -343,7 +311,7 @@ export function LoginPage() {
   }
 
   // ==================== SIGNUP MODE ====================
-  const stepLabels = ['기본 정보', '전화번호', '인증'];
+  const stepLabels = ['전화번호 / 비밀번호', '인증'];
 
   return (
     <div className="mx-auto max-w-md px-4 py-16">
@@ -352,7 +320,8 @@ export function LoginPage() {
           <span className="text-4xl" aria-hidden="true">📰</span>
           <h1 className="text-xl font-bold text-foreground mt-4">위마켓_뉴스 회원가입</h1>
           <p className="text-xs text-muted-foreground mt-1">
-            간단히 가입하고 관심 있는 뉴스 정보만 핀고정하세요.
+            전화번호와 비밀번호로 간단히 가입하세요.<br />
+            가입 후 관심 분야 등 추가 정보를 입력할 수 있습니다.
           </p>
         </div>
 
@@ -360,12 +329,12 @@ export function LoginPage() {
         <div className="mb-6">
           <div className="flex justify-between text-xs text-muted-foreground mb-2">
             <span>{stepLabels[signupStep - 1]}</span>
-            <span>{signupStep}/3</span>
+            <span>{signupStep}/2</span>
           </div>
           <div className="w-full bg-secondary rounded-full h-1.5">
             <div
               className="bg-primary h-1.5 rounded-full transition-all duration-300"
-              style={{ width: `${(signupStep / 3) * 100}%` }}
+              style={{ width: `${(signupStep / 2) * 100}%` }}
             />
           </div>
           <div className="flex justify-between mt-2">
@@ -386,75 +355,18 @@ export function LoginPage() {
           </div>
         )}
 
-        {/* ===== Step 1: Basic Info ===== */}
+        {/* ===== Step 1: Phone + Password ===== */}
         {signupStep === 1 && (
           <form onSubmit={handleSignupStep1} className="space-y-4">
             <div>
-              <label htmlFor="signup-name" className="block text-xs font-semibold text-foreground mb-1">
-                이름
-              </label>
-              <input
-                id="signup-name"
-                type="text"
-                required
-                value={name}
-                onChange={(e) => setName(e.target.value)}
-                placeholder="홍길동"
-                className="h-10 w-full rounded-sm border border-border bg-background px-3 text-xs text-foreground focus:outline-none focus:ring-2 focus:ring-primary"
-              />
-            </div>
-
-            <div>
-              <label htmlFor="signup-email" className="block text-xs font-semibold text-foreground mb-1">
-                이메일 주소
-              </label>
-              <input
-                id="signup-email"
-                type="email"
-                required
-                value={email}
-                onChange={(e) => setEmail(e.target.value)}
-                placeholder="example@news.com"
-                className="h-10 w-full rounded-sm border border-border bg-background px-3 text-xs text-foreground focus:outline-none focus:ring-2 focus:ring-primary"
-              />
-            </div>
-
-            <div>
-              <label htmlFor="signup-password" className="block text-xs font-semibold text-foreground mb-1">
-                비밀번호
-              </label>
-              <input
-                id="signup-password"
-                type="password"
-                required
-                value={password}
-                onChange={(e) => setPassword(e.target.value)}
-                placeholder="6자리 이상 숫자"
-                className="h-10 w-full rounded-sm border border-border bg-background px-3 text-xs text-foreground focus:outline-none focus:ring-2 focus:ring-primary"
-              />
-              <p className="text-[10px] text-muted-foreground mt-1">비밀번호는 6자리 이상 숫자만 가능합니다.</p>
-            </div>
-
-            <button
-              type="submit"
-              className="h-10 w-full bg-primary text-primary-foreground text-xs font-semibold hover:bg-primary-hover transition-colors rounded-sm cursor-pointer"
-            >
-              다음
-            </button>
-          </form>
-        )}
-
-        {/* ===== Step 2: Phone Input ===== */}
-        {signupStep === 2 && (
-          <div className="space-y-4">
-            <div>
               <label htmlFor="signup-phone" className="block text-xs font-semibold text-foreground mb-1">
-                휴대폰 번호
+                휴대폰 번호 *
               </label>
               <div className="relative">
                 <input
                   id="signup-phone"
                   type="tel"
+                  required
                   value={phone}
                   onChange={(e) => handlePhoneChange(e.target.value)}
                   onBlur={() => setPhoneTouched(true)}
@@ -486,25 +398,34 @@ export function LoginPage() {
               )}
             </div>
 
+            <div>
+              <label htmlFor="signup-password" className="block text-xs font-semibold text-foreground mb-1">
+                비밀번호 *
+              </label>
+              <input
+                id="signup-password"
+                type="password"
+                required
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
+                placeholder="6자리 이상 숫자"
+                className="h-10 w-full rounded-sm border border-border bg-background px-3 text-xs text-foreground focus:outline-none focus:ring-2 focus:ring-primary"
+              />
+              <p className="text-[10px] text-muted-foreground mt-1">비밀번호는 6자리 이상 숫자만 가능합니다.</p>
+            </div>
+
             <button
-              onClick={handleSignupStep2}
+              type="submit"
               disabled={loading || (phoneTouched && !phoneValidation.isValid)}
               className="h-10 w-full bg-primary text-primary-foreground text-xs font-semibold hover:bg-primary-hover transition-colors rounded-sm cursor-pointer disabled:opacity-50"
             >
               {loading ? '전송 중...' : '인증번호 발송'}
             </button>
-
-            <button
-              onClick={() => { setSignupStep(1); setError(null); }}
-              className="h-10 w-full border border-border bg-background text-foreground text-xs font-semibold hover:bg-secondary transition-colors rounded-sm cursor-pointer"
-            >
-              이전
-            </button>
-          </div>
+          </form>
         )}
 
-        {/* ===== Step 3: Verification Code ===== */}
-        {signupStep === 3 && (
+        {/* ===== Step 2: Verification Code ===== */}
+        {signupStep === 2 && (
           <div className="space-y-4">
             <div className="bg-secondary/50 rounded-sm p-3 text-center">
               <p className="text-xs text-muted-foreground">
@@ -552,7 +473,7 @@ export function LoginPage() {
             </button>
 
             <button
-              onClick={() => { setSignupStep(2); setError(null); setVerificationCode(''); }}
+              onClick={() => { setSignupStep(1); setError(null); setVerificationCode(''); }}
               className="h-10 w-full border border-border bg-background text-foreground text-xs font-semibold hover:bg-secondary transition-colors rounded-sm cursor-pointer"
             >
               이전

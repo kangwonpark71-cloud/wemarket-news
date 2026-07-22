@@ -106,13 +106,15 @@ model FetchLog {
 // 사용자 회원가입/계정 정보
 model User {
   id                  String   @id @default(uuid())
-  email               String   @unique
+  email               String?  @unique  // 회원가입 시 선택 (가입 후 프로필에서 입력)
   password            String   
-  name                String?
+  name                String?             // 가입 후 프로필에서 입력
   role                UserRole @default(USER)
-  phone               String?  // 휴대폰번호 (인증 후 저장)
+  phone               String?  // 휴대폰번호 (회원가입 필수)
   phoneVerified       Boolean  @default(false) @map("phone_verified") // 전화번호 인증 여부
   emailVerified       Boolean  @default(false) @map("email_verified") // 이메일 인증 여부
+  gender              String?             // 남성/여성/기타
+  birthDate           DateTime?           // 생년월일
   createdAt           DateTime @default(now()) @map("created_at")
   updatedAt           DateTime @updatedAt @map("updated_at")
   verifiedAt          DateTime? // 휴대폰 인증 완료 시간
@@ -132,6 +134,7 @@ model UserPreference {
   pinnedSources   String   @default("") @map("pinned_sources") 
   theme           String   @default("light") 
   language        String   @default("all") 
+  interests       String   @default("") @map("interests") // 쉼표 구분 관심분야 IDs (예: "economy,tech,world")
   createdAt       DateTime @default(now()) @map("created_at")
   updatedAt       DateTime @updatedAt @map("updated_at")
 

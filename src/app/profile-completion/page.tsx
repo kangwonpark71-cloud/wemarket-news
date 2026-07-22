@@ -5,16 +5,9 @@ import { useRouter } from 'next/navigation';
 
 interface ProfileForm {
   name: string;
-  phone: string;
-  birthDate: string;
+  email: string;
   gender: 'male' | 'female' | 'other' | '';
-  address: {
-    street: string;
-    city: string;
-    state: string;
-    zipCode: string;
-    country: string;
-  };
+  birthDate: string;
   interests: string[];
   notifications: {
     email: boolean;
@@ -34,13 +27,12 @@ const interestsOptions = [
 
 export default function ProfileCompletionPage() {
   const router = useRouter();
-  const [user, setUser] = useState<{ name?: string; phone?: string } | null>(null);
+  const [user, setUser] = useState<{ name?: string; phone?: string; email?: string } | null>(null);
   const [form, setForm] = useState<ProfileForm>({
     name: '',
-    phone: '',
-    birthDate: '',
+    email: '',
     gender: '',
-    address: { street: '', city: '', state: '', zipCode: '', country: '' },
+    birthDate: '',
     interests: [],
     notifications: { email: true, sms: false, push: true },
   });
@@ -66,7 +58,7 @@ export default function ProfileCompletionPage() {
         setForm(prev => ({
           ...prev,
           name: u.name || '',
-          phone: u.phone || '',
+          email: u.email || '',
         }));
       } catch {
         router.push('/login');
@@ -76,11 +68,8 @@ export default function ProfileCompletionPage() {
   }, [router]);
 
   useEffect(() => {
-    const requiredFields = ['name', 'phone', 'birthDate', 'gender', 'address', 'interests'];
+    const requiredFields = ['name', 'email', 'gender', 'birthDate', 'interests'];
     const completed = requiredFields.filter(field => {
-      if (field === 'address') {
-        return form.address.street && form.address.city && form.address.state && form.address.zipCode && form.address.country;
-      }
       if (field === 'interests') {
         return form.interests.length > 0;
       }
@@ -90,15 +79,7 @@ export default function ProfileCompletionPage() {
   }, [form]);
 
   const handleInputChange = (field: string, value: unknown) => {
-    if (field.startsWith('address.')) {
-      const addressField = field.split('.')[1];
-      setForm(prev => ({
-        ...prev,
-        address: { ...prev.address, [addressField]: value },
-      }));
-    } else {
-      setForm(prev => ({ ...prev, [field]: value }));
-    }
+    setForm(prev => ({ ...prev, [field]: value }));
   };
 
   const handleInterestToggle = (interestId: string) => {
@@ -121,10 +102,9 @@ export default function ProfileCompletionPage() {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           name: form.name,
-          phone: form.phone,
-          birthDate: form.birthDate,
+          email: form.email || undefined,
           gender: form.gender,
-          address: form.address,
+          birthDate: form.birthDate,
           interests: form.interests,
           notifications: form.notifications,
         }),
@@ -156,112 +136,77 @@ export default function ProfileCompletionPage() {
 
   return (
     <div className="min-h-screen bg-background py-8">
-      <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
+      <div className="max-w-2xl mx-auto px-4">
         <div className="mb-8">
-          <h1 className="text-3xl font-bold text-foreground">프로필 완료</h1>
-          <p className="text-muted-foreground mt-2">
-            Personalized 뉴스 경험을 위한 추가 정보를 입력해주세요.
+          <h1 className="text-2xl font-bold text-foreground">프로필 완성</h1>
+          <p className="text-sm text-muted-foreground mt-2">
+            맞춤 뉴스 경험을 위한 추가 정보를 입력해주세요.
           </p>
           <div className="mt-4">
-            <div className="flex justify-between text-sm text-muted-foreground mb-2">
-              <span>진행률: {progress}%</span>
+            <div className="flex justify-between text-xs text-muted-foreground mb-1">
+              <span>진행률</span>
+              <span>{progress}%</span>
             </div>
-            <div className="w-full bg-secondary rounded-full h-2">
+            <div className="w-full bg-secondary rounded-full h-1.5">
               <div
-                className="bg-primary h-2 rounded-full transition-all duration-300"
+                className="bg-primary h-1.5 rounded-full transition-all duration-300"
                 style={{ width: `${progress}%` }}
-              ></div>
+              />
             </div>
           </div>
         </div>
 
         {error && (
-          <div className="mb-6 border border-red-300 bg-red-50 dark:bg-red-950/20 px-4 py-3 text-sm text-red-600 dark:text-red-400 rounded-sm">
+          <div className="mb-6 border border-red-300 bg-red-50 dark:bg-red-950/20 px-4 py-3 text-xs text-red-600 dark:text-red-400 rounded-sm">
             {error}
           </div>
         )}
 
-        <form onSubmit={handleSubmit} className="space-y-8">
+        <form onSubmit={handleSubmit} className="space-y-6">
           <div className="bg-card border border-border rounded-sm p-6">
-            <h2 className="text-xl font-semibold text-foreground mb-6">1. 기본 정보</h2>
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <div>
-                <label htmlFor="name" className="block text-sm font-medium text-foreground mb-2">이름 *</label>
-                <input id="name" type="text" required value={form.name}
-                  onChange={(e) => handleInputChange('name', e.target.value)} placeholder="홍길동"
-                  className="w-full h-10 rounded-sm border border-border bg-background px-3 text-sm focus:outline-none focus:ring-2 focus:ring-primary" />
-              </div>
-              <div>
-                <label htmlFor="phone" className="block text-sm font-medium text-foreground mb-2">휴대폰 번호 *</label>
-                <input id="phone" type="tel" required value={form.phone}
-                  onChange={(e) => handleInputChange('phone', e.target.value)} placeholder="010-0000-0000"
-                  className="w-full h-10 rounded-sm border border-border bg-background px-3 text-sm focus:outline-none focus:ring-2 focus:ring-primary" />
-              </div>
-              <div>
-                <label htmlFor="birthDate" className="block text-sm font-medium text-foreground mb-2">생년월일 *</label>
-                <input id="birthDate" type="date" required value={form.birthDate}
-                  onChange={(e) => handleInputChange('birthDate', e.target.value)}
-                  className="w-full h-10 rounded-sm border border-border bg-background px-3 text-sm focus:outline-none focus:ring-2 focus:ring-primary" />
-              </div>
-              <div>
-                <label htmlFor="gender" className="block text-sm font-medium text-foreground mb-2">성별 *</label>
-                <select id="gender" required value={form.gender}
-                  onChange={(e) => handleInputChange('gender', e.target.value)}
-                  className="w-full h-10 rounded-sm border border-border bg-background px-3 text-sm focus:outline-none focus:ring-2 focus:ring-primary">
-                  <option value="">선택해주세요</option>
-                  <option value="male">남성</option>
-                  <option value="female">여성</option>
-                  <option value="other">기타</option>
-                </select>
-              </div>
-            </div>
-          </div>
-
-          <div className="bg-card border border-border rounded-sm p-6">
-            <h2 className="text-xl font-semibold text-foreground mb-6">2. 주소 정보</h2>
+            <h2 className="text-sm font-semibold text-foreground mb-4">1. 기본 정보</h2>
             <div className="space-y-4">
               <div>
-                <label htmlFor="street" className="block text-sm font-medium text-foreground mb-2">도로명 주소 *</label>
-                <input id="street" type="text" required value={form.address.street}
-                  onChange={(e) => handleInputChange('address.street', e.target.value)} placeholder="서울특별시 강남구 강남대로 123"
-                  className="w-full h-10 rounded-sm border border-border bg-background px-3 text-sm focus:outline-none focus:ring-2 focus:ring-primary" />
-              </div>
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                <div>
-                  <label htmlFor="city" className="block text-sm font-medium text-foreground mb-2">시/군/구 *</label>
-                  <input id="city" type="text" required value={form.address.city}
-                    onChange={(e) => handleInputChange('address.city', e.target.value)} placeholder="강남구"
-                    className="w-full h-10 rounded-sm border border-border bg-background px-3 text-sm focus:outline-none focus:ring-2 focus:ring-primary" />
-                </div>
-                <div>
-                  <label htmlFor="state" className="block text-sm font-medium text-foreground mb-2">시/도 *</label>
-                  <input id="state" type="text" required value={form.address.state}
-                    onChange={(e) => handleInputChange('address.state', e.target.value)} placeholder="서울특별시"
-                    className="w-full h-10 rounded-sm border border-border bg-background px-3 text-sm focus:outline-none focus:ring-2 focus:ring-primary" />
-                </div>
-                <div>
-                  <label htmlFor="zipCode" className="block text-sm font-medium text-foreground mb-2">우편번호 *</label>
-                  <input id="zipCode" type="text" required value={form.address.zipCode}
-                    onChange={(e) => handleInputChange('address.zipCode', e.target.value)} placeholder="12345"
-                    className="w-full h-10 rounded-sm border border-border bg-background px-3 text-sm focus:outline-none focus:ring-2 focus:ring-primary" />
-                </div>
+                <label htmlFor="name" className="block text-xs font-medium text-foreground mb-1">이름 *</label>
+                <input id="name" type="text" required value={form.name}
+                  onChange={(e) => handleInputChange('name', e.target.value)} placeholder="홍길동"
+                  className="h-10 w-full rounded-sm border border-border bg-background px-3 text-xs focus:outline-none focus:ring-2 focus:ring-primary" />
               </div>
               <div>
-                <label htmlFor="country" className="block text-sm font-medium text-foreground mb-2">국가 *</label>
-                <input id="country" type="text" required value={form.address.country}
-                  onChange={(e) => handleInputChange('address.country', e.target.value)} placeholder="대한민국"
-                  className="w-full h-10 rounded-sm border border-border bg-background px-3 text-sm focus:outline-none focus:ring-2 focus:ring-primary" />
+                <label htmlFor="email" className="block text-xs font-medium text-foreground mb-1">이메일 (선택)</label>
+                <input id="email" type="email" value={form.email}
+                  onChange={(e) => handleInputChange('email', e.target.value)} placeholder="example@email.com"
+                  className="h-10 w-full rounded-sm border border-border bg-background px-3 text-xs focus:outline-none focus:ring-2 focus:ring-primary" />
+              </div>
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <label htmlFor="gender" className="block text-xs font-medium text-foreground mb-1">성별 *</label>
+                  <select id="gender" required value={form.gender}
+                    onChange={(e) => handleInputChange('gender', e.target.value)}
+                    className="h-10 w-full rounded-sm border border-border bg-background px-3 text-xs focus:outline-none focus:ring-2 focus:ring-primary">
+                    <option value="">선택</option>
+                    <option value="male">남성</option>
+                    <option value="female">여성</option>
+                    <option value="other">기타</option>
+                  </select>
+                </div>
+                <div>
+                  <label htmlFor="birthDate" className="block text-xs font-medium text-foreground mb-1">생년월일 *</label>
+                  <input id="birthDate" type="date" required value={form.birthDate}
+                    onChange={(e) => handleInputChange('birthDate', e.target.value)}
+                    className="h-10 w-full rounded-sm border border-border bg-background px-3 text-xs focus:outline-none focus:ring-2 focus:ring-primary" />
+                </div>
               </div>
             </div>
           </div>
 
           <div className="bg-card border border-border rounded-sm p-6">
-            <h2 className="text-xl font-semibold text-foreground mb-6">3. 관심 분야 *</h2>
-            <p className="text-sm text-muted-foreground mb-4">관심 있는 뉴스 카테고리를 선택하여 맞춤형 뉴스를 제공받아보세요.</p>
-            <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
+            <h2 className="text-sm font-semibold text-foreground mb-4">2. 관심 분야 *</h2>
+            <p className="text-xs text-muted-foreground mb-3">관심 있는 뉴스 카테고리를 선택해주세요.</p>
+            <div className="grid grid-cols-2 gap-2">
               {interestsOptions.map((interest) => (
                 <button key={interest.id} type="button" onClick={() => handleInterestToggle(interest.id)}
-                  className={`p-3 rounded-sm border text-sm font-medium transition-colors
+                  className={`p-3 rounded-sm border text-xs font-medium transition-colors text-left
                     ${form.interests.includes(interest.id)
                       ? 'border-primary bg-primary/10 text-primary'
                       : 'border-border bg-background text-foreground hover:border-primary/50'}`}>
@@ -272,33 +217,37 @@ export default function ProfileCompletionPage() {
           </div>
 
           <div className="bg-card border border-border rounded-sm p-6">
-            <h2 className="text-xl font-semibold text-foreground mb-6">4. 알림 설정</h2>
+            <h2 className="text-sm font-semibold text-foreground mb-4">3. 알림 설정</h2>
             <div className="space-y-3">
               <label className="flex items-center space-x-3 cursor-pointer">
                 <input type="checkbox" checked={form.notifications.email}
                   onChange={(e) => handleInputChange('notifications', { ...form.notifications, email: e.target.checked })}
                   className="w-4 h-4 text-primary bg-background border-border rounded focus:ring-primary" />
-                <span className="text-sm text-foreground">이메일 알림</span>
+                <span className="text-xs text-foreground">이메일 알림</span>
               </label>
               <label className="flex items-center space-x-3 cursor-pointer">
                 <input type="checkbox" checked={form.notifications.sms}
                   onChange={(e) => handleInputChange('notifications', { ...form.notifications, sms: e.target.checked })}
                   className="w-4 h-4 text-primary bg-background border-border rounded focus:ring-primary" />
-                <span className="text-sm text-foreground">SMS 알림</span>
+                <span className="text-xs text-foreground">SMS 알림</span>
               </label>
               <label className="flex items-center space-x-3 cursor-pointer">
                 <input type="checkbox" checked={form.notifications.push}
                   onChange={(e) => handleInputChange('notifications', { ...form.notifications, push: e.target.checked })}
                   className="w-4 h-4 text-primary bg-background border-border rounded focus:ring-primary" />
-                <span className="text-sm text-foreground">푸시 알림</span>
+                <span className="text-xs text-foreground">푸시 알림</span>
               </label>
             </div>
           </div>
 
-          <div className="flex justify-end pt-6">
+          <div className="flex gap-3 pt-4">
+            <button type="button" onClick={() => router.push('/settings')}
+              className="h-10 flex-1 border border-border bg-background text-foreground text-xs font-semibold hover:bg-secondary transition-colors rounded-sm cursor-pointer">
+              나중에
+            </button>
             <button type="submit" disabled={loading}
-              className="px-8 py-3 bg-primary text-primary-foreground text-sm font-semibold hover:bg-primary-hover transition-colors rounded-sm cursor-pointer disabled:opacity-50">
-              {loading ? '저장 중...' : '프로필 완료하기'}
+              className="h-10 flex-1 bg-primary text-primary-foreground text-xs font-semibold hover:bg-primary-hover transition-colors rounded-sm cursor-pointer disabled:opacity-50">
+              {loading ? '저장 중...' : '프로필 완료'}
             </button>
           </div>
         </form>
