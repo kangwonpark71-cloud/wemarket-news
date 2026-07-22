@@ -23,6 +23,8 @@ export default function Header() {
 
   useEffect(() => {
     async function checkUser() {
+      const hasSession = document.cookie.includes('session=')
+      if (!hasSession) return
       try {
         const res = await fetch('/api/auth/me')
         if (res.ok) {
