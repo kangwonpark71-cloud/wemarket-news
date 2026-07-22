@@ -37,7 +37,7 @@ export function StockCard({ stock }: StockCardProps) {
           <div className={`flex items-center gap-1 mt-1 ${changeColor}`}>
             {isPositive ? '▲' : '▼'}
             <span className={`text-sm font-medium ${changeColor}`}>
-              {Math.abs(stock.change).toLocaleString()} ({stock.changeRate >= 0 ? '+' : ''}{stock.changeRate.toFixed(2)}%)
+              {Math.abs(stock.change).toLocaleString()} ({stock.changeRate != null && stock.changeRate != undefined ? (stock.changeRate >= 0 ? '+' : '') + Number(stock.changeRate).toFixed(2) + '%' : 'N/A'})
             </span>
           </div>
           <div className="flex items-center gap-4 mt-2 text-xs text-muted-foreground">

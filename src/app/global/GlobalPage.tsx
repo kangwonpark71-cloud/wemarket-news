@@ -235,7 +235,7 @@ export function GlobalPage() {
                   <p className="text-[10px] text-muted-foreground">변동 및 등락률</p>
                   <p className={`text-base font-black mt-0.5 tabular-nums ${selectedIndex.changeRate >= 0 ? 'text-red-600' : 'text-blue-600'}`}>
                     {selectedIndex.changeRate >= 0 ? '▲' : '▼'} {Math.abs(selectedIndex.change).toLocaleString('ko-KR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} ({selectedIndex.changeRate >= 0 ? '+' : ''}
-                    {selectedIndex.changeRate.toFixed(2)}%)
+                    {(selectedIndex.changeRate != null && selectedIndex.changeRate != undefined ? Number(selectedIndex.changeRate).toFixed(2) : 0)}%)
                   </p>
                 </div>
                 <div>

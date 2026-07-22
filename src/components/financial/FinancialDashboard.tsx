@@ -279,11 +279,11 @@ export function FinancialDashboard() {
                 <span className="text-xs font-medium text-muted-foreground">{card.title}</span>
                 <Sparkline data={history[card.sparkKey] || []} color={card.color} />
               </div>
-              <p className="mt-1 text-lg font-bold text-foreground tabular-nums">{card.value}</p>
+                <p className="mt-1 text-lg font-bold text-foreground tabular-nums">{card.value}</p>
               <div className={`mt-1 flex items-center gap-1 text-xs font-medium ${changeColor}`}>
                 <span>{isPositive ? '▲' : '▼'}</span>
                 <span>
-                  {Math.abs(card.change).toLocaleString()} ({isPositive ? '+' : ''}{card.changeRate.toFixed(2)}%)
+                  {Math.abs(card.change).toLocaleString()} ({isPositive ? '+' : ''}{(card.changeRate != null && card.changeRate != undefined ? Number(card.changeRate).toFixed(2) : 0)}%)
                 </span>
               </div>
             </div>

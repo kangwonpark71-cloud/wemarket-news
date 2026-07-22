@@ -5,6 +5,8 @@
 
 import { BaseScheduler, SchedulerMetrics } from './base-scheduler'
 import { RSSScheduler } from './rss-scheduler'
+import { AIITScheduler } from './ai-it-scheduler'
+import { FinancialScheduler } from './financial-scheduler'
 
 export interface SchedulerManagerConfig {
   enabled: boolean
@@ -252,9 +254,24 @@ export function createDefaultSchedulers(): SchedulerManager {
 
   manager.register('rss', rssScheduler)
 
-  // TODO: Register other schedulers here
-  // manager.register('ai-it', new AIITScheduler())
-  // manager.register('financial', new FinancialScheduler())
+  const aiItScheduler = new AIITScheduler({
+    name: 'ai-it',
+    enabled: process.env.DISABLE_SCHEDULERS !== '1',
+    highPriorityInterval: '*/15 * * * *',
+    midPriorityInterval: '*/30 * * * *',
+    lowPriorityInterval: '*/60 * * * *',
+    initialDelay: 5000,
+    lockTimeout: 300,
+  })
+  manager.register('ai-it', aiItScheduler)
+
+  const financialScheduler = new FinancialScheduler({
+    name: 'financial',
+    enabled: process.env.DISABLE_SCHEDULERS !== '1',
+    initialDelay: 5000,
+    lockTimeout: 600,
+  })
+  manager.register('financial', financialScheduler)
 
   return manager
 }

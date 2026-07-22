@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server'
 import { getArticles, getArticleStats } from '@/lib/rss/db-service'
 import { prisma } from '@/lib/db'
+import { cacheService, CacheKeys, CacheTTL } from '@/lib/services/cache/cache-service'
 
 export async function GET(request: Request) {
   const { searchParams } = new URL(request.url)
@@ -37,6 +38,30 @@ export async function GET(request: Request) {
       }
     }
 
+    // Check cache (skip for authenticated users with hidden sources)
+    const cacheKey = CacheKeys.articles({
+      category, source, language,
+      page: String(page), limit: String(Math.min(limit, 100)),
+      search, sortBy, sortOrder,
+      hidden: excludeSourceIds.length > 0 ? '1' : undefined,
+    });
+
+    if (excludeSourceIds.length === 0) {
+      const cached = await cacheService.get(cacheKey);
+      if (cached) {
+        let stats = null;
+        if (includeStats) {
+          const statsCacheKey = CacheKeys.articles({ _stats: '1' });
+          stats = await cacheService.get(statsCacheKey);
+          if (!stats) {
+            stats = await getArticleStats();
+            await cacheService.set(statsCacheKey, stats, { ttl: CacheTTL.MINUTE_5 });
+          }
+        }
+        return NextResponse.json({ success: true, data: cached, stats });
+      }
+    }
+
     const result = await getArticles({
       category,
       sourceName: source,
@@ -49,9 +74,19 @@ export async function GET(request: Request) {
       excludeSourceIds,
     })
 
+    // Cache result (only for non-personalized queries)
+    if (excludeSourceIds.length === 0) {
+      await cacheService.set(cacheKey, result, { ttl: CacheTTL.MINUTE_5 });
+    }
+
     let stats = null
     if (includeStats) {
-      stats = await getArticleStats()
+      const statsCacheKey = CacheKeys.articles({ _stats: '1' });
+      stats = await cacheService.get(statsCacheKey);
+      if (!stats) {
+        stats = await getArticleStats();
+        await cacheService.set(statsCacheKey, stats, { ttl: CacheTTL.MINUTE_5 });
+      }
     }
 
     return NextResponse.json({

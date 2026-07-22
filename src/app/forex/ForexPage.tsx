@@ -249,9 +249,9 @@ export function ForexPage() {
                 </div>
                 <div>
                   <p className="text-[10px] text-muted-foreground">전일 대비 변동</p>
-                  <p className={`text-base font-black mt-0.5 tabular-nums ${selectedForex.changeRate >= 0 ? 'text-red-600' : 'text-blue-600'}`}>
-                    {selectedForex.changeRate >= 0 ? '▲' : '▼'} {Math.abs(selectedForex.change).toFixed(2)} ({selectedForex.changeRate >= 0 ? '+' : ''}
-                    {selectedForex.changeRate.toFixed(2)}%)
+                  <p className={`text-base font-black mt-0.5 tabular-nums ${selectedForex.changeRate != null && selectedForex.changeRate != undefined && selectedForex.changeRate >= 0 ? 'text-red-600' : 'text-blue-600'}`}>
+                    {selectedForex.changeRate != null && selectedForex.changeRate != undefined && selectedForex.changeRate >= 0 ? '▲' : '▼'} {Math.abs(selectedForex.change).toFixed(2)} ({selectedForex.changeRate != null && selectedForex.changeRate != undefined && selectedForex.changeRate >= 0 ? '+' : ''}
+                    {(selectedForex.changeRate != null && selectedForex.changeRate != undefined ? Number(selectedForex.changeRate).toFixed(2) : 0)}%)
                   </p>
                 </div>
                 <div>

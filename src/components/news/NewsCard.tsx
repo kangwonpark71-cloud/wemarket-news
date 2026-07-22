@@ -1,7 +1,7 @@
 'use client'
 
 import { ArticleWithSource } from '@/lib/rss/db-service'
-import { formatDate, truncate } from '@/lib/utils'
+import { formatDate, truncate, estimateReadingTime } from '@/lib/utils'
 import { useState } from 'react'
 import Link from 'next/link'
 
@@ -13,6 +13,7 @@ interface NewsCardProps {
 export default function NewsCard({ article, compact = false }: NewsCardProps) {
   const source = article.source
   const isEnglish = article.language === 'en'
+  const readingTime = estimateReadingTime(article.description || article.content, article.language)
   const [isBookmarked, setIsBookmarked] = useState(article.isBookmarked)
   const [isRead, setIsRead] = useState(article.isRead)
   const [isLoading, setIsLoading] = useState(false)
@@ -146,6 +147,8 @@ export default function NewsCard({ article, compact = false }: NewsCardProps) {
               )}
               <span className="text-gray-300">|</span>
               <span className="capitalize">{article.language === 'ko' ? '한국어' : '영어'}</span>
+              <span className="text-gray-300">|</span>
+              <span>{readingTime}{article.language === 'ko' ? '분' : 'min'}</span>
             </div>
           </div>
         </div>

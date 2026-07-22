@@ -17,7 +17,27 @@ interface FetchResult {
   duration: number
 }
 
-async function fetchFeed(source: typeof ALL_SOURCES[0]): Promise<{ articles: any[]; error?: string }> {
+interface CronArticle {
+  title: string
+  url: string
+  description: string
+  publishedAt: Date
+  sourceName: string
+  language: string
+  category: string
+}
+
+const sourceIdCache = new Map<string, string>()
+
+async function getSourceId(sourceName: string): Promise<string | null> {
+  if (sourceIdCache.has(sourceName)) return sourceIdCache.get(sourceName)!
+  const source = await prisma.source.findFirst({ where: { nameEn: sourceName }, select: { id: true } })
+  if (!source) return null
+  sourceIdCache.set(sourceName, source.id)
+  return source.id
+}
+
+async function fetchFeed(source: typeof ALL_SOURCES[0]): Promise<{ articles: CronArticle[]; error?: string }> {
   try {
     const Parser = (await import('rss-parser')).default
     const parser = new Parser()
@@ -30,7 +50,7 @@ async function fetchFeed(source: typeof ALL_SOURCES[0]): Promise<{ articles: any
         url: item.link || '',
         description: item.contentSnippet || item.content || '',
         publishedAt: item.pubDate ? new Date(item.pubDate) : new Date(),
-        source: source.nameEn,
+        sourceName: source.nameEn,
         language: source.language,
         category: source.category,
       }))
@@ -41,14 +61,20 @@ async function fetchFeed(source: typeof ALL_SOURCES[0]): Promise<{ articles: any
   }
 }
 
-async function upsertArticle(article: any): Promise<boolean> {
+async function upsertArticle(article: CronArticle): Promise<boolean> {
   try {
     const existing = await prisma.article.findUnique({
       where: { url: article.url },
     })
     
     if (existing) {
-      return false // Already exists
+      return false
+    }
+    
+    const sourceId = await getSourceId(article.sourceName)
+    if (!sourceId) {
+      console.warn(`[CronWorker] Source not found: ${article.sourceName}`)
+      return false
     }
     
     await prisma.article.create({
@@ -57,7 +83,7 @@ async function upsertArticle(article: any): Promise<boolean> {
         url: article.url,
         description: article.description,
         publishedAt: article.publishedAt,
-        source: article.source,
+        sourceId,
         language: article.language,
         category: article.category,
         isRead: false,
@@ -65,7 +91,7 @@ async function upsertArticle(article: any): Promise<boolean> {
       },
     })
     
-    return true // New article inserted
+    return true
   } catch (error) {
     console.error(`Failed to upsert article: ${article.url}`, error)
     return false

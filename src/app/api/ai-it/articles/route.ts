@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { getAIITArticles, getAIITArticleById, getAIITArticleByUrl, getAIITArticleStats, getSubcategoriesWithCount } from '@/lib/ai-it/db-service';
+import { cacheService, CacheKeys, CacheTTL } from '@/lib/services/cache/cache-service';
 
 export async function GET(request: NextRequest) {
   try {
@@ -9,7 +10,11 @@ export async function GET(request: NextRequest) {
     const url = searchParams.get('url');
 
     if (action === 'stats') {
+      const statsCacheKey = 'ai-it:articles:stats';
+      const cached = await cacheService.get(statsCacheKey);
+      if (cached) return NextResponse.json({ success: true, ...cached as Record<string, unknown> });
       const stats = await getAIITArticleStats();
+      await cacheService.set(statsCacheKey, stats, { ttl: CacheTTL.MINUTE_5 });
       return NextResponse.json({ success: true, ...stats });
     }
 
@@ -72,6 +77,24 @@ export async function GET(request: NextRequest) {
       }
     }
 
+    const cacheKey = CacheKeys.aiItArticles({
+      category: category || undefined,
+      subcategory: subcategory || undefined,
+      language: language || undefined,
+      page: String(page), limit: String(limit),
+      search: search || undefined,
+      sortBy, sortOrder,
+      sourceId: sourceId || undefined,
+      dateFrom: searchParams.get('dateFrom') || undefined,
+      dateTo: searchParams.get('dateTo') || undefined,
+      hidden: excludeSourceIds.length > 0 ? '1' : undefined,
+    });
+
+    if (excludeSourceIds.length === 0) {
+      const cached = await cacheService.get(cacheKey);
+      if (cached) return NextResponse.json({ success: true, ...cached as Record<string, unknown> });
+    }
+
     const result = await getAIITArticles({
       category: category || undefined,
       subcategory: subcategory || undefined,
@@ -86,6 +109,10 @@ export async function GET(request: NextRequest) {
       dateTo,
       excludeSourceIds,
     });
+
+    if (excludeSourceIds.length === 0) {
+      await cacheService.set(cacheKey, result, { ttl: CacheTTL.MINUTE });
+    }
 
     return NextResponse.json({ success: true, ...result });
   } catch (error) {

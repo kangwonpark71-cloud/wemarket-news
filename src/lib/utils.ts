@@ -86,3 +86,10 @@ export async function sendNotificationWebhook(title: string, url: string, source
   } catch {
   }
 }
+
+export function estimateReadingTime(text: string | null | undefined, language: string = 'ko'): number {
+  if (!text) return 1
+  const charCount = text.length
+  const charsPerMin = language === 'ko' ? 400 : 200
+  return Math.max(1, Math.ceil(charCount / charsPerMin))
+}

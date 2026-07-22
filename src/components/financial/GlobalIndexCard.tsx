@@ -29,7 +29,7 @@ export function GlobalIndexCard({ index }: GlobalIndexCardProps) {
           <div className={`flex items-center gap-1 mt-1 ${changeColor}`}>
             {isPositive ? '▲' : '▼'}
             <span className={`text-sm font-medium ${changeColor}`}>
-              {Math.abs(index.change).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })} ({index.changeRate >= 0 ? '+' : ''}{index.changeRate.toFixed(2)}%)
+              {Math.abs(index.change).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })} ({index.changeRate != null && index.changeRate != undefined ? (index.changeRate >= 0 ? '+' : '') + Number(index.changeRate).toFixed(2) + '%' : 'N/A'})
             </span>
           </div>
         </div>

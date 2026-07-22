@@ -33,6 +33,22 @@ interface StatsData {
   lastFetchStatus?: string
   lastFetchNewCount?: number
   recentFetchLogs?: FetchLogEntry[]
+  sourceHealth?: SourceHealthEntry[]
+}
+
+interface SourceHealthEntry {
+  id: string
+  name: string
+  nameEn: string
+  category: string
+  sourceType: string
+  articleCount: number
+  fetchCount: number
+  successRate: number
+  lastFetchAt: string | null
+  lastFetchStatus: string | null
+  lastFetchCount: number
+  avgDuration: number | null
 }
 
 export default function AdminPage() {
@@ -186,6 +202,81 @@ export default function AdminPage() {
             </span>
           </div>
         </div>
+
+        {stats?.sourceHealth && stats.sourceHealth.length > 0 && (
+          <div className="bg-white rounded-none shadow-sm border border-slate-200 overflow-hidden mb-8">
+            <div className="py-4 px-6 bg-slate-50/50 border-b border-slate-200 font-bold text-sm text-slate-700">
+              📊 소스별 건강 상태
+            </div>
+            <div className="overflow-x-auto">
+              <table className="w-full text-left border-collapse">
+                <thead>
+                  <tr className="bg-slate-100/50 text-slate-600 font-semibold text-xs border-b border-slate-200">
+                    <th className="py-3 px-4">소스명</th>
+                    <th className="py-3 px-4 text-center">기사 수</th>
+                    <th className="py-3 px-4 text-center">수집 횟수</th>
+                    <th className="py-3 px-4 text-center">성공률</th>
+                    <th className="py-3 px-4">마지막 수집</th>
+                    <th className="py-3 px-4 text-center">상태</th>
+                    <th className="py-3 px-4 text-right">평균 소요</th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-slate-100">
+                  {stats.sourceHealth.map((source: SourceHealthEntry) => {
+                    const isStale = source.lastFetchAt
+                      ? (Date.now() - new Date(source.lastFetchAt).getTime()) > 4 * 60 * 60 * 1000
+                      : true;
+                    return (
+                      <tr key={source.id} className="hover:bg-slate-50 text-sm">
+                        <td className="py-3 px-4">
+                          <div className="font-semibold text-slate-900">{source.name}</div>
+                          <div className="text-slate-400 text-xs">{source.nameEn}</div>
+                        </td>
+                        <td className="py-3 px-4 text-center tabular-nums font-medium text-slate-700">
+                          {source.articleCount.toLocaleString()}
+                        </td>
+                        <td className="py-3 px-4 text-center tabular-nums text-slate-500">
+                          {source.fetchCount}
+                        </td>
+                        <td className="py-3 px-4 text-center">
+                          <span className={`font-bold ${
+                            source.successRate >= 90 ? 'text-emerald-600' :
+                            source.successRate >= 70 ? 'text-amber-600' : 'text-rose-600'
+                          }`}>
+                            {source.successRate}%
+                          </span>
+                        </td>
+                        <td className="py-3 px-4 text-xs text-slate-500">
+                          {source.lastFetchAt
+                            ? new Date(source.lastFetchAt).toLocaleString('ko-KR')
+                            : <span className="text-slate-300">수집 기록 없음</span>}
+                        </td>
+                        <td className="py-3 px-4 text-center">
+                          <span className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-sm text-xs font-semibold ${
+                            isStale
+                              ? 'bg-amber-50 text-amber-700 border border-amber-200'
+                              : source.lastFetchStatus === 'success'
+                                ? 'bg-emerald-50 text-emerald-700 border border-emerald-200'
+                                : 'bg-rose-50 text-rose-700 border border-rose-200'
+                          }`}>
+                            <span className={`h-1.5 w-1.5 rounded-full ${
+                              isStale ? 'bg-amber-500' :
+                              source.lastFetchStatus === 'success' ? 'bg-emerald-500' : 'bg-rose-500'
+                            }`} />
+                            {isStale ? 'STALE' : source.lastFetchStatus === 'success' ? 'OK' : 'ERROR'}
+                          </span>
+                        </td>
+                        <td className="py-3 px-4 text-right tabular-nums text-slate-500 text-xs">
+                          {source.avgDuration ? `${source.avgDuration.toLocaleString()}ms` : '-'}
+                        </td>
+                      </tr>
+                    );
+                  })}
+                </tbody>
+              </table>
+            </div>
+          </div>
+        )}
 
         <div className="bg-white rounded-none shadow-sm border border-slate-200 overflow-hidden mb-8">
           <div className="py-4 px-6 bg-slate-50/50 border-b border-slate-200 font-bold text-sm text-slate-700">

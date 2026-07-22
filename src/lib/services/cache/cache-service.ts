@@ -257,6 +257,24 @@ export const CacheKeys = {
   chartData: (symbol: string, type: string, timeframe: string) => `chart:${type}:${symbol}:${timeframe}`,
 
   financialDashboard: () => `financial:dashboard`,
+
+  articles: (params: Record<string, string | undefined>) => {
+    const sorted = Object.entries(params)
+      .filter(([, v]) => v !== undefined)
+      .sort(([a], [b]) => a.localeCompare(b))
+      .map(([k, v]) => `${k}=${v}`)
+      .join('&');
+    return `articles:list:${sorted}`;
+  },
+
+  aiItArticles: (params: Record<string, string | undefined>) => {
+    const sorted = Object.entries(params)
+      .filter(([, v]) => v !== undefined)
+      .sort(([a], [b]) => a.localeCompare(b))
+      .map(([k, v]) => `${k}=${v}`)
+      .join('&');
+    return `ai-it:articles:list:${sorted}`;
+  },
 };
 
 export const CacheTTL = {
