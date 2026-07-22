@@ -1,8 +1,29 @@
 import prisma from '@/lib/db'
 import { ParsedArticle } from './fetcher'
-import { Prisma, Article, Source } from '@prisma/client'
+import { Prisma, Article, Source, NewsSummary } from '@prisma/client'
 
-export type ArticleWithSource = Article & { source: Source }
+export type ArticleWithSource = Article & { source: Source; summary?: NewsSummary | null }
+
+const englishArticleIds: string[] = []
+
+function scheduleTranslation(articleId: string) {
+  englishArticleIds.push(articleId)
+}
+
+export async function processPendingTranslations() {
+  if (englishArticleIds.length === 0) return
+
+  const ids = englishArticleIds.splice(0, englishArticleIds.length)
+  try {
+    const { translateArticleBatch } = await import('@/lib/ai/translation-service')
+    const result = await translateArticleBatch(ids)
+    if (result.translated > 0) {
+      console.log(`[RSS DB] Auto-translated ${result.translated} English articles`)
+    }
+  } catch (err) {
+    console.warn('[RSS DB] Batch translation failed:', err)
+  }
+}
 
 export async function upsertArticles(
   sourceId: string,
@@ -35,6 +56,10 @@ export async function upsertArticles(
         newCount++
         const { sendNotificationWebhook } = await import('@/lib/utils');
         await sendNotificationWebhook(created.title, created.url, created.source.name, created.description || undefined);
+
+        if (article.language === 'en') {
+          scheduleTranslation(created.id)
+        }
       }
     } catch (err) {
       console.warn(`[RSS DB] Skipping article "${article.title?.substring(0, 50)}":`, err instanceof Error ? err.message : err)
@@ -113,7 +138,7 @@ export async function getArticles(params: {
   const [articles, total] = await Promise.all([
     prisma.article.findMany({
       where,
-      include: { source: true },
+      include: { source: true, summary: true },
       orderBy: { [sortField]: sortOrder },
       skip: (page - 1) * limit,
       take: limit,
@@ -132,7 +157,7 @@ export async function getArticles(params: {
 export async function getArticleById(id: string): Promise<ArticleWithSource | null> {
   const article = await prisma.article.findUnique({
     where: { id },
-    include: { source: true },
+    include: { source: true, summary: true },
   })
   return article as ArticleWithSource | null
 }

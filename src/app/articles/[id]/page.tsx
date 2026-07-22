@@ -65,6 +65,7 @@ export default async function ArticleDetailPage({ params }: Props) {
   const isEnglish = article.language === 'en'
   const language: ReaderLanguage = isEnglish ? 'en' : 'ko'
   const source = article.source
+  const translatedTitle = article.summary?.translatedTitle
 
   const relatedRaw = await getRelatedArticles(id, 4)
 
@@ -81,7 +82,8 @@ export default async function ArticleDetailPage({ params }: Props) {
       <ArticleHeader
         article={{
           id: article.id,
-          title: article.title,
+          title: isEnglish && translatedTitle ? translatedTitle : article.title,
+          originalTitle: isEnglish ? article.title : undefined,
           url: article.url,
           description: article.description,
           content: article.content,

@@ -43,6 +43,12 @@ export function ArticleHeader({ article, language, backHref, backLabel }: Articl
         {article.title}
       </h1>
 
+      {article.originalTitle && (
+        <p className="mt-2 text-sm text-muted-foreground italic">
+          {article.originalTitle}
+        </p>
+      )}
+
       <div className="mt-5 flex flex-wrap items-center gap-x-2 gap-y-1 border-b border-border pb-5 text-xs font-medium text-muted-foreground">
         {article.author && (
           <>

@@ -5,8 +5,14 @@ import { formatDate, truncate, estimateReadingTime } from '@/lib/utils'
 import { useState } from 'react'
 import Link from 'next/link'
 
+interface NewsSummary {
+  translatedTitle?: string | null
+  summary3Line?: string
+  keywords?: string[]
+}
+
 interface NewsCardProps {
-  article: ArticleWithSource
+  article: ArticleWithSource & { summary?: NewsSummary | null }
   compact?: boolean
 }
 
@@ -17,6 +23,10 @@ export default function NewsCard({ article, compact = false }: NewsCardProps) {
   const [isBookmarked, setIsBookmarked] = useState(article.isBookmarked)
   const [isRead, setIsRead] = useState(article.isRead)
   const [isLoading, setIsLoading] = useState(false)
+  const [showOriginal, setShowOriginal] = useState(false)
+
+  const translatedTitle = article.summary?.translatedTitle
+  const displayTitle = isEnglish && translatedTitle && !showOriginal ? translatedTitle : article.title
 
   const handleBookmark = async (e: React.MouseEvent) => {
     e.preventDefault()
@@ -80,6 +90,22 @@ export default function NewsCard({ article, compact = false }: NewsCardProps) {
                 <span>{source.icon || '📰'}</span>
                 <span>{source.name}</span>
               </span>
+              {isEnglish && translatedTitle && (
+                <button
+                  onClick={(e) => {
+                    e.preventDefault()
+                    e.stopPropagation()
+                    setShowOriginal(!showOriginal)
+                  }}
+                  className="inline-flex items-center gap-1 rounded-full bg-accent-light px-2 py-0.5 text-xs font-medium text-accent hover:bg-accent/20 transition-colors"
+                  title={showOriginal ? '한국어 번역 보기' : '영어 원문 보기'}
+                >
+                  <svg className="h-3 w-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 5h12M9 3v2m1.048 9.5A18.022 18.022 0 016.412 9m6.088 9h7M11 21l5-10 5 10M12.751 5C11.783 10.77 8.07 15.61 3 18.129" />
+                  </svg>
+                  {showOriginal ? '원문' : '번역'}
+                </button>
+              )}
               {article.category && article.category !== source.subcategory && (
                 <span className="text-xs text-muted-foreground">{article.category}</span>
               )}
@@ -126,8 +152,14 @@ export default function NewsCard({ article, compact = false }: NewsCardProps) {
               className="block line-clamp-2 word-break-keep-all text-sm font-semibold leading-tight text-gray-900 group-hover:text-primary sm:text-base"
               title={article.title}
             >
-              {article.title}
+              {displayTitle}
             </Link>
+
+            {isEnglish && translatedTitle && article.summary?.summary3Line && !compact && (
+              <p className="mt-1.5 text-xs leading-relaxed text-primary/70 line-clamp-2">
+                {truncate(article.summary.summary3Line, 150)}
+              </p>
+            )}
 
             {!compact && article.description && (
               <p className="mt-2 text-sm leading-relaxed text-gray-600">

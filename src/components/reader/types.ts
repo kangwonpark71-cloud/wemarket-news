@@ -10,6 +10,7 @@ export interface ReaderSource {
 export interface ReaderArticle {
   id: string
   title: string
+  originalTitle?: string
   url: string
   description?: string | null
   content?: string | null
