@@ -57,6 +57,7 @@ export function LoginPage() {
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
   const [signupSuccess, setSignupSuccess] = useState(false);
+  const [mockCode, setMockCode] = useState<string | null>(null);
 
   // --- Timer ---
   const [timerSeconds, setTimerSeconds] = useState(300);
@@ -94,6 +95,7 @@ export function LoginPage() {
     setLoading(false);
     setSignupSuccess(false);
     setSignupStep(1);
+    setMockCode(null);
     if (timerRef.current) clearInterval(timerRef.current);
   }, []);
 
@@ -166,6 +168,9 @@ export function LoginPage() {
       if (json.success) {
         setSignupSuccess(true);
         setSignupStep(2);
+        if (json.mockCode) {
+          setMockCode(json.mockCode);
+        }
       } else {
         setError(json.error || '회원가입 중 오류가 발생했습니다.');
       }
@@ -219,6 +224,9 @@ export function LoginPage() {
       if (json.success) {
         setTimerSeconds(300);
         setVerificationCode('');
+        if (json.mockCode) {
+          setMockCode(json.mockCode);
+        }
       } else {
         setError(json.error || '재전송에 실패했습니다.');
       }
@@ -427,6 +435,19 @@ export function LoginPage() {
         {/* ===== Step 2: Verification Code ===== */}
         {signupStep === 2 && (
           <div className="space-y-4">
+            {mockCode && (
+              <div className="border border-amber-300 bg-amber-50 dark:bg-amber-950/30 dark:border-amber-700 rounded-sm p-3">
+                <p className="text-[10px] font-semibold text-amber-700 dark:text-amber-300 mb-1">
+                  📋 개발 모드 — 인증번호
+                </p>
+                <p className="text-lg font-mono font-bold text-amber-800 dark:text-amber-200 tracking-[0.3em] text-center">
+                  {mockCode}
+                </p>
+                <p className="text-[10px] text-amber-600 dark:text-amber-400 mt-1 text-center">
+                  Twilio가 설정되지 않아 화면에 표시됩니다.
+                </p>
+              </div>
+            )}
             <div className="bg-secondary/50 rounded-sm p-3 text-center">
               <p className="text-xs text-muted-foreground">
                 인증 코드가 <span className="font-semibold text-foreground">{phone}</span>로 발송되었습니다.

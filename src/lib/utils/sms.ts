@@ -12,6 +12,16 @@ export interface SMSConfig {
   awsSecretAccessKey?: string;
 }
 
+export function isMockMode(): boolean {
+  return (
+    !process.env.SMS_PROVIDER ||
+    process.env.SMS_PROVIDER === 'mock' ||
+    !process.env.TWILIO_ACCOUNT_SID ||
+    !process.env.TWILIO_AUTH_TOKEN ||
+    !process.env.TWILIO_PHONE_NUMBER
+  );
+}
+
 export async function sendSMS(phone: string, message: string): Promise<boolean> {
   const config: SMSConfig = {
     provider: (process.env.SMS_PROVIDER as 'twilio' | 'aws-sns' | 'mock') || 'mock',
