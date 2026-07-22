@@ -2,7 +2,7 @@ import { NextResponse } from 'next/server';
 import { prisma } from '@/lib/db';
 import { hashPassword } from '@/lib/utils/auth';
 import { z } from 'zod';
-import { validatePhoneNumber, generateVerificationCode, storeVerificationCode, canRequestVerification } from '@/lib/utils/sms';
+import { validatePhoneNumber, generateVerificationCode, storeVerificationCode, canRequestVerification, sendSMS } from '@/lib/utils/sms';
 
 // 회원가입: 전화번호 + 비밀번호만 필요 (이름/이메일은 가입 후 프로필에서 입력)
 const signupSchema = z.object({
@@ -89,11 +89,15 @@ export async function POST(request: Request) {
       },
     });
 
-    // Generate and store SMS verification code
     const verificationCode = generateVerificationCode();
     storeVerificationCode(phoneValidation.normalized, verificationCode, user.id);
     
-    console.log(`[SMS Verification] ${phoneValidation.normalized}로 인증 코드 ${verificationCode}를 전송했습니다.`);
+    const smsMessage = `[经济news] 인증번호: ${verificationCode}\n이 번호는 5분간 유효합니다.`;
+    const smsSent = await sendSMS(phoneValidation.normalized, smsMessage);
+    
+    if (!smsSent) {
+      console.error(`[SMS] ${phoneValidation.normalized}로 SMS 발송 실패`);
+    }
 
     return NextResponse.json({
       success: true,

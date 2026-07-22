@@ -12,6 +12,42 @@ export interface SMSConfig {
   awsSecretAccessKey?: string;
 }
 
+export async function sendSMS(phone: string, message: string): Promise<boolean> {
+  const config: SMSConfig = {
+    provider: (process.env.SMS_PROVIDER as 'twilio' | 'aws-sns' | 'mock') || 'mock',
+    accountSid: process.env.TWILIO_ACCOUNT_SID,
+    authToken: process.env.TWILIO_AUTH_TOKEN,
+    fromNumber: process.env.TWILIO_PHONE_NUMBER,
+  };
+
+  if (config.provider === 'mock' || !config.accountSid || !config.authToken || !config.fromNumber) {
+    console.log(`[SMS Mock] ${phone}로 메시지 발송 시뮬레이션: ${message}`);
+    return true;
+  }
+
+  if (config.provider === 'twilio') {
+    try {
+      const twilio = (await import('twilio')).default;
+      const client = twilio(config.accountSid, config.authToken);
+      
+      await client.messages.create({
+        body: message,
+        from: config.fromNumber,
+        to: phone,
+      });
+      
+      console.log(`[SMS Twilio] ${phone}로 SMS 발송 성공`);
+      return true;
+    } catch (error) {
+      console.error(`[SMS Twilio] ${phone}로 SMS 발송 실패:`, error);
+      return false;
+    }
+  }
+
+  console.log(`[SMS Mock] ${phone}로 메시지 발송 시뮬레이션: ${message}`);
+  return true;
+}
+
 // In-memory store for verification codes (Redis나 Database로 대체 권장)
 // Production에서는 Redis나 Database 사용을 권장하며, 테스트용 모의 메모리 저장소입니다.
 interface VerificationStore {
