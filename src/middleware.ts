@@ -47,10 +47,11 @@ function checkRateLimit(
 }
 
 // ─── Route Configuration ─────────────────────────────────────────────────────
+// Railway shares a single outbound IP — per-IP limits must be generous.
 
-const API_RATE_LIMIT = 60 // requests per minute for general API
-const CRON_RATE_LIMIT = 10 // requests per minute for cron endpoints
-const WRITE_RATE_LIMIT = 20 // requests per minute for POST/PUT/DELETE
+const API_RATE_LIMIT = 200
+const CRON_RATE_LIMIT = 10
+const WRITE_RATE_LIMIT = 200
 
 const SECURITY_HEADERS: Record<string, string> = {
   'X-DNS-Prefetch-Control': 'on',
