@@ -7,21 +7,29 @@ export async function POST(request: Request) {
   const cronSecret = process.env.CRON_SECRET
 
   if (cronSecret && authHeader !== `Bearer ${cronSecret}`) {
-    return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+    return NextResponse.json({ success: false, error: 'Unauthorized' }, { status: 401 })
   }
 
-  const startTime = Date.now()
-  const results: Record<string, unknown> = {}
+  try {
+    const startTime = Date.now()
+    const results: Record<string, unknown> = {}
 
-  const seeded = await seedAIITSources()
-  results.seeded = seeded
+    const seeded = await seedAIITSources()
+    results.seeded = seeded
 
-  const fetch = await fetchAllAIITNews()
-  results.fetch = fetch
+    const fetch = await fetchAllAIITNews()
+    results.fetch = fetch
 
-  results.duration = Date.now() - startTime
+    results.duration = Date.now() - startTime
 
-  return NextResponse.json({ success: true, ...results })
+    return NextResponse.json({ success: true, ...results })
+  } catch (error) {
+    console.error('AI/IT trigger failed:', error)
+    return NextResponse.json(
+      { success: false, error: 'AI/IT trigger failed' },
+      { status: 500 }
+    )
+  }
 }
 
 export async function GET() {

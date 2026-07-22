@@ -7,7 +7,7 @@ export async function POST(request: Request) {
 
     if (!title || typeof title !== 'string') {
       return NextResponse.json(
-        { error: 'title is required (string)' },
+        { success: false, error: 'title is required (string)' },
         { status: 400 }
       )
     }
@@ -19,7 +19,7 @@ export async function POST(request: Request) {
     const message = err instanceof Error ? err.message : 'Unknown error'
     console.error('[POST /api/ai/summarize]', message)
     return NextResponse.json(
-      { error: message },
+      { success: false, error: message },
       { status: 500 }
     )
   }

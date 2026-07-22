@@ -1,7 +1,19 @@
 import { NextResponse } from 'next/server'
 import prisma from '@/lib/db'
+import { getSessionUser } from '@/lib/utils/auth'
 
-export async function GET() {
+async function requireAdmin(request: Request) {
+  const user = await getSessionUser(request);
+  if (!user || user.role !== 'ADMIN') return null;
+  return user;
+}
+
+export async function GET(request: Request) {
+  const admin = await requireAdmin(request);
+  if (!admin) {
+    return NextResponse.json({ success: false, error: 'Unauthorized' }, { status: 401 });
+  }
+
   try {
     const sources = await prisma.source.findMany({
       orderBy: { name: 'asc' },
@@ -17,6 +29,11 @@ export async function GET() {
 }
 
 export async function PATCH(request: Request) {
+  const admin = await requireAdmin(request);
+  if (!admin) {
+    return NextResponse.json({ success: false, error: 'Unauthorized' }, { status: 401 });
+  }
+
   try {
     const body = await request.json()
     const { id, fetchInterval, isActive } = body

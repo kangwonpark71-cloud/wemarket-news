@@ -2,8 +2,20 @@ import { NextResponse } from 'next/server'
 import prisma from '@/lib/db'
 import { runRssFetch } from '@/lib/rss/scheduler'
 import { fetchAndProcessSource } from '@/lib/ai-it/scheduler-service'
+import { getSessionUser } from '@/lib/utils/auth'
+
+async function requireAdmin(request: Request) {
+  const user = await getSessionUser(request);
+  if (!user || user.role !== 'ADMIN') return null;
+  return user;
+}
 
 export async function POST(request: Request) {
+  const admin = await requireAdmin(request);
+  if (!admin) {
+    return NextResponse.json({ success: false, error: 'Unauthorized' }, { status: 401 });
+  }
+
   try {
     const body = await request.json()
     const { sourceId } = body

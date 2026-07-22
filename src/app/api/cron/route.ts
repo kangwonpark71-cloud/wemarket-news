@@ -6,34 +6,41 @@ export async function POST(request: Request) {
   const cronSecret = process.env.CRON_SECRET
 
   if (cronSecret && authHeader !== `Bearer ${cronSecret}`) {
-    return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+    return NextResponse.json({ success: false, error: 'Unauthorized' }, { status: 401 })
   }
 
-  const url = new URL(request.url)
-  const sourceParam = url.searchParams.get('source')
+  try {
+    const url = new URL(request.url)
+    const sourceParam = url.searchParams.get('source')
 
-  const startTime = Date.now()
+    const startTime = Date.now()
 
-  const results = await runRssFetch(sourceParam || undefined)
+    const results = await runRssFetch(sourceParam || undefined)
 
-  const totalDuration = Date.now() - startTime
-  const successCount = results.filter(r => r.status === 'success').length
-  const errorCount = results.filter(r => r.status === 'error').length
-  const partialCount = results.filter(r => r.status === 'partial').length
+    const totalDuration = Date.now() - startTime
+    const successCount = results.filter(r => r.status === 'success').length
+    const errorCount = results.filter(r => r.status === 'error').length
+    const partialCount = results.filter(r => r.status === 'partial').length
 
-
-  return NextResponse.json({
-    success: true,
-    timestamp: new Date().toISOString(),
-    duration: totalDuration,
-    summary: {
-      total: results.length,
-      success: successCount,
-      partial: partialCount,
-      errors: errorCount,
-    },
-    results,
-  })
+    return NextResponse.json({
+      success: true,
+      timestamp: new Date().toISOString(),
+      duration: totalDuration,
+      summary: {
+        total: results.length,
+        success: successCount,
+        partial: partialCount,
+        errors: errorCount,
+      },
+      results,
+    })
+  } catch (error) {
+    console.error('Cron RSS fetch failed:', error)
+    return NextResponse.json(
+      { success: false, error: 'RSS fetch failed' },
+      { status: 500 }
+    )
+  }
 }
 
 export async function GET() {
