@@ -3,6 +3,7 @@
 import { useEffect, useState, useMemo } from 'react';
 import { FinancialDashboard } from '@/components/financial/FinancialDashboard';
 import { FinancialChart } from '@/components/financial/FinancialChart';
+import { formatKRWDecimal, formatNumber } from '@/lib/utils/format';
 
 interface GlobalIndexData {
   symbol: string;
@@ -177,22 +178,22 @@ export function GlobalPage() {
                       </div>
                     </td>
                     <td className="px-4 py-3 text-right font-bold text-sm tabular-nums">
-                      {idx.price.toLocaleString('ko-KR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                      {formatKRWDecimal(idx.price)}
                     </td>
                     <td className={`px-4 py-3 text-right tabular-nums ${changeColor}`}>
-                      {idx.change !== 0 ? (isPositive ? '▲' : '▼') : ''} {Math.abs(idx.change).toLocaleString('ko-KR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                      {idx.change !== 0 ? (isPositive ? '▲' : '▼') : ''} {formatNumber(Math.abs(idx.change))}
                     </td>
                     <td className={`px-4 py-3 text-right font-bold tabular-nums ${changeColor}`}>
                       {idx.changeRate !== 0 ? (isPositive ? '+' : '') : ''}{Number(idx.changeRate ?? 0).toFixed(2)}%
                     </td>
                     <td className="px-4 py-3 text-right text-muted-foreground hidden sm:table-cell tabular-nums">
-                      {idx.openPrice ? idx.openPrice.toLocaleString('ko-KR', { minimumFractionDigits: 2, maximumFractionDigits: 2 }) : '-'}
+                      {idx.openPrice ? formatKRWDecimal(idx.openPrice) : '-'}
                     </td>
                     <td className="px-4 py-3 text-right text-muted-foreground hidden sm:table-cell tabular-nums">
-                      {idx.highPrice ? idx.highPrice.toLocaleString('ko-KR', { minimumFractionDigits: 2, maximumFractionDigits: 2 }) : '-'}
+                      {idx.highPrice ? formatKRWDecimal(idx.highPrice) : '-'}
                     </td>
                     <td className="px-4 py-3 text-right text-muted-foreground hidden sm:table-cell tabular-nums">
-                      {idx.lowPrice ? idx.lowPrice.toLocaleString('ko-KR', { minimumFractionDigits: 2, maximumFractionDigits: 2 }) : '-'}
+                      {idx.lowPrice ? formatKRWDecimal(idx.lowPrice) : '-'}
                     </td>
                   </tr>
                 );
@@ -228,38 +229,38 @@ export function GlobalPage() {
                 <div>
                   <p className="text-[10px] text-muted-foreground">현재 지수</p>
                   <p className="text-base font-black text-foreground mt-0.5 tabular-nums">
-                    {selectedIndex.price.toLocaleString('ko-KR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                    {formatKRWDecimal(selectedIndex.price)}
                   </p>
                 </div>
                 <div>
                   <p className="text-[10px] text-muted-foreground">변동 및 등락률</p>
                   <p className={`text-base font-black mt-0.5 tabular-nums ${selectedIndex.changeRate >= 0 ? 'text-red-600' : 'text-blue-600'}`}>
-                    {selectedIndex.changeRate >= 0 ? '▲' : '▼'} {Math.abs(selectedIndex.change).toLocaleString('ko-KR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} ({selectedIndex.changeRate >= 0 ? '+' : ''}
+                    {selectedIndex.changeRate >= 0 ? '▲' : '▼'} {formatNumber(Math.abs(selectedIndex.change))} ({selectedIndex.changeRate >= 0 ? '+' : ''}
                     {(selectedIndex.changeRate != null && selectedIndex.changeRate != undefined ? Number(selectedIndex.changeRate).toFixed(2) : 0)}%)
                   </p>
                 </div>
                 <div>
                   <p className="text-[10px] text-muted-foreground">시가</p>
                   <p className="text-sm font-bold text-foreground mt-1 tabular-nums">
-                    {selectedIndex.openPrice ? selectedIndex.openPrice.toLocaleString('ko-KR', { minimumFractionDigits: 2, maximumFractionDigits: 2 }) : '-'}
+                    {selectedIndex.openPrice ? formatKRWDecimal(selectedIndex.openPrice) : '-'}
                   </p>
                 </div>
                 <div>
                   <p className="text-[10px] text-muted-foreground">당일 최고가</p>
                   <p className="text-sm font-bold mt-1 tabular-nums text-red-600">
-                    {selectedIndex.highPrice ? `▲ ${selectedIndex.highPrice.toLocaleString('ko-KR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}` : '-'}
+                    {selectedIndex.highPrice ? `▲ ${formatKRWDecimal(selectedIndex.highPrice)}` : '-'}
                   </p>
                 </div>
                 <div>
                   <p className="text-[10px] text-muted-foreground">당일 최저가</p>
                   <p className="text-sm font-bold mt-1 tabular-nums text-blue-600">
-                    {selectedIndex.lowPrice ? `▼ ${selectedIndex.lowPrice.toLocaleString('ko-KR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}` : '-'}
+                    {selectedIndex.lowPrice ? `▼ ${formatKRWDecimal(selectedIndex.lowPrice)}` : '-'}
                   </p>
                 </div>
                 <div>
                   <p className="text-[10px] text-muted-foreground">이전 종가</p>
                   <p className="text-sm font-bold text-foreground mt-1 tabular-nums">
-                    {selectedIndex.previousClose ? selectedIndex.previousClose.toLocaleString('ko-KR', { minimumFractionDigits: 2, maximumFractionDigits: 2 }) : '-'}
+                    {selectedIndex.previousClose ? formatKRWDecimal(selectedIndex.previousClose) : '-'}
                   </p>
                 </div>
               </div>

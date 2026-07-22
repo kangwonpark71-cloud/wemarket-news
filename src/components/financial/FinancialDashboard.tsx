@@ -1,6 +1,7 @@
 'use client';
 
 import { useEffect, useState, useCallback, useRef } from 'react';
+import { formatKRW, formatNumber } from '@/lib/utils/format';
 
 interface DashboardData {
   kospi: { value: number; change: number; changeRate: number };
@@ -145,9 +146,6 @@ export function FinancialDashboard() {
     return date.toLocaleTimeString('ko-KR');
   };
 
-  const formatKRW = (v: number) =>
-    new Intl.NumberFormat('ko-KR').format(v);
-
   if (loading) {
     return (
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
@@ -198,7 +196,7 @@ export function FinancialDashboard() {
     },
     {
       title: 'Bitcoin',
-      value: data.btc ? formatKRW(data.btc.price) + '원' : '-',
+      value: formatKRW(data.btc?.price || 0),
       change: data.btc?.change || 0,
       changeRate: data.btc?.changeRate || 0,
       color: '#f59e0b',
@@ -206,7 +204,7 @@ export function FinancialDashboard() {
     },
     {
       title: 'Ethereum',
-      value: data.eth ? formatKRW(data.eth.price) + '원' : '-',
+      value: formatKRW(data.eth?.price || 0),
       change: data.eth?.change || 0,
       changeRate: data.eth?.changeRate || 0,
       color: '#8b5cf6',
@@ -214,7 +212,7 @@ export function FinancialDashboard() {
     },
     {
       title: 'USD/KRW',
-      value: data.usdKrw ? formatKRW(data.usdKrw.rate) + '원' : '-',
+      value: formatKRW(data.usdKrw?.rate || 0),
       change: data.usdKrw?.change || 0,
       changeRate: data.usdKrw?.changeRate || 0,
       color: '#10b981',
@@ -222,7 +220,7 @@ export function FinancialDashboard() {
     },
     {
       title: 'NASDAQ',
-      value: data.nasdaq ? formatKRW(data.nasdaq.price) : '-',
+      value: formatKRW(data.nasdaq?.price || 0),
       change: data.nasdaq?.change || 0,
       changeRate: data.nasdaq?.changeRate || 0,
       color: '#6366f1',
@@ -283,7 +281,7 @@ export function FinancialDashboard() {
               <div className={`mt-1 flex items-center gap-1 text-xs font-medium ${changeColor}`}>
                 <span>{isPositive ? '▲' : '▼'}</span>
                 <span>
-                  {Math.abs(card.change).toLocaleString()} ({isPositive ? '+' : ''}{Number(card.changeRate ?? 0).toFixed(2)}%)
+                  {formatNumber(Math.abs(card.change))} ({isPositive ? '+' : ''}{Number(card.changeRate ?? 0).toFixed(2)}%)
                 </span>
               </div>
             </div>

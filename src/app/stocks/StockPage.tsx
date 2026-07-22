@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from 'react';
 import { FinancialDashboard } from '@/components/financial/FinancialDashboard';
+import { formatKRW, formatNumber } from '@/lib/utils/format';
 
 interface StockData {
   code: string;
@@ -243,22 +244,22 @@ export function StockPage() {
                       <div className="text-xs text-muted-foreground">{stock.code}</div>
                     </td>
                     <td className="px-4 py-3 text-right font-medium text-foreground">
-                      {stock.price?.toLocaleString()}
+                      {formatKRW(stock.price)}
                     </td>
                     <td className={`px-4 py-3 text-right font-medium ${stock.changeRate && stock.changeRate >= 0 ? 'text-red-500' : 'text-blue-500'}`}>
                       {stock.changeRate && stock.changeRate >= 0 ? '▲' : '▼'} {Math.abs(stock.changeRate || 0).toFixed(2)}%
                     </td>
                     <td className={`px-4 py-3 text-right ${stock.change && stock.change >= 0 ? 'text-red-500' : 'text-blue-500'}`}>
-                      {stock.change && stock.change >= 0 ? '▲' : '▼'} {Math.abs(stock.change || 0).toLocaleString()}
+                      {stock.change && stock.change >= 0 ? '▲' : '▼'} {formatNumber(Math.abs(stock.change || 0))}
                     </td>
                     <td className="px-4 py-3 text-right text-sm text-muted-foreground">
-                      {(stock.volume || 0).toLocaleString()}
+                      {formatNumber(stock.volume || 0)}
                     </td>
                     <td className="px-4 py-3 text-right text-sm text-muted-foreground">
-                      {(stock.tradingValue || 0).toLocaleString()}
+                      {formatNumber(stock.tradingValue || 0)}
                     </td>
                     <td className="px-4 py-3 text-right text-sm text-muted-foreground">
-                      {stock.marketCap ? stock.marketCap.toLocaleString() : '-'}
+                      {stock.marketCap ? formatNumber(stock.marketCap) : '-'}
                     </td>
                   </tr>
                 ))}
@@ -277,12 +278,12 @@ export function StockPage() {
                   <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
                     <div>
                       <p className="text-sm text-muted-foreground">현재가</p>
-                      <p className="text-2xl font-bold">{selectedStock.price?.toLocaleString()} KRW</p>
+                      <p className="text-2xl font-bold">{formatKRW(selectedStock.price)}</p>
                     </div>
                     <div>
                       <p className="text-sm text-muted-foreground">전일대비</p>
                       <p className={`text-2xl font-bold ${selectedStock.change && selectedStock.change >= 0 ? 'text-red-500' : 'text-blue-500'}`}>
-                        {selectedStock.change && selectedStock.change >= 0 ? '▲' : '▼'} {Math.abs(selectedStock.change || 0).toLocaleString()}
+                        {selectedStock.change && selectedStock.change >= 0 ? '▲' : '▼'} {formatNumber(Math.abs(selectedStock.change || 0))}
                       </p>
                     </div>
                     <div>
@@ -293,27 +294,27 @@ export function StockPage() {
                     </div>
                     <div>
                       <p className="text-sm text-muted-foreground">거래량</p>
-                      <p className="text-2xl font-bold">{selectedStock.volume?.toLocaleString()}</p>
+                      <p className="text-2xl font-bold">{formatNumber(selectedStock.volume)}</p>
                     </div>
                     <div>
                       <p className="text-sm text-muted-foreground">거래대금</p>
-                      <p className="text-2xl font-bold">{(selectedStock.tradingValue || 0).toLocaleString()} 원</p>
+                      <p className="text-2xl font-bold">{formatKRW(selectedStock.tradingValue || 0)}</p>
                     </div>
                     <div>
                       <p className="text-sm text-muted-foreground">시가총액</p>
-                      <p className="text-2xl font-bold">{selectedStock.marketCap?.toLocaleString() || '-'}</p>
+                      <p className="text-2xl font-bold">{selectedStock.marketCap ? formatKRW(selectedStock.marketCap) : '-'}</p>
                     </div>
                     <div>
                       <p className="text-sm text-muted-foreground">시가</p>
-                      <p className="text-2xl font-bold">{selectedStock.openPrice?.toLocaleString()}</p>
+                      <p className="text-2xl font-bold">{formatKRW(selectedStock.openPrice)}</p>
                     </div>
                     <div>
                       <p className="text-sm text-muted-foreground">고가</p>
-                      <p className="text-2xl font-bold">{selectedStock.highPrice?.toLocaleString()}</p>
+                      <p className="text-2xl font-bold">{formatKRW(selectedStock.highPrice)}</p>
                     </div>
                     <div>
                       <p className="text-sm text-muted-foreground">저가</p>
-                      <p className="text-2xl font-bold">{selectedStock.lowPrice?.toLocaleString()}</p>
+                      <p className="text-2xl font-bold">{formatKRW(selectedStock.lowPrice)}</p>
                     </div>
                   </div>
                      <button

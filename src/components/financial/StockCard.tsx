@@ -1,5 +1,7 @@
 'use client';
 
+import { formatKRW, formatNumber } from '@/lib/utils/format';
+
 interface StockData {
   code: string;
   name: string;
@@ -31,26 +33,25 @@ export function StockCard({ stock }: StockCardProps) {
             <span className="text-xs text-muted-foreground">{stock.code}</span>
           </div>
           <div className="flex items-baseline gap-2 mt-1">
-            <span className="text-2xl font-bold tabular-nums">{stock.price.toLocaleString()}</span>
-            <span className="text-xs text-muted-foreground">KRW</span>
+            <span className="text-2xl font-bold tabular-nums">{formatKRW(stock.price)}</span>
           </div>
           <div className={`flex items-center gap-1 mt-1 ${changeColor}`}>
             {isPositive ? '▲' : '▼'}
             <span className={`text-sm font-medium ${changeColor}`}>
-              {Math.abs(stock.change).toLocaleString()} ({stock.changeRate != null && stock.changeRate != undefined ? (stock.changeRate >= 0 ? '+' : '') + Number(stock.changeRate).toFixed(2) + '%' : 'N/A'})
+              {formatNumber(Math.abs(stock.change))} ({stock.changeRate != null && stock.changeRate != undefined ? (stock.changeRate >= 0 ? '+' : '') + Number(stock.changeRate).toFixed(2) + '%' : 'N/A'})
             </span>
           </div>
           <div className="flex items-center gap-4 mt-2 text-xs text-muted-foreground">
-            <span>시가: {stock.openPrice.toLocaleString()}</span>
-            <span>고가: {stock.highPrice.toLocaleString()}</span>
-            <span>저가: {stock.lowPrice.toLocaleString()}</span>
-            <span>거래량: {stock.volume.toLocaleString()}</span>
+            <span>시가: {formatNumber(stock.openPrice)}</span>
+            <span>고가: {formatNumber(stock.highPrice)}</span>
+            <span>저가: {formatNumber(stock.lowPrice)}</span>
+            <span>거래량: {formatNumber(stock.volume)}</span>
           </div>
         </div>
         <div className={`flex items-center gap-1 px-2 py-1 rounded-sm ${bgColor} ${changeColor} text-sm`}>
           {isPositive ? '▲' : '▼'}
           <span className="font-medium">
-            {Math.abs(stock.change).toLocaleString()} ({stock.changeRate >= 0 ? '+' : ''}{Number(stock.changeRate ?? 0).toFixed(2)}%)
+            {formatNumber(Math.abs(stock.change))} ({stock.changeRate >= 0 ? '+' : ''}{Number(stock.changeRate ?? 0).toFixed(2)}%)
           </span>
         </div>
       </div>

@@ -3,6 +3,7 @@
 import { useEffect, useState, useMemo } from 'react';
 import { FinancialDashboard } from '@/components/financial/FinancialDashboard';
 import { FinancialChart } from '@/components/financial/FinancialChart';
+import { formatKRWDecimal } from '@/lib/utils/format';
 
 interface ForexData {
   baseCurrency: string;
@@ -195,7 +196,7 @@ export function ForexPage() {
                       </div>
                     </td>
                     <td className="px-4 py-3 text-right font-bold text-sm tabular-nums">
-                      {forex.rate.toLocaleString('ko-KR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                      {formatKRWDecimal(forex.rate)} <span className="text-[10px] text-muted-foreground">원</span>
                     </td>
                     <td className={`px-4 py-3 text-right tabular-nums ${changeColor}`}>
                       {forex.change !== 0 ? (isPositive ? '▲' : '▼') : ''} {Math.abs(forex.change).toFixed(2)}
@@ -243,8 +244,7 @@ export function ForexPage() {
                 <div>
                   <p className="text-[10px] text-muted-foreground">현재 환율</p>
                   <p className="text-base font-black text-foreground mt-0.5 tabular-nums">
-                    {selectedForex.rate.toLocaleString('ko-KR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}{' '}
-                    <span className="text-[10px] font-medium text-muted-foreground">KRW</span>
+                    {formatKRWDecimal(selectedForex.rate)} <span className="text-[10px] font-medium text-muted-foreground">원</span>
                   </p>
                 </div>
                 <div>

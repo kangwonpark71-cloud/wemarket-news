@@ -1,5 +1,7 @@
 'use client';
 
+import { formatKRWDecimal, formatNumber } from '@/lib/utils/format';
+
 interface GlobalIndexData {
   symbol: string;
   name: string;
@@ -24,19 +26,19 @@ export function GlobalIndexCard({ index }: GlobalIndexCardProps) {
         <div className="flex-1 min-w-0">
           <p className="text-sm font-medium text-foreground">{index.nameKr || index.name}</p>
           <div className="flex items-baseline gap-2 mt-1">
-            <span className="text-2xl font-bold tabular-nums">{index.price.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</span>
+            <span className="text-2xl font-bold tabular-nums">{formatKRWDecimal(index.price)}</span>
           </div>
           <div className={`flex items-center gap-1 mt-1 ${changeColor}`}>
             {isPositive ? '▲' : '▼'}
             <span className={`text-sm font-medium ${changeColor}`}>
-              {Math.abs(index.change).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })} ({index.changeRate != null && index.changeRate != undefined ? (index.changeRate >= 0 ? '+' : '') + Number(index.changeRate).toFixed(2) + '%' : 'N/A'})
+              {formatNumber(Math.abs(index.change))} ({index.changeRate != null && index.changeRate != undefined ? (index.changeRate >= 0 ? '+' : '') + Number(index.changeRate).toFixed(2) + '%' : 'N/A'})
             </span>
           </div>
         </div>
         <div className={`flex items-center gap-1 px-2 py-1 rounded-sm ${bgColor} ${changeColor} text-sm`}>
           {isPositive ? '▲' : '▼'}
           <span className="font-medium">
-            {Math.abs(index.change).toLocaleString()} ({index.changeRate >= 0 ? '+' : ''}{Number(index.changeRate ?? 0).toFixed(2)}%)
+            {formatNumber(Math.abs(index.change))} ({index.changeRate >= 0 ? '+' : ''}{Number(index.changeRate ?? 0).toFixed(2)}%)
           </span>
         </div>
       </div>

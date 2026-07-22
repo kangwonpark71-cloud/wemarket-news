@@ -1,5 +1,7 @@
 'use client';
 
+import { formatKRWDecimal, formatNumber } from '@/lib/utils/format';
+
 interface ForexData {
   baseCurrency: string;
   quoteCurrency: string;
@@ -42,13 +44,13 @@ export function ForexCard({ forex }: ForexCardProps) {
 
         <div className="text-right">
           <div className="text-xl font-bold text-foreground">
-            {forex.rate.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+            {formatKRWDecimal(forex.rate)} <span className="text-xs text-muted-foreground">원</span>
           </div>
           <div className={`text-sm font-medium ${forex.changeRate >= 0 ? 'text-red-500' : 'text-blue-500'}`}>
             {forex.changeRate >= 0 ? '▲' : '▼'} {Math.abs(forex.changeRate).toFixed(2)}%
           </div>
           <div className="text-xs text-muted-foreground">
-            {forex.change >= 0 ? '▲' : '▼'} {Math.abs(forex.change).toLocaleString(undefined, { minimumFractionDigits: 2 })}
+            {forex.change >= 0 ? '▲' : '▼'} {formatNumber(Math.abs(forex.change))}
           </div>
         </div>
       </div>
