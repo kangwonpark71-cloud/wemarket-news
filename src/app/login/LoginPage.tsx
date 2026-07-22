@@ -102,6 +102,23 @@ export function LoginPage() {
     if (timerRef.current) clearInterval(timerRef.current);
   }, []);
 
+  const switchToSignup = useCallback(() => {
+    setAuthMode('signup');
+    setSignupStep(1);
+    setLoginInput('');
+    setLoginPassword('');
+    setName('');
+    setEmail('');
+    setPassword('');
+    setPhone('');
+    setPhoneTouched(false);
+    setVerificationCode('');
+    setError(null);
+    setLoading(false);
+    setSignupSuccess(false);
+    if (timerRef.current) clearInterval(timerRef.current);
+  }, []);
+
   // --- Login submit ---
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -314,7 +331,7 @@ export function LoginPage() {
 
           <div className="text-center mt-6 pt-6 border-t border-border">
             <button
-              onClick={resetToLogin}
+              onClick={switchToSignup}
               className="text-xs text-primary hover:underline font-semibold cursor-pointer"
             >
               아직 계정이 없으신가요? 회원가입
