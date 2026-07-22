@@ -201,7 +201,7 @@ export function ForexPage() {
                       {forex.change !== 0 ? (isPositive ? '▲' : '▼') : ''} {Math.abs(forex.change).toFixed(2)}
                     </td>
                     <td className={`px-4 py-3 text-right font-bold tabular-nums ${changeColor}`}>
-                      {forex.changeRate !== 0 ? (isPositive ? '+' : '') : ''}{forex.changeRate.toFixed(2)}%
+                      {forex.changeRate !== 0 ? (isPositive ? '+' : '') : ''}{Number(forex.changeRate ?? 0).toFixed(2)}%
                     </td>
                     <td className="px-4 py-3 text-right text-muted-foreground hidden sm:table-cell">
                       {forex.source}

@@ -183,7 +183,7 @@ export function GlobalPage() {
                       {idx.change !== 0 ? (isPositive ? '▲' : '▼') : ''} {Math.abs(idx.change).toLocaleString('ko-KR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
                     </td>
                     <td className={`px-4 py-3 text-right font-bold tabular-nums ${changeColor}`}>
-                      {idx.changeRate !== 0 ? (isPositive ? '+' : '') : ''}{idx.changeRate.toFixed(2)}%
+                      {idx.changeRate !== 0 ? (isPositive ? '+' : '') : ''}{Number(idx.changeRate ?? 0).toFixed(2)}%
                     </td>
                     <td className="px-4 py-3 text-right text-muted-foreground hidden sm:table-cell tabular-nums">
                       {idx.openPrice ? idx.openPrice.toLocaleString('ko-KR', { minimumFractionDigits: 2, maximumFractionDigits: 2 }) : '-'}

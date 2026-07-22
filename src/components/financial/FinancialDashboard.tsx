@@ -283,7 +283,7 @@ export function FinancialDashboard() {
               <div className={`mt-1 flex items-center gap-1 text-xs font-medium ${changeColor}`}>
                 <span>{isPositive ? '▲' : '▼'}</span>
                 <span>
-                  {Math.abs(card.change).toLocaleString()} ({isPositive ? '+' : ''}{(card.changeRate != null && card.changeRate != undefined ? Number(card.changeRate).toFixed(2) : 0)}%)
+                  {Math.abs(card.change).toLocaleString()} ({isPositive ? '+' : ''}{Number(card.changeRate ?? 0).toFixed(2)}%)
                 </span>
               </div>
             </div>

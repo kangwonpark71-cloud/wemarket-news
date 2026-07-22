@@ -50,7 +50,7 @@ export function StockCard({ stock }: StockCardProps) {
         <div className={`flex items-center gap-1 px-2 py-1 rounded-sm ${bgColor} ${changeColor} text-sm`}>
           {isPositive ? '▲' : '▼'}
           <span className="font-medium">
-            {Math.abs(stock.change).toLocaleString()} ({stock.changeRate >= 0 ? '+' : ''}{stock.changeRate.toFixed(2)}%)
+            {Math.abs(stock.change).toLocaleString()} ({stock.changeRate >= 0 ? '+' : ''}{Number(stock.changeRate ?? 0).toFixed(2)}%)
           </span>
         </div>
       </div>
