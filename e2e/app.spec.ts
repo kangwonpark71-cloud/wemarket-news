@@ -98,35 +98,35 @@ test.describe('All News Page', () => {
 });
 
 test.describe('Article Interactions', () => {
-  test.beforeEach(async ({ page }) => {
+  test.beforeEach(async ({ page, request }) => {
+    // Verify articles exist via API before UI tests
+    const articlesResp = await request.get('/api/articles?limit=1');
+    const articlesData = await articlesResp.json();
+    const hasArticles = articlesData?.data?.articles?.length > 0;
+
+    if (!hasArticles) {
+      test.skip(hasArticles, 'Skipping: no articles available in database');
+      return;
+    }
+
     await page.goto('/');
     await page.waitForLoadState('networkidle');
   });
 
-  test('should have bookmark button on articles if articles exist', async ({ page }) => {
+  test('should have bookmark button on articles', async ({ page }) => {
     const bookmarkButton = page.locator('button[aria-label="북마크 추가"]').first();
-    // Check if articles exist
-    const articles = page.locator('article');
-    if (await articles.count() > 0) {
-      await expect(bookmarkButton).toBeVisible();
-    }
+    await expect(bookmarkButton).toBeVisible({ timeout: 5000 });
   });
 
-  test('should have mark read button on unread articles if articles exist', async ({ page }) => {
+  test('should have mark read button on unread articles', async ({ page }) => {
     const readButton = page.locator('button[aria-label="읽음으로 표시"]').first();
-    const articles = page.locator('article');
-    if (await articles.count() > 0) {
-      await expect(readButton).toBeVisible();
-    }
+    await expect(readButton).toBeVisible({ timeout: 5000 });
   });
 
   test('article links should open in new tab', async ({ page }) => {
     const articleLink = page.locator('article a[target="_blank"]').first();
-    const articles = page.locator('article');
-    if (await articles.count() > 0) {
-      await expect(articleLink).toHaveAttribute('target', '_blank');
-      await expect(articleLink).toHaveAttribute('rel', 'noopener noreferrer');
-    }
+    await expect(articleLink).toHaveAttribute('target', '_blank');
+    await expect(articleLink).toHaveAttribute('rel', 'noopener noreferrer');
   });
 });
 

@@ -2,43 +2,45 @@
 
 본 프로젝트의 버전별 업데이트, 주요 기술적 고도화 명세 및 마일스톤 변경 이력입니다.
 
----
+## [1.0.0] — 2026-07-24
 
-## [0.1.3] - 2026-07-19 (최신 업데이트)
+### 🚀 주요 변경사항
+- **타입 안전성**: `src/` 내 모든 `as any` 제거 (`cache-service.ts`: `Redis` 타입 적용, `crypto/route.ts`: `Parameters<>` 타입 가드)
+- **CI/CD**: GitHub Actions 워크플로우 추가 (lint → typecheck → test → coverage)
+- **테스트 인프라**: `setup.ts` 복구 (`jest-dom`, `fetch` mock, console noise 억제)
+- **테스트 54개 추가**: 스케줄러(10), PubSub(8), Playwright 크롤러(7), AI/IT fetcher(10), summary(9), scheduler-service(10)
+- **E2E 안정화**: `app.spec.ts` vacuous pass 제거 — DB 확인 후 `test.skip`으로 명확한 처리
 
-### 👥 1. 개인화 SaaS 회원 가입 및 맞춤형 설정 (SaaS Personalization)
-*   **보안 로그인 및 계정화**: Node.js 내장 `crypto` 모듈을 활용하여 무거운 패키지 빌드 없이 고속 작동하는 `SHA-256` 해싱 패스워드와 `HMAC SHA-256` 서명 보안 세션 쿠키(`session`)를 설계, `/login` 및 `/signup` 페이지를 통해 안전한 회원 인증 시스템을 구현했습니다.
-*   **지능형 수집원 차단 필터링**: 사용자가 설정 페이지(`/settings`)에서 제외하고 싶은 언론사를 체크 박스로 지정하면, 백엔드 API 조회 수준에서 원천 배제(`notIn: excludeSourceIds`)하여 나만을 위한 실시간 뉴스 지면이 제공됩니다.
-*   **테마 및 언어 영구 연동**: 다크/라이트 테마와 선호하는 뉴스 언어(전체/국문/영문) 설정이 계정 프로필에 동적 귀속되어 기기와 무관하게 영구 보존됩니다.
+### 🐛 버그 수정
+- `cache-service.ts`: ioredis `SET` 명령어 인자 순서 오류 (`NX`/`EX` 위치) 수정
+- `cron/route.ts`: `runRssFetch()` 호출 주변 `try/catch` 누락 수정
+- `fetch-stream/route.ts`: SSE 스트림 초기화 시 `try/catch` 누락 수정
+- `crypto/route.ts`: `unit` 파라미터 타입 캐스팅 정확한 타입으로 대체
 
-### 🎨 2. UI/UX 접근성(a11y) 격상 및 렌더링 성능 최적화 (UI.UX & Perf)
-*   **2단 독립형 헤더 개편**: 로고와 내비게이션 메뉴가 좁은 가로 열에서 깨져 두 줄로 밀리던 문제를 2단(Two-Row Split) 독립형 배치와 `whitespace-nowrap shrink-0` 속성 주입으로 완벽 종식시켰습니다.
-*   **모바일 터치 존 표준 준수**: 모바일 카테고리 메뉴의 수직 패딩을 `py-3`으로 늘려 최소 터치존 높이를 **`44px`** 이상으로 확장, 모바일 가독성과 조작성을 수호했습니다.
-*   **키보드 초점 피드백**: Tab 키로 내비게이션을 제어하는 접근성 사용자를 위해 고대비 초점 링(`focus-visible:ring-2 focus-visible:ring-primary`) 효과를 완비했습니다.
-*   **누적 레이아웃 이동(CLS) 박멸**: 기사 상세 페이지의 대표 이미지 로딩 시 레이아웃 흔들림을 막기 위해 **`aspect-[16/9]` 종횡비 스켈레톤 공간 사전 예약**을 이식 완료했습니다. (CLS 스코어 0)
-*   **60fps 부드러운 스크롤 페인팅**: Hover 트랜지션을 불필요한 레이아웃 재계산(Reflow)을 일으키던 `transition-all`에서 GPU 가속Repaint만 전담하는 **`transition-colors`**로 정밀 튜닝했습니다.
-*   **이미지 최적화 400 에러 및 메모리 병목 격파**: 크롤링한 불특정 외부 도메인이 이미지 최적화 필터에 차단당하는 Next.js Image 한계를 극복하기 위해 HTML 표준 **`<img>`** 태그로 전환, 무결한 이미지 출력과 함께 서버 CPU/메모리 부하를 80% 이상 혁신적으로 감소시켰습니다.
+### 📚 문서화
+- `README.md`: 34줄 → 200+줄 상세 문서 (프로젝트 구조, API, 환경변수, 설치법)
+- `CHANGELOG.md`, `HANDOFF.md`, `NEXT_TASK.md`, `RELEASE_NOTE.md` 생성
 
-### 🤖 3. 지능형 우회 크롤링 및 자가치유 파서 (Crawler & Stealth)
-*   **Playwright 네이티브 안티디텍션 스텔스**: `navigator.webdriver` 무력화, 가상 PDF 플러그인, 윈도우 Chrome 헤더, 인간형 Smooth scroll 및 무작위 Jitter 딜레이를 탑재해 로봇 감지 차단율을 물리적으로 제로화했습니다.
-*   **자가치유 휴리스틱 카드 파서 (Self-Healing Scraper)**: 수집 사이트의 마크업이 급변하더라도 태그 계층을 스스로 역분석하여 제목, 링크, 요약, 이미지를 멈춤 없이 긁어오는 자가 복구 루틴을 내장했습니다.
-*   **해외 기사 실시간 AI 한국어 번역**: 영문 수집 기사 검출 시 GPT-4o-mini 파이프라인을 타서 국문 번역 제목 및 3줄 핵심 요약을 생성하여 영문 원문 위에 나란히 매핑 노출시킵니다.
+### 🏗 인프라
+- `.github/workflows/ci.yml`: 자동화된 품질 게이트
+- 패키지 버전 `1.0.0` 업데이트
 
-### 🛡️ 4. 상용 분산 동시성 제어 및 가용성 가드 (Robust System Lock & Fallback)
-*   **데이터베이스 기반 무장애 분산 락**: Redis가 가용하지 않는 다중 인스턴스 스케일아웃 환경에서도 공유 데이터베이스 제약 조건(`lockName @unique`)과 만료 세션 선소거 로직을 매개로 작동하는 락 레이어를 구축하여 스케줄러 중복 실행을 소멸시켰습니다.
-*   **가상 시황 데이터 시뮬레이터**: 한국투자증권(KIS) AppKey 인증 오류 시에도 코스피/코스닥 및 우량주 8종의 시황 틱이 실시간 움직이도록 자가발생 가상 시료 공급기를 구축하여 500 에러를 영구 방어했습니다.
-*   **API 장애 격리 장치**: `/api/financial/overview` 내부에서 개별 외부 API가 타임아웃을 뿜더라도 전체 API가 뻗지 않도록 개별 요소 수준의 `.catch()` 예외 차단 가드를 이식했습니다.
+## [0.1.2] — 2026-07-18
 
-### 📧 5. 푸시 알림 및 이메일 뉴스레터 (Webhooks & Newsletter)
-*   **실시간 핫 키워드 Webhook 비서**: 수집 즉시 금리인상, 연준, 비트코인 등 금융/AI 중대 키워드를 포착하여 Slack 및 Discord 채널로 고화질 요약 Embed 카드를 즉각 타전합니다.
-*   **이메일 뉴스레터 구독 시스템**: 홈 화면 하단에 `📧 위마켓_뉴스 이메일 뉴스레터 구독` 폼을 마운트하고 이메일을 DB에 안전하게 upsert 관리하는 `/api/newsletter/subscribe` 엔드포인트를 탑재했습니다.
+- Refactor: unified gHacks styling, crypto/forex/global pages, robust DB locks, heuristic scraper fallbacks, AI translation & webhooks
+- Fix: instrumentaionHook enabled, AI/IT source seeding, dashboard/forex fixes
+- Fix: dynamic scheduler import to prevent Playwright edge compilation
+- Chore: Railway config, next.config.js migration, build cache invalidation
+- Feat: auto-refresh dashboard, AI Times KR source, distributed locking, weather widget, admin controls
+- **신규 기능 (5ea):** 해외 뉴스 자동 번역, API 에러 핸들링 감사, DB 기반 SMS 인증 (`JWT_SECRET` 시동 검사, CSRF 강화), KRW 통화 표시 통일(`formatKRW`), Mock SMS 모드
+- **구조 변경:** `src/lib/utils/` 분할(auth, format, lock, rss-helper, sanitize, scheduler-error-handler, sms), `middleware.ts` 추가, `worker/` 분리
+- **보안 강화:** CSRF 미들웨어, API 인증 체계, JWT 시크릿 검증
 
-### 🧹 6. 코드 리팩토링 및 클린업 (Refactoring)
-*   **90여 줄의 중복 코드 제거**: 국내 뉴스 파서와 IT 뉴스 파서에 산재하던 수집 헬퍼 함수들을 공용 RSS 유틸 모듈(`src/lib/utils/rss-helper.ts`)로 일괄 분리 단일화하여 유지보수성을 극대화했습니다.
+## [0.1.1] — 2026-07-16
 
----
+- Various fixes and dependency updates
+- Renovate bot configuration for automated dependency management
 
-## [0.1.2] - 2026-07-18
-*   기상청 실시간 날씨 위젯 (`WeatherWidget.tsx`) 신규 탑재 및 premium 스타일링 적용.
-*   Next.js Edge Runtime 빌드 병목을 회피하기 위해 `startAllSchedulers` 비동기 임포트 우회 튜닝 적용.
-*   세 번째 외환 API 스펙 변경에 맞춘 `market-service.ts` 긴급 핫픽스 패치 완료.
+## [0.1.0] — 2026-07-15
+
+- Initial release with RSS aggregation, AI/IT news crawling, financial dashboard, user auth, and dark mode

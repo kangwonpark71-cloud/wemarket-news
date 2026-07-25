@@ -1,6 +1,6 @@
 type Listener = (data: unknown) => void
 
-class PubSub {
+export class PubSub {
   private listeners: Map<string, Set<Listener>> = new Map()
 
   subscribe(event: string, listener: Listener): () => void {

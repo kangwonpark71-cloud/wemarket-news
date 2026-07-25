@@ -20,25 +20,42 @@ export async function GET() {
 
   const stream = new ReadableStream({
     start(controller) {
-      if (!safeEnqueue(controller, 'event: connected\ndata: {"status":"connected"}\n\n')) return
+      try {
+        if (!safeEnqueue(controller, 'event: connected\ndata: {"status":"connected"}\n\n')) return
 
-      const unsubscribe = fetchProgressPubSub.subscribe('fetch-progress', (data) => {
-        safeEnqueue(controller, `event: progress\ndata: ${JSON.stringify(data)}\n\n`)
-      })
+        const unsubscribe = fetchProgressPubSub.subscribe('fetch-progress', (data) => {
+          try {
+            safeEnqueue(controller, `event: progress\ndata: ${JSON.stringify(data)}\n\n`)
+          } catch (e) {
+            console.error('[SSE] Failed to enqueue progress:', e)
+          }
+        })
 
-      const heartbeat = setInterval(() => {
-        safeEnqueue(controller, 'event: heartbeat\ndata: {}\n\n')
-      }, 15000)
+        const heartbeat = setInterval(() => {
+          try {
+            safeEnqueue(controller, 'event: heartbeat\ndata: {}\n\n')
+          } catch {
+            clearInterval(heartbeat)
+          }
+        }, 15000)
 
-      const unsubscribeComplete = fetchProgressPubSub.subscribe('fetch-complete', (data) => {
-        safeEnqueue(controller, `event: complete\ndata: ${JSON.stringify(data)}\n\n`)
-      })
+        const unsubscribeComplete = fetchProgressPubSub.subscribe('fetch-complete', (data) => {
+          try {
+            safeEnqueue(controller, `event: complete\ndata: ${JSON.stringify(data)}\n\n`)
+          } catch (e) {
+            console.error('[SSE] Failed to enqueue complete:', e)
+          }
+        })
 
-      reqCleanup = () => {
-        unsubscribe()
-        unsubscribeComplete()
-        clearInterval(heartbeat)
-        isClosed = true
+        reqCleanup = () => {
+          unsubscribe()
+          unsubscribeComplete()
+          clearInterval(heartbeat)
+          isClosed = true
+        }
+      } catch (error) {
+        console.error('[SSE] Stream setup failed:', error)
+        controller.error(error)
       }
     },
     cancel() {

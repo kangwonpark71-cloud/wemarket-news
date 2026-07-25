@@ -42,6 +42,7 @@ class CacheService {
 
         await redis.connect();
       } else {
+        console.log('[Cache] Redis URL not configured, using in-memory cache');
       }
     } catch (error) {
       console.warn('[Cache] Failed to initialize Redis, using in-memory cache:', error);
@@ -157,7 +158,7 @@ class CacheService {
 
   /**
    * Acquire a distributed lock with automatic expiration (TTL)
-   * Uses Redis NX option if connected, otherwise falls back to memory cache
+   * Uses Redis NX option if connected, otherwise falls back to DB-based lock
    */
   async acquireLock(lockName: string, ttlSeconds: number = 300): Promise<boolean> {
     const fullKey = `economy-news:lock:${lockName}`;
@@ -168,10 +169,11 @@ class CacheService {
         const result = await this.redis.set(fullKey, uniqueVal, 'EX', ttlSeconds, 'NX');
         return result === 'OK';
       } catch (error) {
-        console.warn('[Cache] Redis acquireLock failed:', error);
+        console.warn('[Cache] Redis acquireLock failed, falling back to DB:', error);
       }
     }
 
+    // DB-based distributed lock fallback
     try {
       const now = new Date();
       const expiresAt = new Date(now.getTime() + ttlSeconds * 1000);
@@ -195,7 +197,6 @@ class CacheService {
         return true;
       } catch (createErr) {
         // Unique constraint (P2002): another instance already holds the lock.
-        // This is the expected "lock not acquired" case, not an error.
         if ((createErr as { code?: string })?.code === 'P2002') {
           return false;
         }
@@ -207,6 +208,9 @@ class CacheService {
     }
   }
 
+  /**
+   * Release a previously acquired distributed lock
+   */
   async releaseLock(lockName: string): Promise<void> {
     const fullKey = `economy-news:lock:${lockName}`;
     if (this.useRedis && this.redis) {
@@ -223,6 +227,7 @@ class CacheService {
         where: { lockName },
       });
     } catch {
+      // Ignore deletion errors in cleanup path
     }
 
     this.memoryCache.delete(fullKey);

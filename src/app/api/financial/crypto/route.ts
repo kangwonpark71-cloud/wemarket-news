@@ -5,7 +5,7 @@ export async function GET(request: Request) {
   const { searchParams } = new URL(request.url);
   const action = searchParams.get('action') || 'tickers';
   const symbol = searchParams.get('symbol');
-  const unit = searchParams.get('unit') as 'minutes/1' | 'minutes/5' | 'minutes/15' | 'minutes/30' | 'minutes/60' | 'days' | 'weeks' | 'months' | undefined;
+  const unit = searchParams.get('unit') || 'minutes/60';
   const limit = parseInt(searchParams.get('limit') || '20');
 
   try {
@@ -34,7 +34,7 @@ export async function GET(request: Request) {
             { status: 400 }
           );
         }
-        result = await upbitService.getCandles(symbol, unit, parseInt(searchParams.get('count') || '200'));
+        result = await upbitService.getCandles(symbol, unit as Parameters<typeof upbitService.getCandles>[1], parseInt(searchParams.get('count') || '200'));
         break;
 
       case 'top-volume':
