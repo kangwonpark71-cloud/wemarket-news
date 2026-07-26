@@ -280,7 +280,7 @@ export default function NewsCard({ article, compact = false }: NewsCardProps) {
               }`}
             >
               <p className="line-clamp-2 text-xs leading-relaxed text-primary/70">
-                {truncate(translation!.summary3Line!, 150)}
+                {translation?.summary3Line && truncate(translation.summary3Line, 150)}
               </p>
             </div>
 
