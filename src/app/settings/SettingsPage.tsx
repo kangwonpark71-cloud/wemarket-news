@@ -28,6 +28,7 @@ export function SettingsPage() {
   const [theme, setTheme] = useState('light');
   const [language, setLanguage] = useState('all');
   const [voiceGender, setVoiceGender] = useState<'female' | 'male'>('female');
+  const [ttsEngine, setTtsEngine] = useState<'premium' | 'basic'>('premium');
   const [hidden, setHidden] = useState<string[]>([]);
   const [success, setSuccess] = useState(false);
   const [saving, setSaving] = useState(false);
@@ -73,6 +74,10 @@ export function SettingsPage() {
     const stored = localStorage.getItem('tts:voiceGender');
     if (stored === 'male' || stored === 'female') {
       setVoiceGender(stored);
+    }
+    const engineStored = localStorage.getItem('tts:engine');
+    if (engineStored === 'basic' || engineStored === 'premium') {
+      setTtsEngine(engineStored);
     }
   }, []);
 
@@ -249,6 +254,53 @@ export function SettingsPage() {
                 <span>남성 음성</span>
               </label>
             </div>
+          </div>
+        </div>
+
+        <div className="border border-border p-6 bg-card rounded-sm">
+          <h2 className="text-sm font-bold text-foreground mb-4">음성 읽기 엔진</h2>
+          <p className="text-[10px] text-muted-foreground mb-3">뉴스를 읽어주는 음성 엔진을 선택하세요. 프리미엄 엔진은 AI가 사람처럼 자연스럽게 읽어줍니다.</p>
+          <div className="flex gap-3">
+            <label
+              className={`flex items-center gap-2 px-4 py-2.5 border rounded-sm cursor-pointer transition-colors text-xs font-medium ${
+                ttsEngine === 'premium'
+                  ? 'border-accent bg-accent-light text-accent'
+                  : 'border-border bg-background text-foreground hover:bg-muted/40'
+              }`}
+            >
+              <input
+                type="radio"
+                name="ttsEngine"
+                value="premium"
+                checked={ttsEngine === 'premium'}
+                onChange={() => {
+                  setTtsEngine('premium');
+                  localStorage.setItem('tts:engine', 'premium');
+                }}
+                className="sr-only"
+              />
+              <span>🤖 프리미엄 (AI 음성)</span>
+            </label>
+            <label
+              className={`flex items-center gap-2 px-4 py-2.5 border rounded-sm cursor-pointer transition-colors text-xs font-medium ${
+                ttsEngine === 'basic'
+                  ? 'border-accent bg-accent-light text-accent'
+                  : 'border-border bg-background text-foreground hover:bg-muted/40'
+              }`}
+            >
+              <input
+                type="radio"
+                name="ttsEngine"
+                value="basic"
+                checked={ttsEngine === 'basic'}
+                onChange={() => {
+                  setTtsEngine('basic');
+                  localStorage.setItem('tts:engine', 'basic');
+                }}
+                className="sr-only"
+              />
+              <span>🔊 기본 (브라우저 음성)</span>
+            </label>
           </div>
         </div>
 

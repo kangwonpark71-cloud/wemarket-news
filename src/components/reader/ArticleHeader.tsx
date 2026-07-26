@@ -1,6 +1,7 @@
 import Link from 'next/link'
 import { formatDate } from '@/lib/utils'
 import type { ReaderArticle, ReaderLanguage } from './types'
+import VoiceButton from '@/components/news/VoiceButton'
 
 interface ArticleHeaderProps {
   article: ReaderArticle
@@ -35,6 +36,16 @@ export function ArticleHeader({ article, language, backHref, backLabel }: Articl
         {(article.category || source.subcategory) && (
           <span className="rounded-sm bg-muted px-2.5 py-1 text-xs font-semibold uppercase tracking-wide text-muted-foreground">
             {article.category || source.subcategory}
+          </span>
+        )}
+        {article.content && (
+          <span className="ml-auto">
+            <VoiceButton
+              articleId={article.id}
+              title={article.originalTitle || article.title}
+              content={article.content}
+              language={article.language}
+            />
           </span>
         )}
       </div>

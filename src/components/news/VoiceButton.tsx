@@ -7,54 +7,70 @@ interface VoiceButtonProps {
   articleId: string
   title: string
   description?: string | null
+  content?: string | null
   language: string
 }
 
-export default function VoiceButton({ articleId, title, description, language }: VoiceButtonProps) {
+export default function VoiceButton({ articleId, title, description, content, language }: VoiceButtonProps) {
   const tts = useTTS()
   const isOwn = tts.activeId === articleId
   const isActive = isOwn && tts.speaking
+  const isLoading = isOwn && tts.loading
+  const isPaused = isOwn && tts.paused
 
   const handleClick = useCallback((e: React.MouseEvent) => {
     e.preventDefault()
     e.stopPropagation()
 
-    if (isOwn && tts.speaking) {
+    if (isActive) {
       tts.stop()
       return
     }
 
-    if (isOwn && tts.paused) {
+    if (isPaused) {
       tts.resume()
       return
     }
 
-    const text = [title.trim(), description?.trim()].filter(Boolean).join('. ')
+    const text = content
+      ? [title.trim(), content.trim()].filter(Boolean).join('. ')
+      : [title.trim(), description?.trim()].filter(Boolean).join('. ')
     tts.speak(articleId, text, language === 'ko' ? 'ko-KR' : 'en-US')
-  }, [articleId, title, description, language, tts, isOwn, isActive])
+  }, [articleId, title, description, content, language, tts, isActive, isPaused])
 
   if (!tts.supported) return null
 
   return (
     <button
       onClick={handleClick}
+      disabled={isLoading}
       className={`relative inline-flex items-center justify-center rounded-full p-1.5 transition-all duration-200 ${
         isActive
           ? 'bg-primary text-white shadow-sm shadow-primary/30'
-          : 'text-muted-foreground hover:bg-accent-light hover:text-accent'
+          : isLoading
+            ? 'text-muted-foreground/50 cursor-wait'
+            : 'text-muted-foreground hover:bg-accent-light hover:text-accent'
       }`}
       title={
-        isActive ? '읽기 중지'
-        : isOwn && tts.paused ? '계속 듣기'
+        isLoading ? '음성 생성 중...'
+        : isActive ? '읽기 중지'
+        : isPaused ? '계속 듣기'
+        : content ? '전체 기사 듣기'
         : '뉴스 듣기'
       }
       aria-label={
-        isActive ? '읽기 중지'
-        : isOwn && tts.paused ? '계속 듣기'
+        isLoading ? '음성 생성 중...'
+        : isActive ? '읽기 중지'
+        : isPaused ? '계속 듣기'
         : '뉴스 듣기'
       }
     >
-      {isActive ? (
+      {isLoading ? (
+        <svg className="h-3.5 w-3.5 animate-spin" fill="none" viewBox="0 0 24 24">
+          <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
+          <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z" />
+        </svg>
+      ) : isActive ? (
         <span className="flex items-center gap-[2px]">
           <span className="h-3 w-[2px] animate-tts-wave-1 rounded-full bg-current" />
           <span className="h-2 w-[2px] animate-tts-wave-2 rounded-full bg-current" />
