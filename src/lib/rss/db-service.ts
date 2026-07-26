@@ -16,7 +16,7 @@ export type ArticleWithSourceOnly = Prisma.ArticleGetPayload<typeof articleWithS
 const TRANSLATION_QUEUE_MAX = 5000
 const englishArticleIds: string[] = []
 
-function scheduleTranslation(articleId: string) {
+export function scheduleTranslation(articleId: string) {
   if (englishArticleIds.length >= TRANSLATION_QUEUE_MAX) {
     if (englishArticleIds.length === TRANSLATION_QUEUE_MAX) {
       console.warn(`[RSS DB] Translation queue at max (${TRANSLATION_QUEUE_MAX}), dropping oldest`)

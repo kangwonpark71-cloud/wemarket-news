@@ -14,7 +14,13 @@ const STATION_NAMES: Record<string, string> = {
 export async function GET(request: Request) {
   const { searchParams } = new URL(request.url)
   const stn = searchParams.get('stn') || '108'
-  const authKey = process.env.KMA_AUTH_KEY || 'DbUh4_ekRRi1IeP3pPUYog'
+  const authKey = process.env.KMA_AUTH_KEY
+  if (!authKey) {
+    return NextResponse.json(
+      { success: false, error: 'KMA_AUTH_KEY가 설정되지 않았습니다.' },
+      { status: 500 }
+    );
+  }
 
   try {
     const url = `https://apihub.kma.go.kr/api/typ01/url/kma_sfctm2.php?stn=${stn}&authKey=${authKey}`

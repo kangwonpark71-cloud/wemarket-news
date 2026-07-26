@@ -1,6 +1,7 @@
 import { getActiveAIITSources, logAIITFetch, upsertAIITArticles, getAIITArticleByUrl, upsertSummary } from './db-service';
 import { fetchAIITFeed } from './fetcher';
 import { generateAISummaryWithLLM } from './summary-service';
+import { processPendingTranslations } from '@/lib/rss/db-service';
 import type { AIITSourceConfig } from './sources';
 
 export async function fetchAndProcessSource(sourceId: string): Promise<{ count: number; newCount: number; error?: string }> {
@@ -96,11 +97,13 @@ export async function fetchAllAIITNews(): Promise<{ totalCount: number; totalNew
     }
     
     return { totalCount, totalNew, errors };
-  } catch (error) {
-    console.error('[AIITScheduler] Fatal error:', error);
-    return { totalCount: 0, totalNew: 0, errors: 1 };
+    } catch (error) {
+      console.error('[AIITScheduler] Fatal error:', error);
+      return { totalCount: 0, totalNew: 0, errors: 1 };
+    } finally {
+      processPendingTranslations().catch(() => {});
+    }
   }
-}
 
 export async function fetchAIITNewsByCategory(category: 'ai' | 'it'): Promise<{ totalCount: number; totalNew: number }> {
   const sources = await getActiveAIITSources(category);
@@ -114,6 +117,7 @@ export async function fetchAIITNewsByCategory(category: 'ai' | 'it'): Promise<{ 
     totalNew += result.newCount;
   }
   
+  processPendingTranslations().catch(() => {});
   return { totalCount, totalNew };
 }
 

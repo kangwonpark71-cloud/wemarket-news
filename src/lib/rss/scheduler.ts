@@ -1,6 +1,6 @@
 import cron from 'node-cron'
 import { fetchFeed } from './fetcher'
-import { upsertArticles } from './db-service'
+import { upsertArticles, processPendingTranslations } from './db-service'
 import { getSourceIdByNameEn, logFetch, seedSources } from './service'
 import { ALL_SOURCES } from './sources'
 import { fetchProgressPubSub } from '@/lib/sse/pubsub'
@@ -101,6 +101,7 @@ export async function runRssFetch(sourceNameEn?: string): Promise<FetchResult[]>
     results,
   })
 
+  processPendingTranslations().catch(() => {});
   return results
 }
 

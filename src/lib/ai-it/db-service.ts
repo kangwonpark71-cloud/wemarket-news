@@ -1,6 +1,7 @@
 import prisma from '@/lib/db';
 import { AIITParsedArticle } from './fetcher';
 import { Prisma, Article, Source, NewsSummary } from '@prisma/client';
+import { scheduleTranslation } from '@/lib/rss/db-service';
 
 export type AINewsWithSource = Article & { source: Source; summary?: NewsSummary | null; tags?: { tag: { name: string } }[] };
 export type ITSummaryWithNews = NewsSummary & { news: Article };
@@ -17,8 +18,8 @@ export async function upsertAIITArticles(
         where: { url: article.url },
       });
 
-      if (!existing) {
-        await prisma.article.create({
+        if (!existing) {
+        const created = await prisma.article.create({
           data: {
             sourceId,
             sourceType: 'AI_IT',
@@ -32,9 +33,16 @@ export async function upsertAIITArticles(
             publishedAt: article.publishedAt,
             language: article.language,
           },
+          include: { source: true },
         });
 
         newCount++;
+        const { sendNotificationWebhook } = await import('@/lib/utils');
+        await sendNotificationWebhook(created.title, created.url, created.source.name, created.description || undefined);
+
+        if (article.language === 'en') {
+          scheduleTranslation(created.id)
+        }
       }
     } catch (err) {
       console.warn(`[AIIT DB] Skipping article "${article.title?.substring(0, 50)}":`, err instanceof Error ? err.message : err)

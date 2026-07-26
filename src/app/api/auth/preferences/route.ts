@@ -13,7 +13,18 @@ export async function POST(request: Request) {
       );
     }
 
-    const { theme, language, hiddenSources, pinnedSources } = await request.json();
+    const body = await request.json();
+    const { theme, language, hiddenSources, pinnedSources, name, email } = body;
+
+    if (name !== undefined || email !== undefined) {
+      await prisma.user.update({
+        where: { id: sessionUser.id },
+        data: {
+          ...(name !== undefined && { name }),
+          ...(email !== undefined && { email }),
+        },
+      });
+    }
 
     const updated = await prisma.userPreference.upsert({
       where: { userId: sessionUser.id },

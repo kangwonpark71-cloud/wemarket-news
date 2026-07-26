@@ -150,8 +150,8 @@ export function useTTS(): TTSController {
       utteranceRef.current = null
       activeIdRef.current = null
     }
-    utterance.onerror = (e) => {
-      if ((e as any).error !== 'canceled' && (e as any).error !== 'interrupted') {
+    utterance.onerror = (e: SpeechSynthesisErrorEvent) => {
+      if (e.error !== 'canceled' && e.error !== 'interrupted') {
         setState(prev => ({ ...prev, speaking: false, paused: false, activeId: null, loading: false }))
         utteranceRef.current = null
         activeIdRef.current = null

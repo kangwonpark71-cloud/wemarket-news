@@ -146,10 +146,10 @@ export default async function AIITArticleDetailPage({ params }: Props) {
         <ArticleTags tags={readerArticle.tags!} language={language} />
       )}
 
-      <ArticleFooter
-        article={readerArticle}
-        related={related}
-        language={language}
+       <ArticleFooter
+         article={readerArticle}
+         related={related}
+         language={language}
       />
     </ArticleReader>
   )

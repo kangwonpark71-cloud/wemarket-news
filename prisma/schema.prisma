@@ -72,6 +72,8 @@ model Article {
   language        String    @default("ko") // "ko" | "en"
   isRead          Boolean   @default(false) @map("is_read")
   isBookmarked    Boolean   @default(false) @map("is_bookmarked")
+  viewCount       Int       @default(0) @map("view_count")
+  keywords        String    @default("") @map("keywords")
 
   source          Source             @relation(fields: [sourceId], references: [id], onDelete: Cascade)
   categoryRef     NewsCategory?      @relation(fields: [categoryId], references: [id], onDelete: SetNull)

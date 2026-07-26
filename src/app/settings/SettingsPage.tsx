@@ -23,13 +23,15 @@ interface UserData {
 
 export function SettingsPage() {
   const [user, setUser] = useState<UserData | null>(null);
-  const [sources, setSources] = useState<Source[]>([]);
+  const [sources, setSources] = useState<Source[]>([])
   const [loading, setLoading] = useState(true);
   const [theme, setTheme] = useState('light');
   const [language, setLanguage] = useState('all');
   const [voiceGender, setVoiceGender] = useState<'female' | 'male'>('female');
   const [ttsEngine, setTtsEngine] = useState<'premium' | 'basic'>('premium');
   const [hidden, setHidden] = useState<string[]>([]);
+  const [name, setName] = useState('');
+  const [email, setEmail] = useState('');
   const [success, setSuccess] = useState(false);
   const [saving, setSaving] = useState(false);
 
@@ -54,6 +56,8 @@ export function SettingsPage() {
         setUser(u);
         setTheme(u.preferences?.theme || 'light');
         setLanguage(u.preferences?.language || 'all');
+        setName(u.name || '');
+        setEmail(u.email || '');
         if (u.preferences?.hiddenSources) {
           setHidden(u.preferences.hiddenSources.split(',').map((s: string) => s.trim()).filter(Boolean));
         }
@@ -101,6 +105,8 @@ export function SettingsPage() {
           language,
           hiddenSources: hidden.join(','),
           pinnedSources: '',
+          name,
+          email,
         }),
       });
 
@@ -138,8 +144,8 @@ export function SettingsPage() {
   if (!user) return null;
 
   return (
-    <div className="mx-auto max-w-3xl px-4 py-8">
-      <div className="mb-8 flex items-center justify-between border-b border-border pb-4">
+    <div className="mx-auto max-w-3xl px-4 py-6">
+      <div className="mb-4 flex items-center justify-between border-b border-border pb-3">
         <div>
           <h1 className="text-2xl font-bold text-foreground">개인화 설정</h1>
           <p className="text-xs text-muted-foreground mt-1">로그인 정보 확인, 노출 테마 조율 및 뉴스 수집 채널을 온전히 제어하세요.</p>
@@ -152,24 +158,38 @@ export function SettingsPage() {
         </button>
       </div>
 
-      <div className="space-y-6">
-        <div className="border border-border p-6 bg-card rounded-sm">
-          <h2 className="text-sm font-bold text-foreground mb-4">계정 정보</h2>
-          <div className="grid grid-cols-1 gap-4 text-xs font-medium sm:grid-cols-2">
+      <div className="space-y-4">
+        <div className="border border-border p-4 bg-card rounded-sm">
+          <h2 className="text-xs font-bold text-foreground mb-3">계정 정보</h2>
+          <div className="grid grid-cols-1 gap-3 text-xs font-medium sm:grid-cols-2">
             <div>
-              <span className="block text-muted-foreground">사용자 이름</span>
-              <span className="block text-foreground mt-1 text-sm font-bold">{user.name || '미설정'}</span>
+              <label htmlFor="name-input" className="block text-muted-foreground mb-1">사용자 이름</label>
+              <input
+                id="name-input"
+                type="text"
+                value={name}
+                onChange={(e) => setName(e.target.value)}
+                placeholder="이름을 입력하세요"
+                className="h-9 w-full rounded-sm border border-border bg-background px-3 text-xs text-foreground focus:outline-none focus:ring-2 focus:ring-primary"
+              />
             </div>
             <div>
-              <span className="block text-muted-foreground">이메일 주소</span>
-              <span className="block text-foreground mt-1 text-sm font-bold">{user.email}</span>
+              <label htmlFor="email-input" className="block text-muted-foreground mb-1">이메일 주소</label>
+              <input
+                id="email-input"
+                type="email"
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
+                placeholder="이메일을 입력하세요"
+                className="h-9 w-full rounded-sm border border-border bg-background px-3 text-xs text-foreground focus:outline-none focus:ring-2 focus:ring-primary"
+              />
             </div>
           </div>
         </div>
 
-        <div className="border border-border p-6 bg-card rounded-sm">
-          <h2 className="text-sm font-bold text-foreground mb-4">화면 및 언어 설정</h2>
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+        <div className="border border-border p-4 bg-card rounded-sm">
+          <h2 className="text-xs font-bold text-foreground mb-3">화면 및 언어 설정</h2>
+          <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
             <div>
               <label htmlFor="theme-select" className="block text-xs font-semibold text-foreground mb-2">
                 테마 선택
@@ -203,8 +223,8 @@ export function SettingsPage() {
           </div>
         </div>
 
-        <div className="border border-border p-6 bg-card rounded-sm">
-          <h2 className="text-sm font-bold text-foreground mb-4">화면 및 언어 설정</h2>
+        <div className="border border-border p-4 bg-card rounded-sm">
+          <h2 className="text-xs font-bold text-foreground mb-3">화면 및 언어 설정</h2>
           <div>
             <label className="block text-xs font-semibold text-foreground mb-2">
               음성 읽기 성별
@@ -257,9 +277,9 @@ export function SettingsPage() {
           </div>
         </div>
 
-        <div className="border border-border p-6 bg-card rounded-sm">
-          <h2 className="text-sm font-bold text-foreground mb-4">음성 읽기 엔진</h2>
-          <p className="text-[10px] text-muted-foreground mb-3">뉴스를 읽어주는 음성 엔진을 선택하세요. 프리미엄 엔진은 AI가 사람처럼 자연스럽게 읽어줍니다.</p>
+        <div className="border border-border p-4 bg-card rounded-sm">
+          <h2 className="text-xs font-bold text-foreground mb-3">음성 읽기 엔진</h2>
+          <p className="text-[10px] text-muted-foreground mb-2">뉴스를 읽어주는 음성 엔진을 선택하세요. 프리미엄 엔진은 AI가 사람처럼 자연스럽게 읽어줍니다.</p>
           <div className="flex gap-3">
             <label
               className={`flex items-center gap-2 px-4 py-2.5 border rounded-sm cursor-pointer transition-colors text-xs font-medium ${
@@ -304,8 +324,8 @@ export function SettingsPage() {
           </div>
         </div>
 
-        <div className="border border-border p-6 bg-card rounded-sm">
-          <div className="mb-4">
+        <div className="border border-border p-4 bg-card rounded-sm">
+          <div className="mb-3">
             <h2 className="text-sm font-bold text-foreground">수집원 필터 관리</h2>
             <p className="text-[10px] text-muted-foreground mt-1">지면에서 노출을 원치 않는 언론사나 수집 소스를 선택하여 완전히 차단하세요.</p>
           </div>
@@ -335,10 +355,10 @@ export function SettingsPage() {
           </div>
         </div>
 
-        <div className="flex items-center justify-between pt-4 border-t border-border">
+        <div className="flex items-center justify-between pt-2 border-t border-border">
           {success ? (
-            <span className="text-xs font-semibold text-emerald-600 dark:text-emerald-400">
-              ✓ 개인화 설정이 성공적으로 안전하게 저장되었습니다!
+            <span className="text-[10px] font-semibold text-emerald-600 dark:text-emerald-400">
+              ✓ 저장 완료
             </span>
           ) : (
             <span />
@@ -347,9 +367,9 @@ export function SettingsPage() {
           <button
             onClick={handleSave}
             disabled={saving}
-            className="px-6 py-2.5 bg-primary text-primary-foreground text-xs font-semibold hover:bg-primary-hover transition-colors rounded-sm cursor-pointer disabled:opacity-50"
+            className="px-4 py-1.5 bg-primary text-primary-foreground text-xs font-semibold hover:bg-primary-hover transition-colors rounded-sm cursor-pointer disabled:opacity-50"
           >
-            {saving ? '저장 중...' : '설정 저장'}
+            {saving ? '저장 중...' : '저장'}
           </button>
         </div>
       </div>
