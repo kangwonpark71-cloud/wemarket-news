@@ -27,6 +27,7 @@ export function SettingsPage() {
   const [loading, setLoading] = useState(true);
   const [theme, setTheme] = useState('light');
   const [language, setLanguage] = useState('all');
+  const [voiceGender, setVoiceGender] = useState<'female' | 'male'>('female');
   const [hidden, setHidden] = useState<string[]>([]);
   const [success, setSuccess] = useState(false);
   const [saving, setSaving] = useState(false);
@@ -69,6 +70,10 @@ export function SettingsPage() {
 
   useEffect(() => {
     void loadData();
+    const stored = localStorage.getItem('tts:voiceGender');
+    if (stored === 'male' || stored === 'female') {
+      setVoiceGender(stored);
+    }
   }, []);
 
   const handleSourceToggle = (sourceId: string) => {
@@ -189,6 +194,60 @@ export function SettingsPage() {
                 <option value="ko">🇰🇷 한국어 뉴스만 노출</option>
                 <option value="en">🇺🇸 영어 뉴스만 노출</option>
               </select>
+            </div>
+          </div>
+        </div>
+
+        <div className="border border-border p-6 bg-card rounded-sm">
+          <h2 className="text-sm font-bold text-foreground mb-4">화면 및 언어 설정</h2>
+          <div>
+            <label className="block text-xs font-semibold text-foreground mb-2">
+              음성 읽기 성별
+            </label>
+            <p className="text-[10px] text-muted-foreground mb-3">뉴스 제목을 음성으로 읽어줄 때 사용할 음성의 성별을 선택하세요.</p>
+            <div className="flex gap-3">
+              <label
+                className={`flex items-center gap-2 px-4 py-2.5 border rounded-sm cursor-pointer transition-colors text-xs font-medium ${
+                  voiceGender === 'female'
+                    ? 'border-accent bg-accent-light text-accent'
+                    : 'border-border bg-background text-foreground hover:bg-muted/40'
+                }`}
+              >
+                <input
+                  type="radio"
+                  name="voiceGender"
+                  value="female"
+                  checked={voiceGender === 'female'}
+                  onChange={() => {
+                    setVoiceGender('female');
+                    localStorage.setItem('tts:voiceGender', 'female');
+                  }}
+                  className="sr-only"
+                />
+                <span className="text-base">👩</span>
+                <span>여성 음성 (기본)</span>
+              </label>
+              <label
+                className={`flex items-center gap-2 px-4 py-2.5 border rounded-sm cursor-pointer transition-colors text-xs font-medium ${
+                  voiceGender === 'male'
+                    ? 'border-accent bg-accent-light text-accent'
+                    : 'border-border bg-background text-foreground hover:bg-muted/40'
+                }`}
+              >
+                <input
+                  type="radio"
+                  name="voiceGender"
+                  value="male"
+                  checked={voiceGender === 'male'}
+                  onChange={() => {
+                    setVoiceGender('male');
+                    localStorage.setItem('tts:voiceGender', 'male');
+                  }}
+                  className="sr-only"
+                />
+                <span className="text-base">👨</span>
+                <span>남성 음성</span>
+              </label>
             </div>
           </div>
         </div>

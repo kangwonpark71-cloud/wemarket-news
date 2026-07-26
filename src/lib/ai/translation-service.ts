@@ -74,6 +74,85 @@ export async function translateArticleBatch(
   return { translated, failed };
 }
 
+/**
+ * Quick title-only translation — faster and cheaper than full article translation.
+ * Used for on-demand translate button clicks. Falls back to full translation
+ * if the article already has a summary (returns the cached translatedTitle).
+ */
+export async function translateArticleTitleOnly(articleId: string): Promise<TranslationResult | null> {
+  const article = await prisma.article.findUnique({
+    where: { id: articleId },
+    include: { summary: true },
+  });
+
+  if (!article) return null;
+  if (article.language !== 'en') return null;
+
+  // If already have a full summary, just return it
+  if (article.summary?.translatedTitle) {
+    return {
+      translatedTitle: article.summary.translatedTitle,
+      summary3Line: article.summary.summary3Line,
+      keywords: article.summary.keywords,
+      relatedCompanies: article.summary.relatedCompanies,
+      relatedModels: article.summary.relatedModels,
+      difficulty: (article.summary.difficulty as TranslationResult['difficulty']) || 'intermediate',
+    };
+  }
+
+  // Quick title-only LLM call — minimal tokens (~100 tokens vs 500+ for full)
+  const { translateTitleQuick, summarizeWithLLMFallback } = await import('./llm-service');
+  let translatedTitle: string;
+  try {
+    translatedTitle = await translateTitleQuick(article.title);
+  } catch {
+    const result = await summarizeWithLLMFallback(
+      article.title,
+      article.description || undefined,
+      article.content || undefined,
+    );
+    translatedTitle = result.translatedTitle || article.title;
+  }
+
+  // Lightweight summary (best-effort, separate try/catch so title translation is never blocked)
+  let summary3Line = '';
+  let keywords: string[] = [];
+  try {
+    const fullResult = await summarizeWithLLMFallback(
+      article.title,
+      article.description || undefined,
+      undefined,
+    );
+    summary3Line = fullResult.summary3Line || '';
+    keywords = fullResult.keywords || [];
+  } catch {
+  }
+
+  // Store in DB so next visit uses cache
+  await prisma.newsSummary.create({
+    data: {
+      articleId: article.id,
+      translatedTitle,
+      summary3Line: summary3Line || '요약 준비 중',
+      keywords: keywords || [],
+      relatedCompanies: [],
+      relatedModels: [],
+      difficulty: 'intermediate',
+      aiGenerated: true,
+      modelUsed: 'gpt-4o-mini',
+    },
+  });
+
+  return {
+    translatedTitle,
+    summary3Line: summary3Line || '요약 준비 중',
+    keywords,
+    relatedCompanies: [],
+    relatedModels: [],
+    difficulty: 'intermediate',
+  };
+}
+
 export async function translateUntranslatedOverseas(
   limit: number = 50,
 ): Promise<{ translated: number; failed: number; total: number }> {

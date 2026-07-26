@@ -71,6 +71,43 @@ export async function summarizeWithLLM(
   }
 }
 
+const QUICK_TRANSLATE_PROMPT = `Translate the following English news title to Korean. Return ONLY valid JSON:
+
+{
+  "translatedTitle": "Korean translation of the title"
+}
+
+Title:`
+
+export async function translateTitleQuick(title: string): Promise<string> {
+  const response = await fetch(LLM_API_URL, {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      Authorization: `Bearer ${getApiKey()}`,
+    },
+    body: JSON.stringify({
+      model: 'gpt-4o-mini',
+      messages: [
+        { role: 'system', content: 'You are a professional translator. Translate English news titles to natural Korean. Respond only with valid JSON.' },
+        { role: 'user', content: `${QUICK_TRANSLATE_PROMPT} ${title}"` },
+      ],
+      response_format: { type: 'json_object' },
+      temperature: 0.1,
+      max_tokens: 100,
+    }),
+  });
+
+  if (!response.ok) {
+    const errText = await response.text().catch(() => 'unknown');
+    throw new Error(`LLM API error ${response.status}: ${errText}`);
+  }
+
+  const data = await response.json();
+  const parsed = JSON.parse(data.choices[0].message.content);
+  return parsed.translatedTitle || title;
+}
+
 export async function summarizeWithLLMFallback(
   title: string,
   description?: string,

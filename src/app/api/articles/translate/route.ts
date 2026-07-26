@@ -1,9 +1,9 @@
 import { NextResponse } from 'next/server';
-import { translateArticle } from '@/lib/ai/translation-service';
+import { translateArticle, translateArticleTitleOnly } from '@/lib/ai/translation-service';
 
 export async function POST(request: Request) {
   try {
-    const { articleId } = await request.json();
+    const { articleId, mode = 'full' } = await request.json();
 
     if (!articleId || typeof articleId !== 'string') {
       return NextResponse.json(
@@ -12,7 +12,9 @@ export async function POST(request: Request) {
       );
     }
 
-    const result = await translateArticle(articleId);
+    const result = mode === 'title'
+      ? await translateArticleTitleOnly(articleId)
+      : await translateArticle(articleId);
 
     if (!result) {
       return NextResponse.json(
