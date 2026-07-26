@@ -178,7 +178,7 @@ export default function Header() {
       <div className="border-t border-border hidden md:block bg-muted/20">
         <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
           <nav className="flex h-11 items-center gap-1 overflow-x-auto scrollbar-none py-1" aria-label="주요 내비게이션">
-            {NAV_ITEMS.map((item) => {
+            {NAV_ITEMS.map((item, index) => {
               const active = isActive(item.href);
               return (
                 <Link
@@ -193,6 +193,11 @@ export default function Header() {
                   aria-current={active ? 'page' : undefined}
                 >
                   {item.label}
+                  {index === 0 && (
+                    <span className="ml-1.5 inline-flex items-center rounded-sm bg-primary/10 px-1.5 py-0.5 text-[10px] font-bold uppercase tracking-wider text-primary">
+                      광고없는 뉴스
+                    </span>
+                  )}
                 </Link>
               );
             })}

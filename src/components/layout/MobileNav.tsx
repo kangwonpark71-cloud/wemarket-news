@@ -76,7 +76,7 @@ export function MobileNav({ open, onClose }: MobileNavProps) {
 
         <nav className="flex-1 overflow-y-auto px-3 py-4" aria-label="모바일 내비게이션">
           <ul className="space-y-1">
-            {navItems.map((item) => {
+            {navItems.map((item, index) => {
               const active = isActive(item.href, pathname)
               return (
                 <li key={item.href}>
@@ -93,6 +93,11 @@ export function MobileNav({ open, onClose }: MobileNavProps) {
                   >
                     {item.icon && <span aria-hidden="true">{item.icon}</span>}
                     <span>{item.label}</span>
+                    {index === 0 && (
+                      <span className="ml-1.5 inline-flex items-center rounded-sm bg-primary/10 px-1.5 py-0.5 text-[10px] font-bold uppercase tracking-wider text-primary">
+                        광고없는 뉴스
+                      </span>
+                    )}
                   </Link>
                 </li>
               )
