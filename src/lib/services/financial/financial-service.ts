@@ -5,6 +5,7 @@
 
 import { cacheService, CacheKeys, CacheTTL } from '@/lib/services/cache/cache-service';
 import { prisma } from '@/lib/db';
+import { yahooFinanceService } from './yahoo-finance-service';
 
 interface KoreaInvestmentConfig {
   appKey: string;
@@ -51,6 +52,7 @@ export class KoreaInvestmentService {
   private accessToken: string | null = null;
   private tokenExpiresAt: number = 0;
   private isFallbackMock = false;
+  private useYahooFallback = false;
 
   /**
    * True when the service is running without real KIS credentials and is
@@ -68,7 +70,7 @@ export class KoreaInvestmentService {
       isMock: process.env.KOREA_INVEST_IS_MOCK === 'true',
     };
     if (!this.config.appKey || !this.config.appSecret || this.config.appKey === 'placeholder') {
-      this.isFallbackMock = true;
+      this.useYahooFallback = true;
     }
     this.baseUrl = this.config.isMock
       ? 'https://openapivts.koreainvestment.com:29443'
@@ -191,7 +193,11 @@ const data = await response.json();
    * TR_ID: FHKST01010100 (실시간 현재가)
    */
   async getStockPrice(code: string): Promise<StockPriceData | null> {
-    if (this.isFallbackMock) {
+    // Try Yahoo Finance first when KIS credentials are not configured
+    if (this.useYahooFallback) {
+      const yahooResult = await yahooFinanceService.getStockPrice(code);
+      if (yahooResult) return yahooResult;
+      this.isFallbackMock = true;
       return this.getMockStockPrice(code);
     }
     const cacheKey = CacheKeys.stockPrice(code);
@@ -240,11 +246,14 @@ const data = await response.json();
    * TR_ID: FHKST01010200 (실시간 현재가 다중)
    */
   async getStockPrices(codes: string[]): Promise<Map<string, StockPriceData>> {
-    if (this.isFallbackMock) {
+    if (this.useYahooFallback) {
+      const yahooResult = await yahooFinanceService.getStockPrices(codes);
+      if (yahooResult.size > 0) return yahooResult;
       const mockResult = new Map<string, StockPriceData>();
       for (const code of codes) {
         mockResult.set(code, this.getMockStockPrice(code));
       }
+      this.isFallbackMock = true;
       return mockResult;
     }
     const result = new Map<string, StockPriceData>();
@@ -314,7 +323,13 @@ const data = await response.json();
    * Get stock master data (KOSPI/KOSDAQ listed stocks)
    */
   async getStockMaster(): Promise<StockMasterData[]> {
-    if (this.isFallbackMock) {
+    if (this.useYahooFallback) {
+      const yahooMaster = await yahooFinanceService.getStockMaster();
+      if (yahooMaster.length > 0) {
+        this.isFallbackMock = false;
+        return yahooMaster;
+      }
+      this.isFallbackMock = true;
       return this.getMockStockMaster();
     }
     const cacheKey = CacheKeys.stockMaster();
