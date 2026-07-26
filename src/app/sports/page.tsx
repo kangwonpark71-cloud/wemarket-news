@@ -1,5 +1,12 @@
+import { Metadata } from 'next'
 import { searchNaverNewsByDate } from '@/lib/services/search/naver-news-service'
 import NaverNewsList from '@/components/news/NaverNewsList'
+import CategoryPageLayout from '@/components/news/CategoryPageLayout'
+
+export const metadata: Metadata = {
+  title: '스포츠 뉴스 - 실시간 스포츠',
+  description: '네이버 뉴스 실시간 스포츠 뉴스를 확인하세요.',
+}
 
 interface PageProps {
   searchParams: Promise<{ page?: string }>
@@ -18,43 +25,15 @@ export default async function SportsPage({ searchParams }: PageProps) {
   const totalPages = Math.ceil(total / 20)
 
   return (
-    <div className="mx-auto max-w-7xl px-4 py-6 sm:px-6 lg:px-8">
-      <div className="mb-6">
-        <h1 className="text-2xl font-bold text-foreground">스포츠 실시간 뉴스</h1>
-        <p className="mt-1 text-sm text-muted-foreground">
-          네이버 뉴스 실시간 스포츠
-        </p>
-      </div>
-
-      <NaverNewsList articles={articles} emptyMessage="실시간 뉴스가 없습니다" />
-
-      {totalPages > 1 && (
-        <nav className="mt-6 flex items-center justify-center gap-2" aria-label="페이지네이션">
-          {page > 1 && (
-            <a
-              href={`/sports?page=${page - 1}`}
-              className="rounded-none border border-border bg-background px-4 py-2 text-sm font-medium text-foreground hover:bg-muted transition-colors"
-            >
-              이전
-            </a>
-          )}
-          <span className="px-4 py-2 text-sm text-muted-foreground" aria-current="page">
-            {page} / {totalPages}
-          </span>
-          {page < totalPages && (
-            <a
-              href={`/sports?page=${page + 1}`}
-              className="rounded-none border border-border bg-background px-4 py-2 text-sm font-medium text-foreground hover:bg-muted transition-colors"
-            >
-              다음
-            </a>
-          )}
-        </nav>
-      )}
-
-      <div className="mt-4 text-center text-xs text-muted-foreground">
-        총 {total}건의 뉴스
-      </div>
-    </div>
+    <CategoryPageLayout
+      title="스포츠 실시간 뉴스"
+      description="네이버 뉴스 실시간 스포츠"
+      total={total}
+      page={page}
+      totalPages={totalPages}
+      basePath="/sports"
+    >
+      <NaverNewsList articles={articles} />
+    </CategoryPageLayout>
   )
 }

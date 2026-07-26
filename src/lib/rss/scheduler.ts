@@ -23,11 +23,8 @@ export async function runRssFetch(sourceNameEn?: string): Promise<FetchResult[]>
     ? ALL_SOURCES.filter(s => s.nameEn === sourceNameEn)
     : ALL_SOURCES
 
-  const anySource = sourcesToFetch.length > 0
-    ? await getSourceIdByNameEn(sourcesToFetch[0].nameEn) : null
-  if (!anySource) {
-    await seedSources()
-  }
+  // Always seed sources to ensure new or updated sources are in the DB
+  await seedSources()
 
   const results: FetchResult[] = []
   const totalSources = sourcesToFetch.length
