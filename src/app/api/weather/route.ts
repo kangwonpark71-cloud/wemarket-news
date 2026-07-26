@@ -14,7 +14,7 @@ const STATION_NAMES: Record<string, string> = {
 export async function GET(request: Request) {
   const { searchParams } = new URL(request.url)
   const stn = searchParams.get('stn') || '108'
-  const authKey = 'DbUh4_ekRRi1IeP3pPUYog'
+  const authKey = process.env.KMA_AUTH_KEY || 'DbUh4_ekRRi1IeP3pPUYog'
 
   try {
     const url = `https://apihub.kma.go.kr/api/typ01/url/kma_sfctm2.php?stn=${stn}&authKey=${authKey}`

@@ -42,8 +42,11 @@ export default function RootLayout({
                   if (theme === 'dark' || (theme === 'system' && window.matchMedia('(prefers-color-scheme: dark)').matches)) {
                     document.documentElement.classList.add('dark');
                   }
-                } catch(e) {}
-              })();
+                } catch(e) {
+                    // localStorage access may throw in sandboxed iframes/privacy modes.
+                    // FOUC prevention must never break page rendering, so fail silently.
+                  }
+                })();
             `,
           }}
         />

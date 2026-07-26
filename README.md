@@ -57,6 +57,7 @@ npm run dev
 | `npm run build` | 프로덕션 빌드 |
 | `npm run start` | 프로덕션 서버 시작 |
 | `npm run lint` | ESLint 검사 |
+| `npm run typecheck` | TypeScript 타입 검사 (`tsc --noEmit`) |
 
 ### Database
 
@@ -73,7 +74,7 @@ npm run dev
 
 | Command | Description |
 |---------|-------------|
-| `npm test` | Jest 단위 테스트 (73 tests, 8 suites) |
+| `npm test` | Jest 단위 테스트 (200 tests, 19 suites) |
 | `npm run test:watch` | Watch 모드 |
 | `npm run test:coverage` | 커버리지 리포트 |
 | `npm run test:e2e` | Playwright E2E 테스트 |
@@ -167,7 +168,7 @@ economy-news/
 | **AI** | OpenAI GPT-4o-mini (요약) |
 | **Crawling** | Playwright, Cheerio |
 | **Auth** | 전화번호 기반 (SMS) |
-| **Testing** | Jest (73 tests), Playwright (E2E) |
+| **Testing** | Jest (200 tests, 19 suites), Playwright (E2E) |
 | **CI** | GitHub Actions (lint → typecheck → test → coverage) |
 | **Deploy** | Railway (Nixpacks) |
 | **Runtime** | Node 22+, npm |
@@ -188,10 +189,16 @@ economy-news/
 
 ```bash
 # 전체 단위 테스트
-npm test                    # 73 tests, 8 suites ✅
+npm test                    # 200 tests, 19 suites ✅
 
 # 커버리지
 npm run test:coverage
+
+# 타입 체크
+npm run typecheck
+
+# Lint
+npm run lint
 
 # E2E (로컬 dev 서버 필요)
 npm run test:e2e

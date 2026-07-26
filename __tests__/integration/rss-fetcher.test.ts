@@ -1,4 +1,4 @@
-import { fetchFeed, fetchAllFeeds, ParsedArticle } from '@/lib/rss/fetcher'
+import { fetchFeed, fetchAllFeeds } from '@/lib/rss/fetcher'
 import { RSSSourceConfig } from '@/lib/rss/sources'
 
 // Mock the rss-parser module
@@ -15,7 +15,6 @@ jest.mock('@/lib/utils/rss-helper', () => ({
   fetchWithRetry: jest.fn(),
 }))
 
-import Parser from 'rss-parser'
 import { fetchWithRetry } from '@/lib/utils/rss-helper'
 
 const mockFetchWithRetry = fetchWithRetry as jest.MockedFunction<typeof fetchWithRetry>
@@ -28,8 +27,6 @@ describe('RSS Fetcher', () => {
     category: 'domestic',
     language: 'ko',
     subcategory: 'economy',
-    type: 'RSS',
-    isActive: true,
   }
 
   beforeEach(() => {

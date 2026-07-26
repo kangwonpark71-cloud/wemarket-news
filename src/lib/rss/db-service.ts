@@ -1,12 +1,28 @@
 import prisma from '@/lib/db'
 import { ParsedArticle } from './fetcher'
-import { Prisma, Article, Source, NewsSummary } from '@prisma/client'
+import { Prisma } from '@prisma/client'
 
-export type ArticleWithSource = Article & { source: Source; summary?: NewsSummary | null }
+const articleWithSummary = Prisma.validator<Prisma.ArticleDefaultArgs>()({
+  include: { source: true, summary: true },
+})
 
+const articleWithSource = Prisma.validator<Prisma.ArticleDefaultArgs>()({
+  include: { source: true },
+})
+
+export type ArticleWithSource = Prisma.ArticleGetPayload<typeof articleWithSummary>
+export type ArticleWithSourceOnly = Prisma.ArticleGetPayload<typeof articleWithSource>
+
+const TRANSLATION_QUEUE_MAX = 5000
 const englishArticleIds: string[] = []
 
 function scheduleTranslation(articleId: string) {
+  if (englishArticleIds.length >= TRANSLATION_QUEUE_MAX) {
+    if (englishArticleIds.length === TRANSLATION_QUEUE_MAX) {
+      console.warn(`[RSS DB] Translation queue at max (${TRANSLATION_QUEUE_MAX}), dropping oldest`)
+    }
+    englishArticleIds.shift()
+  }
   englishArticleIds.push(articleId)
 }
 
@@ -71,6 +87,7 @@ export async function upsertArticles(
 
 export async function getArticles(params: {
   category?: string
+  subcategory?: string
   sourceName?: string
   language?: string
   page?: number
@@ -84,6 +101,7 @@ export async function getArticles(params: {
 }): Promise<{ articles: ArticleWithSource[]; total: number; page: number; totalPages: number }> {
   const {
     category,
+    subcategory,
     sourceName,
     language,
     page = 1,
@@ -112,6 +130,9 @@ export async function getArticles(params: {
   const sourceFilter: Prisma.SourceWhereInput = {}
   if (category && category !== 'all') {
     sourceFilter.category = category
+  }
+  if (subcategory) {
+    sourceFilter.subcategory = subcategory
   }
   if (sourceName) {
     sourceFilter.nameEn = sourceName
@@ -147,7 +168,7 @@ export async function getArticles(params: {
   ])
 
   return {
-    articles: articles as ArticleWithSource[],
+    articles,
     total,
     page,
     totalPages: Math.ceil(total / limit),
@@ -159,13 +180,13 @@ export async function getArticleById(id: string): Promise<ArticleWithSource | nu
     where: { id },
     include: { source: true, summary: true },
   })
-  return article as ArticleWithSource | null
+  return article
 }
 
 export async function getRelatedArticles(
   id: string,
   limit = 4,
-): Promise<ArticleWithSource[]> {
+): Promise<ArticleWithSourceOnly[]> {
   const current = await prisma.article.findUnique({
     where: { id },
     select: { category: true, sourceId: true },
@@ -193,7 +214,7 @@ export async function getRelatedArticles(
   )
 
   const ranked = [...sameSource, ...sameCategory].slice(0, limit)
-  if (ranked.length >= limit) return ranked as ArticleWithSource[]
+  if (ranked.length >= limit) return ranked
 
   // Fallback: most recent articles so the section is never empty.
   const fallback = await prisma.article.findMany({
@@ -203,7 +224,7 @@ export async function getRelatedArticles(
     take: limit,
   })
   const seen = new Set(ranked.map((a) => a.id))
-  return [...ranked, ...fallback.filter((a) => !seen.has(a.id))].slice(0, limit) as ArticleWithSource[]
+  return [...ranked, ...fallback.filter((a) => !seen.has(a.id))].slice(0, limit)
 }
 
 export async function saveArticleContent(id: string, content: string): Promise<void> {
@@ -232,7 +253,7 @@ export async function toggleBookmark(id: string): Promise<boolean> {
   return updated.isBookmarked
 }
 
-export async function getRecentArticlesBySource(sourceNameEn: string, limit = 10): Promise<ArticleWithSource[]> {
+export async function getRecentArticlesBySource(sourceNameEn: string, limit = 10): Promise<ArticleWithSourceOnly[]> {
   const articles = await prisma.article.findMany({
     where: {
       source: { nameEn: sourceNameEn },
@@ -241,7 +262,7 @@ export async function getRecentArticlesBySource(sourceNameEn: string, limit = 10
     orderBy: { publishedAt: 'desc' },
     take: limit,
   })
-  return articles as ArticleWithSource[]
+  return articles
 }
 
 export async function getArticleStats() {

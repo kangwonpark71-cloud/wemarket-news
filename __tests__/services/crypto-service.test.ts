@@ -50,6 +50,8 @@ describe('UpbitService', () => {
     service = new UpbitService();
     (cacheService.get as jest.Mock).mockResolvedValue(null);
     (cacheService.set as jest.Mock).mockResolvedValue(undefined);
+    // Ensure mockFetch is the global fetch
+    global.fetch = mockFetch;
   });
 
   describe('getMarkets', () => {

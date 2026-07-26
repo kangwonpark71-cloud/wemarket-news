@@ -5,7 +5,7 @@ export interface RSSSourceConfig {
   name: string
   nameEn: string
   url: string
-  category: 'domestic' | 'overseas'
+  category: 'domestic' | 'overseas' | 'medical' | 'smallbiz'
   subcategory: string
   language: 'ko' | 'en'
   icon?: string
@@ -92,11 +92,88 @@ export const OVERSEAS_SOURCES: RSSSourceConfig[] = [
   },
 ]
 
+// =============================================
+// 의료/의사 뉴스 소스
+// =============================================
+
+export const MEDICAL_SOURCES: RSSSourceConfig[] = [
+  {
+    name: '의협신문',
+    nameEn: 'doctorsnews',
+    url: 'http://www.doctorsnews.co.kr/rss/allArticle.xml',
+    category: 'medical',
+    subcategory: 'medical_policy',
+    language: 'ko',
+    icon: '🏥',
+  },
+  {
+    name: '보사',
+    nameEn: 'bosa',
+    url: 'https://www.bosa.co.kr/rss/allArticle.xml',
+    category: 'medical',
+    subcategory: 'medical_policy',
+    language: 'ko',
+    icon: '📋',
+  },
+  {
+    name: '히트뉴스',
+    nameEn: 'hitnews',
+    url: 'https://www.hitnews.co.kr/rss/allArticle.xml',
+    category: 'medical',
+    subcategory: 'medical_pharma',
+    language: 'ko',
+    icon: '💊',
+  },
+  {
+    name: 'The Lancet',
+    nameEn: 'lancet',
+    url: 'https://www.thelancet.com/rssfeed/lancet_current.xml',
+    category: 'medical',
+    subcategory: 'medical_research',
+    language: 'en',
+    icon: '🔬',
+  },
+  {
+    name: 'FDA Press Releases',
+    nameEn: 'fda_press',
+    url: 'https://www.fda.gov/about-fda/contact-fda/stay-informed/rss-feeds/press-releases/rss.xml',
+    category: 'medical',
+    subcategory: 'medical_policy',
+    language: 'en',
+    icon: '🏛️',
+  },
+]
+
+// =============================================
+// 소상공인 뉴스 소스
+// =============================================
+
+export const SMALLBIZ_SOURCES: RSSSourceConfig[] = [
+  {
+    name: '한국소상공인신문',
+    nameEn: 'ksbnews',
+    url: 'https://www.ksbnews.co.kr/rss/allArticle.xml',
+    category: 'smallbiz',
+    subcategory: 'sbiz_general',
+    language: 'ko',
+    icon: '🏪',
+  },
+  {
+    name: '식품외식경제',
+    nameEn: 'foodbank',
+    url: 'https://www.foodbank.co.kr/rss/allArticle.xml',
+    category: 'smallbiz',
+    subcategory: 'sbiz_food',
+    language: 'ko',
+    icon: '🍽️',
+  },
+]
+
 // 모든 소스 통합
-export const ALL_SOURCES: RSSSourceConfig[] = [...DOMESTIC_SOURCES, ...OVERSEAS_SOURCES]
+export const ALL_SOURCES: RSSSourceConfig[] = [...DOMESTIC_SOURCES, ...OVERSEAS_SOURCES, ...MEDICAL_SOURCES, ...SMALLBIZ_SOURCES]
 
 // 카테고리별 소스 가져오기
-export function getSourcesByCategory(category: 'domestic' | 'overseas'): RSSSourceConfig[] {
+export function getSourcesByCategory(category: 'domestic' | 'overseas' | 'medical' | 'smallbiz'): RSSSourceConfig[] {
   return ALL_SOURCES.filter((s) => s.category === category)
 }
 
@@ -117,11 +194,20 @@ export const SUBCATEGORY_LABELS: Record<string, string> = {
   feds_notes: 'FEDS Notes',
   interest_rates: 'Selected Interest Rates',
   exchange_rates: 'Foreign Exchange Rates',
+  // 의료
+  medical_policy: '의료정책',
+  medical_pharma: '제약·신약',
+  medical_research: '해외 의학 연구',
+  // 소상공인
+  sbiz_general: '일반 소상공인',
+  sbiz_food: '외식·카페',
 }
 
 // 카테고리 한글 매핑
 export const CATEGORY_LABELS: Record<string, string> = {
   domestic: '국내 경제',
   overseas: '해외 경제',
+  medical: '의료',
+  smallbiz: '소상공인',
   all: '전체 뉴스',
 }

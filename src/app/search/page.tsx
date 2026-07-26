@@ -127,7 +127,7 @@ export default async function SearchPage({ searchParams }: SearchPageProps) {
               </h2>
               <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
                 {aiItArticles.map((article) => (
-                  <NewsCard key={article.id} article={article as unknown as ArticleWithSource} />
+                  <NewsCard key={article.id} article={article} />
                 ))}
               </div>
             </section>

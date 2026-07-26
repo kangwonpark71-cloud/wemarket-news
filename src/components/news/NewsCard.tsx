@@ -1,6 +1,5 @@
 'use client'
 
-import { ArticleWithSource } from '@/lib/rss/db-service'
 import { formatDate, truncate, estimateReadingTime } from '@/lib/utils'
 import { useState } from 'react'
 import Link from 'next/link'
@@ -11,8 +10,25 @@ interface NewsSummary {
   keywords?: string[]
 }
 
+interface ArticleBase {
+  id: string
+  title: string
+  url: string
+  description?: string | null
+  content?: string | null
+  author?: string | null
+  thumbnail?: string | null
+  category?: string | null
+  publishedAt: Date
+  language: string
+  isBookmarked?: boolean
+  isRead?: boolean
+  source: { id: string; name: string; nameEn?: string | null; category?: string | null; subcategory?: string | null; icon?: string | null }
+  summary?: NewsSummary | null
+}
+
 interface NewsCardProps {
-  article: ArticleWithSource & { summary?: NewsSummary | null }
+  article: ArticleBase
   compact?: boolean
 }
 

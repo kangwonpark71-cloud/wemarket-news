@@ -12,7 +12,16 @@ export async function translateArticle(articleId: string): Promise<TranslationRe
 
   if (!article) return null;
   if (article.language !== 'en') return null;
-  if (article.summary) return article.summary as unknown as TranslationResult;
+  if (article.summary) {
+    return {
+      translatedTitle: article.summary.translatedTitle || undefined,
+      summary3Line: article.summary.summary3Line,
+      keywords: article.summary.keywords,
+      relatedCompanies: article.summary.relatedCompanies,
+      relatedModels: article.summary.relatedModels,
+      difficulty: (article.summary.difficulty as TranslationResult['difficulty']) || 'intermediate',
+    };
+  }
 
   const result = await summarizeWithLLMFallback(
     article.title,

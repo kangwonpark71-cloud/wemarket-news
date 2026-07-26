@@ -14,9 +14,10 @@ const mockPage = {
 }
 
 const mockContext = {
-  newPage:    jest.fn().mockResolvedValue(mockPage),
-  close:      jest.fn().mockResolvedValue(undefined),
-  pages:      jest.fn().mockReturnValue([mockPage]),
+  newPage:         jest.fn().mockResolvedValue(mockPage),
+  close:           jest.fn().mockResolvedValue(undefined),
+  pages:           jest.fn().mockReturnValue([mockPage]),
+  addInitScript:   jest.fn().mockResolvedValue(undefined),
 }
 
 const mockBrowser = {
@@ -103,12 +104,14 @@ describe('playwright-crawler', () => {
     expect(result.pagesCrawled).toBe(0)
   })
 
-  it('should handle waitForSelector failure', async () => {
+  it('should handle waitForSelector failure gracefully', async () => {
     mockPage.goto.mockResolvedValue(undefined)
     mockPage.waitForSelector.mockRejectedValueOnce(new Error('Selector not found'))
+    mockPage.evaluate.mockResolvedValue([])
 
     const result = await crawlWithPlaywright(makeSource())
-    expect(result.error).toContain('Selector not found')
+    // waitForSelector error is caught and logged; extract continues with fallback
+    expect(result.error).toBeUndefined()
     expect(result.articles).toHaveLength(0)
   })
 

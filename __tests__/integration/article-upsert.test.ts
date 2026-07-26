@@ -280,7 +280,7 @@ describe('Article Upsert', () => {
       expect(result).toEqual(mockArticle)
       expect(mockPrisma.article.findUnique).toHaveBeenCalledWith({
         where: { id: 'article-id-1' },
-        include: { source: true },
+        include: { source: true, summary: true },
       })
     })
 

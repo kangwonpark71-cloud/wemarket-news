@@ -47,6 +47,7 @@ describe('MarketService', () => {
     service = new MarketService();
     (cacheService.get as jest.Mock).mockResolvedValue(null);
     (cacheService.set as jest.Mock).mockResolvedValue(undefined);
+    global.fetch = mockFetch;
   });
 
   describe('getAllExchangeRates', () => {
