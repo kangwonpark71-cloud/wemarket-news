@@ -2,27 +2,48 @@ export interface NavItem {
   href: string
   label: string
   icon?: string
+  children?: NavItem[]
 }
 
-// "/" is the default landing page (전체뉴스); 국내뉴스 lives at /domestic.
 export const NAV_ITEMS: NavItem[] = [
-  { href: '/', label: '전체뉴스', icon: '📰' },
-  { href: '/domestic', label: '국내뉴스', icon: '🏠' },
-  { href: '/overseas', label: '해외뉴스', icon: '🌐' },
-  { href: '/ai-news', label: 'AI뉴스', icon: '🤖' },
-  { href: '/it-news', label: 'IT뉴스', icon: '💡' },
-  { href: '/medical', label: '의료', icon: '🏥' },
-  { href: '/smallbiz', label: '소상공인', icon: '🏪' },
-  { href: '/stocks', label: '주식', icon: '📈' },
-  { href: '/crypto', label: '암호화폐', icon: '🪙' },
-  { href: '/forex', label: '환율', icon: '💱' },
-  { href: '/global', label: '글로벌', icon: '🏛️' },
-  { href: '/bookmarks', label: '내 모음', icon: '🔖' },
-  { href: '/search', label: '검색', icon: '🔍' },
-  // ── 네이버 실시간 뉴스 ──────────────────────────────────
-  { href: '/politics', label: '정치', icon: '🗳️' },
-  { href: '/society', label: '사회', icon: '👥' },
-  { href: '/culture', label: '문화', icon: '🎨' },
-  { href: '/entertainment', label: '연예', icon: '⭐' },
-  { href: '/sports', label: '스포츠', icon: '🏆' },
+  {
+    href: '/',
+    label: '전체뉴스',
+    icon: '📰',
+  },
+  {
+    href: '/domestic',
+    label: '국내뉴스',
+    icon: '🏠',
+    children: [
+      { href: '/medical', label: '의료', icon: '🏥' },
+      { href: '/smallbiz', label: '소상공인', icon: '🏪' },
+      { href: '/ai-news', label: 'AI뉴스', icon: '🤖' },
+      { href: '/it-news', label: 'IT뉴스', icon: '💡' },
+      { href: '/economy', label: '경제', icon: '📊' },
+      { href: '/stocks', label: '국내주식', icon: '📈' },
+      { href: '/global', label: '해외주식', icon: '🌍' },
+      { href: '/crypto', label: '암호화폐', icon: '🪙' },
+      { href: '/politics', label: '정치', icon: '🗳️' },
+      { href: '/society', label: '사회', icon: '👥' },
+      { href: '/culture', label: '문화', icon: '🎨' },
+      { href: '/entertainment', label: '연예', icon: '⭐' },
+      { href: '/sports', label: '스포츠', icon: '🏆' },
+    ],
+  },
+  {
+    href: '/overseas',
+    label: '해외뉴스',
+    icon: '🌐',
+    children: [
+      { href: '/america', label: '미국', icon: '🇺🇸' },
+      { href: '/europe', label: '유럽', icon: '🇪🇺' },
+      { href: '/asia', label: '아시아', icon: '🌏' },
+    ],
+  },
+  {
+    href: '/bookmarks',
+    label: '내 모음',
+    icon: '🔖',
+  },
 ]
