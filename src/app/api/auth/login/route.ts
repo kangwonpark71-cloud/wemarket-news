@@ -16,7 +16,6 @@ export async function POST(request: Request) {
     }
 
     let user = null;
-    let isPhoneLogin = false;
 
     // Check if phone login attempt
     if (phone) {
@@ -31,7 +30,6 @@ export async function POST(request: Request) {
       user = await prisma.user.findFirst({
         where: { phone: phoneValidation.normalized },
       });
-      isPhoneLogin = true;
     } else if (email) {
       user = await prisma.user.findUnique({
         where: { email },
@@ -43,14 +41,6 @@ export async function POST(request: Request) {
       return NextResponse.json(
         { success: false, error: '이메일 또는 비밀번호가 일치하지 않습니다.' },
         { status: 400 }
-      );
-    }
-
-    // Check if phone login but phone not verified
-    if (isPhoneLogin && !user.phoneVerified) {
-      return NextResponse.json(
-        { success: false, error: '휴대폰 인증이 필요합니다. 인증 코드를 받아주세요.' },
-        { status: 403 }
       );
     }
 
