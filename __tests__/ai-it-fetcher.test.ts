@@ -33,16 +33,10 @@ jest.mock('@/lib/utils/rss-helper', () => ({
   fetchWithRetry: jest.fn(),
 }))
 
-import Parser from 'rss-parser'
 import { crawlWithPlaywright } from '@/lib/ai-it/playwright-crawler'
 import { fetchWithRetry } from '@/lib/utils/rss-helper'
 import { fetchAIITFeed, fetchAllAIITFeeds } from '@/lib/ai-it/fetcher'
 import type { AIITSourceConfig } from '@/lib/ai-it/sources'
-
-const mockParser = new (Parser as unknown as jest.MockClass)() as jest.Mocked<ReturnType<typeof Parser>>
-
-// Mock type for rss-parser constructor
-type MockClass = { new (): { parseURL: jest.Mock } }
 
 const mockRSSSource: AIITSourceConfig = {
   name: 'OpenAI Blog',

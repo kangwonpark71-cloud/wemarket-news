@@ -216,7 +216,7 @@ export async function getSearchSuggestions(query: string, limit = 10): Promise<s
     prisma.article.findMany({
       where: {
         summary: {
-          relatedCompanies: { has: query },
+          relatedCompanies: { contains: query },
         },
       },
       select: { summary: { select: { relatedCompanies: true } } },
@@ -230,11 +230,11 @@ export async function getSearchSuggestions(query: string, limit = 10): Promise<s
   tagMatches.forEach(t => suggestions.add(t.name));
   companyMatches.forEach(c => {
     const raw = c.summary?.relatedCompanies;
-    if (raw && Array.isArray(raw)) {
-      raw
+    if (raw) {
+      const companies = (Array.isArray(raw) ? raw : raw.split(','))
         .map(comp => comp.trim())
-        .filter(comp => comp.length > 0)
-        .forEach(comp => suggestions.add(comp));
+        .filter(comp => comp.length > 0);
+      companies.forEach(comp => suggestions.add(comp));
     }
   });
 

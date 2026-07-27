@@ -128,6 +128,8 @@ export function SearchBar({ initialQuery = '', initialScope = 'all' }: SearchBar
             aria-label="뉴스 검색"
 
             aria-autocomplete="list"
+            aria-expanded={open}
+            aria-controls="search-suggestions"
             className="h-11 w-full rounded-sm border border-border bg-background px-4 pr-10 text-sm text-foreground placeholder:text-muted-foreground focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/30"
           />
           <button
@@ -142,6 +144,7 @@ export function SearchBar({ initialQuery = '', initialScope = 'all' }: SearchBar
 
           {open && suggestions.length > 0 && (
             <ul
+              id="search-suggestions"
               role="listbox"
               className="absolute z-50 mt-1 max-h-72 w-full overflow-auto rounded-sm border border-border bg-popover shadow-lg"
             >

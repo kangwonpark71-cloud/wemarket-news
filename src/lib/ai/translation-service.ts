@@ -1,6 +1,7 @@
 import prisma from '@/lib/db';
 import { summarizeWithLLMFallback } from './llm-service';
 import type { AISummaryResult } from '../ai-it/summary-service';
+import { parseList, stringifyList } from '@/lib/utils/list-fields';
 
 export type TranslationResult = AISummaryResult;
 
@@ -16,9 +17,9 @@ export async function translateArticle(articleId: string): Promise<TranslationRe
     return {
       translatedTitle: article.summary.translatedTitle || undefined,
       summary3Line: article.summary.summary3Line,
-      keywords: article.summary.keywords,
-      relatedCompanies: article.summary.relatedCompanies,
-      relatedModels: article.summary.relatedModels,
+      keywords: parseList(article.summary.keywords),
+      relatedCompanies: parseList(article.summary.relatedCompanies),
+      relatedModels: parseList(article.summary.relatedModels),
       difficulty: (article.summary.difficulty as TranslationResult['difficulty']) || 'intermediate',
     };
   }
@@ -34,9 +35,9 @@ export async function translateArticle(articleId: string): Promise<TranslationRe
       articleId: article.id,
       translatedTitle: result.translatedTitle,
       summary3Line: result.summary3Line,
-      keywords: result.keywords,
-      relatedCompanies: result.relatedCompanies,
-      relatedModels: result.relatedModels,
+      keywords: stringifyList(result.keywords),
+      relatedCompanies: stringifyList(result.relatedCompanies),
+      relatedModels: stringifyList(result.relatedModels),
       difficulty: result.difficulty,
       aiGenerated: true,
       modelUsed: 'gpt-4o-mini',
@@ -93,9 +94,9 @@ export async function translateArticleTitleOnly(articleId: string): Promise<Tran
     return {
       translatedTitle: article.summary.translatedTitle,
       summary3Line: article.summary.summary3Line,
-      keywords: article.summary.keywords,
-      relatedCompanies: article.summary.relatedCompanies,
-      relatedModels: article.summary.relatedModels,
+      keywords: parseList(article.summary.keywords),
+      relatedCompanies: parseList(article.summary.relatedCompanies),
+      relatedModels: parseList(article.summary.relatedModels),
       difficulty: (article.summary.difficulty as TranslationResult['difficulty']) || 'intermediate',
     };
   }
@@ -134,9 +135,9 @@ export async function translateArticleTitleOnly(articleId: string): Promise<Tran
       articleId: article.id,
       translatedTitle,
       summary3Line: summary3Line || '요약 준비 중',
-      keywords: keywords || [],
-      relatedCompanies: [],
-      relatedModels: [],
+      keywords: stringifyList(keywords || []),
+      relatedCompanies: '',
+      relatedModels: '',
       difficulty: 'intermediate',
       aiGenerated: true,
       modelUsed: 'gpt-4o-mini',

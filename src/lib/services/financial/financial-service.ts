@@ -460,7 +460,7 @@ const stocks: StockMasterData[] = data.output.map((item: KoreaInvestmentStockMas
             openPrice: price.openPrice,
             highPrice: price.highPrice,
             lowPrice: price.lowPrice,
-            volume: BigInt(price.volume ?? 0),
+            volume: Number(price.volume ?? 0),
             tradingValue: price.tradingValue ?? 0,
             marketCap: price.marketCap,
             timestamp: price.timestamp,

@@ -9,7 +9,7 @@ import VoiceButton from './VoiceButton'
 interface NewsSummary {
   translatedTitle?: string | null
   summary3Line?: string
-  keywords?: string[]
+  keywords?: string | string[]
 }
 
 interface ArticleBase {

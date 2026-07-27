@@ -174,7 +174,7 @@ export async function getRelatedAIITArticles(
       OR: [
         { sourceId: current.sourceId },
         ...(keywords.length > 0
-          ? [{ summary: { is: { keywords: { hasSome: keywords } } } }]
+          ? [{ summary: { is: { keywords: { contains: keywords[0] } } } }]
           : []),
       ],
     },
@@ -324,23 +324,25 @@ export async function upsertSummary(
     difficulty: 'beginner' | 'intermediate' | 'advanced';
   }
 ): Promise<NewsSummary> {
+  // SQLite stores these as comma-separated strings, not arrays
+  const joinList = (arr: string[]) => arr.join(',');
   return prisma.newsSummary.upsert({
     where: { articleId: newsId },
     update: {
       translatedTitle: summaryData.translatedTitle,
       summary3Line: summaryData.summary3Line,
-      keywords: summaryData.keywords,
-      relatedCompanies: summaryData.relatedCompanies,
-      relatedModels: summaryData.relatedModels,
+      keywords: joinList(summaryData.keywords),
+      relatedCompanies: joinList(summaryData.relatedCompanies),
+      relatedModels: joinList(summaryData.relatedModels),
       difficulty: summaryData.difficulty,
     },
     create: {
       articleId: newsId,
       translatedTitle: summaryData.translatedTitle,
       summary3Line: summaryData.summary3Line,
-      keywords: summaryData.keywords,
-      relatedCompanies: summaryData.relatedCompanies,
-      relatedModels: summaryData.relatedModels,
+      keywords: joinList(summaryData.keywords),
+      relatedCompanies: joinList(summaryData.relatedCompanies),
+      relatedModels: joinList(summaryData.relatedModels),
       difficulty: summaryData.difficulty,
     },
   });
