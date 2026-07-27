@@ -2,10 +2,12 @@ import prisma from '@/lib/db'
 import { ParsedArticle } from './fetcher'
 import { Prisma } from '@prisma/client'
 
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
 const articleWithSummary = Prisma.validator<Prisma.ArticleDefaultArgs>()({
   include: { source: true, summary: true },
 })
 
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
 const articleWithSource = Prisma.validator<Prisma.ArticleDefaultArgs>()({
   include: { source: true },
 })

@@ -221,7 +221,7 @@ describe('searchNaverNewsByDate', () => {
 
 describe('edge cases', () => {
   it('handles missing items field', async () => {
-    setOK({ items: undefined as any })
+    setOK({ items: undefined as unknown as object[] })
     const result = await searchNaverNews('test')
     expect(result.articles).toHaveLength(0)
   })

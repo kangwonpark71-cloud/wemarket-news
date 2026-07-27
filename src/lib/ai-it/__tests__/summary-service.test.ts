@@ -67,6 +67,7 @@ describe('summary-service', () => {
     })
 
     it('caches results', async () => {
+      // eslint-disable-next-line @typescript-eslint/no-require-imports
       const cacheService = require('@/lib/services/cache/cache-service').cacheService
       cacheService.get.mockResolvedValueOnce({
         summary3Line: 'Cached summary.',

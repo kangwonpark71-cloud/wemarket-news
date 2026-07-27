@@ -58,6 +58,7 @@ function makeSource(overrides: Partial<AIITSourceConfig> = {}): AIITSourceConfig
 
 // ── Module under test ──────────────────────────────────────────
 const { crawlWithPlaywright, crawlAllWithPlaywright } =
+  // eslint-disable-next-line @typescript-eslint/no-require-imports
   require('../playwright-crawler') as typeof import('../playwright-crawler')
 
 describe('playwright-crawler', () => {
@@ -161,7 +162,7 @@ describe('playwright-crawler', () => {
     // page.evaluate(fn, arg) — mock must call fn(arg) like Playwright does
     mockPage.evaluate.mockImplementation(
       async (_fn: (arg: unknown) => unknown, arg: unknown) => {
-        const { extraction: _ext, origin } = arg as { extraction: ExtractionStrategy; origin: string }
+        const { origin } = arg as { extraction: ExtractionStrategy; origin: string }
         const url = '/relative/path'
         const resolved = new URL(url, origin).href
         return [

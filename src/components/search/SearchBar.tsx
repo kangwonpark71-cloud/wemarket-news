@@ -119,6 +119,7 @@ export function SearchBar({ initialQuery = '', initialScope = 'all' }: SearchBar
         <div className="relative flex-1">
           <input
             type="search"
+            role="combobox"
             value={query}
             onChange={(e) => onChange(e.target.value)}
             onFocus={() => setOpen(true)}
