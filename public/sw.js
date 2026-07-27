@@ -17,13 +17,34 @@ self.addEventListener('activate', (event) => {
   )
 })
 
+self.addEventListener('push', (event) => {
+  const data = event.data?.json() ?? { title: 'Economy News', body: '새로운 글이 있습니다.' }
+  const options: NotificationOptions = {
+    body: data.body,
+    icon: '/icon-192.png',
+    badge: '/icon-192.png',
+    vibrate: [100, 50, 100],
+    data: data.url ?? '/',
+    actions: data.actions ?? [{ action: 'read', title: '읽기' }, { action: 'close', title: '닫기' }],
+    tag: data.tag ?? 'economy-news',
+    renotify: false,
+  }
+  event.waitUntil(self.registration.showNotification(data.title ?? 'Economy News', options))
+})
+
+self.addEventListener('notificationclick', (event) => {
+  event.notification.close()
+  const url = event.notification.data ?? '/'
+  if (event.action === 'close') return
+  event.waitUntil(clients.openWindow(url))
+})
+
 self.addEventListener('fetch', (event) => {
   const { request } = event
   if (request.method !== 'GET') return
 
   const url = new URL(request.url)
   if (url.origin !== self.location.origin) return
-  // Never cache API responses or dev-only endpoints.
   if (url.pathname.startsWith('/api/')) return
 
   if (request.mode === 'navigate') {

@@ -19,11 +19,14 @@ interface UserData {
     hiddenSources: string;
     pinnedSources: string;
   } | null;
+  pushSubscribed: boolean;
 }
 
 export function SettingsPage() {
   const [user, setUser] = useState<UserData | null>(null);
   const [sources, setSources] = useState<Source[]>([])
+  const [pushSubscribed, setPushSubscribed] = useState(false);
+  const [pushLoading, setPushLoading] = useState(false);
   const [loading, setLoading] = useState(true);
   const [theme, setTheme] = useState('light');
   const [language, setLanguage] = useState('all');
@@ -132,6 +135,54 @@ export function SettingsPage() {
       console.error(err);
     }
   };
+
+  const handlePushSubscribe = async () => {
+    setPushLoading(true);
+    try {
+      const registration = await navigator.serviceWorker.ready;
+      const subscription = await registration.pushManager.subscribe({
+        userVisibleOnly: true,
+        applicationServerKey: urlBase64ToUint8Array(
+          process.env.NEXT_PUBLIC_VAPID_PUBLIC_KEY ?? '',
+        ),
+      });
+
+      const res = await fetch('/api/push/subscribe', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ subscription }),
+      });
+
+      if (res.ok) {
+        setPushSubscribed(true);
+      }
+    } catch (err) {
+      console.error('Push subscribe failed:', err);
+    } finally {
+      setPushLoading(false);
+    }
+  };
+
+  const handlePushUnsubscribe = async () => {
+    setPushLoading(true);
+    try {
+      const res = await fetch('/api/push/subscribe', { method: 'DELETE' });
+      if (res.ok) {
+        setPushSubscribed(false);
+      }
+    } catch (err) {
+      console.error('Push unsubscribe failed:', err);
+    } finally {
+      setPushLoading(false);
+    }
+  };
+
+  function urlBase64ToUint8Array(base64: string): BufferSource {
+    const padding = '='.repeat((4 - (base64.length % 4)) % 4);
+    const base64Clean = (base64 + padding).replace(/-/g, '+').replace(/_/g, '/');
+    const rawData = window.atob(base64Clean);
+    return new Uint8Array([...rawData].map((c) => c.charCodeAt(0)));
+  }
 
   if (loading) {
     return (
@@ -353,6 +404,38 @@ export function SettingsPage() {
               );
             })}
           </div>
+        </div>
+
+        <div className="border border-border p-4 bg-card rounded-sm">
+          <div className="mb-3">
+            <h2 className="text-sm font-bold text-foreground">푸시 알림</h2>
+            <p className="text-[10px] text-muted-foreground mt-1">
+              새로운 기사가 등록되면 푸시 알림을 받아보세요.
+            </p>
+          </div>
+
+          {pushSubscribed ? (
+            <div className="flex items-center justify-between">
+              <span className="text-xs font-medium text-emerald-600 dark:text-emerald-400">
+                ✓ 알림 구독 중
+              </span>
+              <button
+                onClick={handlePushUnsubscribe}
+                disabled={pushLoading}
+                className="px-3 py-1.5 border border-border text-xs font-semibold text-muted-foreground hover:bg-muted hover:text-foreground transition-colors cursor-pointer rounded-sm disabled:opacity-50"
+              >
+                {pushLoading ? '처리 중...' : '구독 취소'}
+              </button>
+            </div>
+          ) : (
+            <button
+              onClick={handlePushSubscribe}
+              disabled={pushLoading}
+              className="px-4 py-1.5 bg-primary text-primary-foreground text-xs font-semibold hover:bg-primary-hover transition-colors rounded-sm cursor-pointer disabled:opacity-50"
+            >
+              {pushLoading ? '구독 중...' : '알림 구독하기'}
+            </button>
+          )}
         </div>
 
         <div className="flex items-center justify-between pt-2 border-t border-border">

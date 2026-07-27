@@ -124,6 +124,7 @@ model User {
   verificationExpires DateTime? @map("verification_expires") // 인증 코드 만료 시간
 
   preferences         UserPreference?
+  pushSubscription  PushSubscription?
 
   @@map("users")
 }
@@ -543,4 +544,18 @@ model NewsletterSubscription {
   createdAt DateTime @default(now()) @map("created_at")
 
   @@map("newsletter_subscriptions")
+}
+
+// PUSH 알림 구독 테이블
+model PushSubscription {
+  id              String   @id @default(uuid())
+  userId          String   @unique @map("user_id")
+  endpoint        String   @unique
+  keysP256dh      String   @map("keys_p256dh")
+  auth            String
+  user            User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  createdAt       DateTime @default(now()) @map("created_at")
+  updatedAt       DateTime @updatedAt @map("updated_at")
+
+  @@map("push_subscriptions")
 }
