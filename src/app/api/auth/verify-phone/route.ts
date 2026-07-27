@@ -69,7 +69,7 @@ export async function POST(request: Request) {
 
     // Create session token
     const { createSessionToken } = await import('@/lib/utils/auth');
-    const token = createSessionToken(updatedUser.id);
+    const token = await createSessionToken(updatedUser.id);
 
     const response = NextResponse.json({
       success: true,

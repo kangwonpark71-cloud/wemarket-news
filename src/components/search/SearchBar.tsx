@@ -126,7 +126,7 @@ export function SearchBar({ initialQuery = '', initialScope = 'all' }: SearchBar
             onKeyDown={onKeyDown}
             placeholder="뉴스 검색 (키워드, 기업, 모델명...)"
             aria-label="뉴스 검색"
-            aria-expanded={open && suggestions.length > 0}
+
             aria-autocomplete="list"
             className="h-11 w-full rounded-sm border border-border bg-background px-4 pr-10 text-sm text-foreground placeholder:text-muted-foreground focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/30"
           />

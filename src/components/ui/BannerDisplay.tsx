@@ -1,3 +1,4 @@
+import Image from 'next/image'
 import { prisma } from '@/lib/db'
 import { isBannerPosition, type BannerPosition } from '@/lib/constants/banner'
 
@@ -38,11 +39,12 @@ export async function BannerDisplay({ position }: BannerDisplayProps) {
             className="group flex h-11 w-full items-center gap-3 overflow-hidden rounded-sm border border-border bg-card px-4 transition-shadow hover:shadow-md"
           >
             <div className="relative h-7 w-7 shrink-0 overflow-hidden rounded-sm bg-muted">
-              <img
+              <Image
                 src={banner.imageUrl}
                 alt={banner.title}
-                className="h-full w-full object-cover"
-                loading="lazy"
+                fill
+                className="object-cover"
+                sizes="28px"
               />
             </div>
             <p className="truncate text-sm font-medium text-foreground">{banner.title}</p>
@@ -63,12 +65,13 @@ export async function BannerDisplay({ position }: BannerDisplayProps) {
             rel={banner.linkUrl ? 'noopener noreferrer' : undefined}
             className="group block overflow-hidden rounded-sm border border-border bg-card transition-shadow hover:shadow-md"
           >
-            <div className="aspect-[16/9] w-full overflow-hidden bg-muted">
-              <img
+            <div className="relative aspect-[16/9] w-full overflow-hidden bg-muted">
+              <Image
                 src={banner.imageUrl}
                 alt={banner.title}
-                className="h-full w-full object-cover transition-transform duration-300 group-hover:scale-105"
-                loading="lazy"
+                fill
+                className="object-cover transition-transform duration-300 group-hover:scale-105"
+                sizes="(max-width: 768px) 100vw, 300px"
               />
             </div>
             <div className="p-2">
@@ -92,11 +95,12 @@ export async function BannerDisplay({ position }: BannerDisplayProps) {
           className="group relative flex flex-col overflow-hidden rounded-sm border border-border bg-card transition-shadow hover:shadow-md"
         >
           <div className="relative w-full overflow-hidden bg-muted" style={{ aspectRatio: '24 / 7', maxHeight: '180px' }}>
-            <img
+            <Image
               src={banner.imageUrl}
               alt={banner.title}
-              className="h-full w-full object-cover transition-transform duration-300 group-hover:scale-105"
-              loading="lazy"
+              fill
+              className="object-cover transition-transform duration-300 group-hover:scale-105"
+              sizes="(max-width: 768px) 100vw, 50vw"
             />
           </div>
           <div className="p-2">

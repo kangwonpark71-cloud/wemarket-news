@@ -12,6 +12,11 @@ export const NAV_ITEMS: NavItem[] = [
     icon: '📰',
   },
   {
+    href: '/breaking',
+    label: '속보',
+    icon: '🚨',
+  },
+  {
     href: '/domestic',
     label: '국내뉴스',
     icon: '🏠',
@@ -42,8 +47,18 @@ export const NAV_ITEMS: NavItem[] = [
     ],
   },
   {
+    href: '/forex',
+    label: '환율',
+    icon: '💱',
+  },
+  {
     href: '/bookmarks',
     label: '내 모음',
     icon: '🔖',
+  },
+  {
+    href: '/search',
+    label: '검색',
+    icon: '🔍',
   },
 ]

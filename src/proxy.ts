@@ -76,14 +76,14 @@ function getClientIp(request: NextRequest): string {
   return '127.0.0.1'
 }
 
-// ─── Middleware ───────────────────────────────────────────────────────────────
+// ─── Proxy ───────────────────────────────────────────────────────────────────
 
-export function middleware(request: NextRequest) {
+export function proxy(request: NextRequest) {
   const { pathname } = request.nextUrl
   const method = request.method
   const ip = getClientIp(request)
 
-  // Skip middleware for static files and internal Next.js routes
+  // Skip proxy for static files and internal Next.js routes
   if (
     pathname.startsWith('/_next') ||
     pathname.startsWith('/favicon') ||

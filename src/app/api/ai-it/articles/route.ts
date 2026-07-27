@@ -64,7 +64,7 @@ export async function GET(request: NextRequest) {
 
     if (token) {
       const { verifySessionToken } = await import('@/lib/utils/auth');
-      const userId = verifySessionToken(token);
+      const userId = await verifySessionToken(token);
       if (userId) {
         const { prisma } = await import('@/lib/db');
         const pref = await prisma.userPreference.findUnique({

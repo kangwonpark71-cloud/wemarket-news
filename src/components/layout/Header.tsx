@@ -21,7 +21,15 @@ export default function Header() {
   const [lastCrawled, setLastCrawled] = useState<string>('')
   const [user, setUser] = useState<CurrentUser | null>(null)
   const [openDropdown, setOpenDropdown] = useState<string | null>(null)
-  const dropdownRef = useRef<HTMLDivElement>(null)
+  const navRef = useRef<HTMLDivElement>(null)
+
+  useEffect(() => {
+    if (!navRef.current) return
+    const activeLink = navRef.current.querySelector('[aria-current="page"]')
+    if (activeLink) {
+      activeLink.scrollIntoView({ behavior: 'smooth', block: 'nearest', inline: 'center' })
+    }
+  }, [pathname])
 
   useEffect(() => {
     async function checkUser() {
@@ -62,7 +70,7 @@ export default function Header() {
   useEffect(() => {
     if (!openDropdown) return
     function handleClick(e: MouseEvent) {
-      if (dropdownRef.current && !dropdownRef.current.contains(e.target as Node)) {
+      if (navRef.current && !navRef.current.contains(e.target as Node)) {
         setOpenDropdown(null)
       }
     }
@@ -197,7 +205,7 @@ export default function Header() {
 
       <div className="border-t border-border hidden md:block bg-muted/20">
         <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
-          <nav className="flex h-11 items-center gap-1 overflow-x-auto scrollbar-none py-1" aria-label="주요 내비게이션" ref={dropdownRef}>
+          <nav ref={navRef} className="flex h-11 items-center gap-1 overflow-x-auto scrollbar-none py-1" aria-label="주요 내비게이션">
             {NAV_ITEMS.map((item) => {
               const active = item.children ? isSubItemActive(item) : isActive(item.href)
               const hasChildren = !!item.children && item.children.length > 0

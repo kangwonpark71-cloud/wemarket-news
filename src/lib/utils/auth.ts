@@ -1,9 +1,8 @@
 import crypto from 'crypto';
 import { prisma } from '@/lib/db';
+import { sessionStore } from '@/lib/services/session/session-store';
 import type { User, UserRole } from '@prisma/client';
 
-// Resolved lazily so that importing this module during `next build` (no runtime env)
-// does not throw. The guard still applies per-call: no insecure fallback is ever used.
 function getSecret(): string {
   const secret = process.env.JWT_SECRET;
   if (!secret) {
@@ -17,22 +16,12 @@ export type { UserRole };
 const SCRYPT_KEYLEN = 64;
 const SALT_BYTES = 16;
 
-/**
- * Hash a password with crypto.scrypt + a per-user random salt.
- * Format: `scrypt$<saltHex>$<hashHex>`. A fixed server secret is intentionally
- * NOT used as salt — each user gets a unique random salt so identical passwords
- * produce different hashes (rainbow-table resistant).
- */
 export function hashPassword(password: string): string {
   const salt = crypto.randomBytes(SALT_BYTES);
   const hash = crypto.scryptSync(password, salt, SCRYPT_KEYLEN);
   return `scrypt$${salt.toString('hex')}$${hash.toString('hex')}`;
 }
 
-/**
- * Verify a password against a stored scrypt hash. Returns false (never throws)
- * for malformed/legacy inputs so callers can treat them as auth failures.
- */
 export function verifyPassword(password: string, storedHash: string | null | undefined): boolean {
   if (!storedHash) return false;
   const parts = storedHash.split('$');
@@ -47,14 +36,14 @@ export function verifyPassword(password: string, storedHash: string | null | und
   return crypto.timingSafeEqual(actual, expected);
 }
 
-export function createSessionToken(userId: string): string {
+export function createHmacToken(userId: string): string {
   const secret = getSecret();
   const payload = JSON.stringify({ userId, exp: Date.now() + 7 * 24 * 60 * 60 * 1000 });
   const signature = crypto.createHmac('sha256', secret).update(payload).digest('hex');
   return Buffer.from(payload).toString('base64') + '.' + signature;
 }
 
-export function verifySessionToken(token: string): string | null {
+export function verifyHmacToken(token: string): string | null {
   try {
     const secret = getSecret();
     const parts = token.split('.');
@@ -78,6 +67,27 @@ export function verifySessionToken(token: string): string | null {
   }
 }
 
+export async function createSessionToken(userId: string): Promise<string> {
+  return sessionStore.createSession(userId);
+}
+
+export async function verifySessionToken(token: string): Promise<string | null> {
+  const session = await sessionStore.getSession(token);
+  if (session) {
+    await sessionStore.extendSession(token);
+    return session.userId;
+  }
+
+  const legacyUserId = verifyHmacToken(token);
+  if (legacyUserId) {
+    // Create a session token for the legacy user (side effect: stores in DB)
+    await createSessionToken(legacyUserId);
+    return legacyUserId;
+  }
+
+  return null;
+}
+
 export function getSessionFromCookie(request: Request): string | null {
   const cookieHeader = request.headers.get('cookie') || '';
   const cookies = Object.fromEntries(
@@ -92,7 +102,7 @@ export async function getSessionUser(request: Request): Promise<SessionUser | nu
   const token = getSessionFromCookie(request);
   if (!token) return null;
 
-  const userId = verifySessionToken(token);
+  const userId = await verifySessionToken(token);
   if (!userId) return null;
 
   const user = await prisma.user.findUnique({
@@ -101,4 +111,12 @@ export async function getSessionUser(request: Request): Promise<SessionUser | nu
   });
 
   return user;
+}
+
+export async function destroySession(sessionId: string): Promise<void> {
+  await sessionStore.deleteSession(sessionId);
+}
+
+export async function destroyAllUserSessions(userId: string): Promise<void> {
+  await sessionStore.deleteAllUserSessions(userId);
 }

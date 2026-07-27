@@ -107,20 +107,9 @@ export class AIITScheduler extends BaseScheduler {
     await this.executeJob(
       name,
       async () => {
-        const lockName = `scheduler:job:${name}`
-        const acquired = await this.acquireLock(lockName)
-
+        const acquired = await runJobWithLock(name, jobFn, this.aiConfig.lockTimeout)
         if (!acquired) {
           console.log(`[${this.config.name}] Could not acquire lock for ${name}, skipping`)
-          return
-        }
-
-        try {
-          await jobFn()
-        } finally {
-          setTimeout(() => {
-            this.releaseLock(lockName).catch(() => {})
-          }, 5000)
         }
       },
       {
@@ -129,23 +118,5 @@ export class AIITScheduler extends BaseScheduler {
         timeout: 300000,
       }
     )
-  }
-
-  private async acquireLock(name: string): Promise<boolean> {
-    try {
-      const { cacheService } = await import('@/lib/services/cache/cache-service')
-      return await cacheService.acquireLock(name, this.aiConfig.lockTimeout)
-    } catch {
-      return true // If cache unavailable, proceed without lock
-    }
-  }
-
-  private async releaseLock(name: string): Promise<void> {
-    try {
-      const { cacheService } = await import('@/lib/services/cache/cache-service')
-      await cacheService.releaseLock(name)
-    } catch {
-      // Ignore
-    }
   }
 }

@@ -1,5 +1,6 @@
 'use client'
 
+import Image from 'next/image'
 import ReactMarkdown from 'react-markdown'
 import remarkGfm from 'remark-gfm'
 import rehypeSlug from 'rehype-slug'
@@ -151,15 +152,17 @@ export function MarkdownRenderer({ content, className = '' }: MarkdownRendererPr
             </a>
           ),
           hr: () => <hr className="my-10 border-border" />,
-          img: ({ src, alt, ...props }) => (
+          img: ({ src, alt }) => (
             <figure className="my-10 -mx-4 md:-mx-12 overflow-hidden bg-muted border border-border rounded-sm relative aspect-[16/9]">
-              <img
-                {...props}
-                src={src}
-                alt={alt}
-                className="absolute inset-0 w-full h-full object-cover"
-                loading="lazy"
-              />
+              {src && (
+                <Image
+                  src={src as string}
+                  alt={alt || ''}
+                  fill
+                  className="object-cover"
+                  sizes="(max-width: 768px) 100vw, 680px"
+                />
+              )}
               {alt && (
                 <figcaption className="text-center text-xs italic text-muted-foreground mt-3 tracking-wide bg-background/50 py-1.5 border-t border-border font-sans">
                   {alt}

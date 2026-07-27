@@ -2,6 +2,7 @@
 
 import { formatDate, truncate, estimateReadingTime } from '@/lib/utils'
 import { useState, useCallback } from 'react'
+import Image from 'next/image'
 import Link from 'next/link'
 import VoiceButton from './VoiceButton'
 
@@ -196,11 +197,12 @@ export default function NewsCard({ article, compact = false }: NewsCardProps) {
         <div className="flex gap-4">
           {article.thumbnail && !compact && (
             <div className="relative hidden h-24 w-24 shrink-0 sm:block">
-              <img
+              <Image
                 src={article.thumbnail}
                 alt=""
-                className="h-full w-full rounded-sm object-cover"
-                loading="lazy"
+                fill
+                className="rounded-sm object-cover"
+                sizes="96px"
               />
             </div>
           )}

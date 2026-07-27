@@ -1,5 +1,6 @@
 'use client';
 
+import Image from 'next/image';
 import Link from 'next/link';
 import { formatDistanceToNow } from 'date-fns';
 import { ko, enUS } from 'date-fns/locale';
@@ -48,7 +49,7 @@ export default function NewsCard({ article, variant = 'default' }: NewsCardProps
       <article className="flex gap-3 py-3 border-b border-border last:border-0 hover:bg-muted/50 transition-colors">
         {article.thumbnail && (
           <Link href={`/ai-it/articles/${article.id}`} className="flex-shrink-0 w-20 h-20 rounded-sm overflow-hidden relative" aria-label={article.title}>
-            <img src={article.thumbnail} alt="" className="w-full h-full object-cover" loading="lazy" />
+            <Image src={article.thumbnail} alt="" fill className="object-cover" sizes="80px" />
           </Link>
         )}
         <div className="flex-1 min-w-0">
@@ -78,7 +79,7 @@ export default function NewsCard({ article, variant = 'default' }: NewsCardProps
       <article className="group relative rounded-sm border border-border bg-card overflow-hidden transition-colors duration-200 hover:shadow-sm">
         {article.thumbnail && (
           <Link href={`/ai-it/articles/${article.id}`} className="relative aspect-video overflow-hidden" aria-label={article.title}>
-            <img src={article.thumbnail} alt="" className="absolute inset-0 w-full h-full object-cover group-hover:scale-105 transition-transform duration-300" loading="lazy" />
+            <Image src={article.thumbnail} alt="" fill className="object-cover group-hover:scale-105 transition-transform duration-300" sizes="(max-width: 768px) 100vw, 50vw" />
           </Link>
         )}
         <div className="p-4">
@@ -124,7 +125,7 @@ export default function NewsCard({ article, variant = 'default' }: NewsCardProps
       <div className="flex gap-4">
         {article.thumbnail && (
           <Link href={`/ai-it/articles/${article.id}`} className="flex-shrink-0 w-32 h-32 rounded-sm overflow-hidden relative" aria-label={article.title}>
-            <img src={article.thumbnail} alt="" className="w-full h-full object-cover" loading="lazy" />
+            <Image src={article.thumbnail} alt="" fill className="object-cover" sizes="128px" />
           </Link>
         )}
         <div className="flex-1 min-w-0">

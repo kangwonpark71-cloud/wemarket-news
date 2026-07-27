@@ -1,21 +1,47 @@
 import { NextResponse } from 'next/server'
-import { schedulerService } from '@/lib/services/scheduler/scheduler-service'
+import { koreaInvestmentService } from '@/lib/services/financial/financial-service'
+import { upbitService } from '@/lib/services/crypto/crypto-service'
+import { marketService } from '@/lib/services/market/market-service'
+
+async function updateStockPrices(): Promise<void> {
+  await koreaInvestmentService.syncStockMasterToDb()
+  const stocks = await koreaInvestmentService.getStockMaster()
+  const codes = stocks.map(s => s.code)
+  const prices = await koreaInvestmentService.getStockPrices(codes)
+  const pricesArray = Array.from(prices.values())
+  await koreaInvestmentService.saveStockPricesToDb(pricesArray)
+}
+
+async function updateCryptoTickers(): Promise<void> {
+  const tickers = await upbitService.getAllTickers()
+  await upbitService.saveTickersToDb(tickers)
+}
+
+async function updateForexRates(): Promise<void> {
+  const rates = await marketService.getAllExchangeRates()
+  await marketService.saveExchangeRatesToDb(rates)
+}
+
+async function updateGlobalIndices(): Promise<void> {
+  const indices = await marketService.getGlobalIndices()
+  await marketService.saveGlobalIndicesToDb(indices)
+}
 
 export async function POST() {
   try {
     const startTime = Date.now()
 
     await Promise.all([
-      schedulerService.updateStockPrices().catch(err => {
+      updateStockPrices().catch(err => {
         console.warn('[Admin] Stock price update failed during manual refresh:', err.message || err)
       }),
-      schedulerService.updateCryptoTickers().catch(err => {
+      updateCryptoTickers().catch(err => {
         console.warn('[Admin] Crypto ticker update failed during manual refresh:', err.message || err)
       }),
-      schedulerService.updateForexRates().catch(err => {
+      updateForexRates().catch(err => {
         console.warn('[Admin] Forex rates update failed during manual refresh:', err.message || err)
       }),
-      schedulerService.updateGlobalIndices().catch(err => {
+      updateGlobalIndices().catch(err => {
         console.warn('[Admin] Global indices update failed during manual refresh:', err.message || err)
       }),
     ])

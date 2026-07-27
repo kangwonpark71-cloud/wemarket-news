@@ -32,6 +32,24 @@ export const DOMESTIC_SOURCES: RSSSourceConfig[] = [
     language: 'ko',
     icon: '📊',
   },
+  {
+    name: '연합뉴스TV 경제',
+    nameEn: 'yonhapnewstv_economy',
+    url: 'http://www.yonhapnewstv.co.kr/category/news/economy/feed/',
+    category: 'domestic',
+    subcategory: 'yonhapnewstv_economy',
+    language: 'ko',
+    icon: '📺',
+  },
+  {
+    name: '연합뉴스TV 최신',
+    nameEn: 'yonhapnewstv_latest',
+    url: 'http://www.yonhapnewstv.co.kr/browse/feed/',
+    category: 'domestic',
+    subcategory: 'yonhapnewstv_latest',
+    language: 'ko',
+    icon: '📺',
+  },
 ]
 
 // 해외 경제 소스 (연준/Fed)
@@ -187,6 +205,8 @@ export const SUBCATEGORY_LABELS: Record<string, string> = {
   // 국내
   korean_economy: '한국 경제',
   mk_economy: '매일 경제',
+  yonhapnewstv_economy: '연합뉴스TV 경제',
+  yonhapnewstv_latest: '연합뉴스TV 최신',
   // 해외
   press_releases: 'Press Releases',
   monetary_policy: 'Monetary Policy',

@@ -2,6 +2,13 @@ import prisma from '@/lib/db'
 import { ParsedArticle } from './fetcher'
 import { Prisma } from '@prisma/client'
 
+const BREAKING_KEYWORDS = ['속보', '[속보]', '〈속보〉', '【속보】', '「속보」']
+
+function isBreakingArticle(title: string): boolean {
+  if (!title) return false
+  return BREAKING_KEYWORDS.some(keyword => title.includes(keyword))
+}
+
 // eslint-disable-next-line @typescript-eslint/no-unused-vars
 const articleWithSummary = Prisma.validator<Prisma.ArticleDefaultArgs>()({
   include: { source: true, summary: true },
@@ -68,6 +75,7 @@ export async function upsertArticles(
             publishedAt: article.publishedAt,
             category: article.category,
             language: article.language,
+            isBreaking: isBreakingArticle(article.title),
           },
           include: { source: true },
         })
@@ -265,6 +273,31 @@ export async function getRecentArticlesBySource(sourceNameEn: string, limit = 10
     take: limit,
   })
   return articles
+}
+
+export async function getBreakingArticles(
+  limit = 20,
+  page = 1,
+): Promise<{ articles: ArticleWithSource[]; total: number; page: number; totalPages: number }> {
+  const where: Prisma.ArticleWhereInput = { isBreaking: true }
+
+  const [articles, total] = await Promise.all([
+    prisma.article.findMany({
+      where,
+      include: { source: true, summary: true },
+      orderBy: { publishedAt: 'desc' },
+      skip: (page - 1) * limit,
+      take: limit,
+    }),
+    prisma.article.count({ where }),
+  ])
+
+  return {
+    articles: articles as ArticleWithSource[],
+    total,
+    page,
+    totalPages: Math.ceil(total / limit),
+  }
 }
 
 export async function getArticleStats() {

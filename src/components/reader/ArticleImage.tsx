@@ -1,3 +1,5 @@
+import Image from 'next/image'
+
 interface ArticleImageProps {
   src: string
   alt: string
@@ -8,11 +10,12 @@ export function ArticleImage({ src, alt, caption }: ArticleImageProps) {
   return (
     <figure className="my-10 -mx-5 sm:-mx-6 lg:-mx-12">
       <div className="relative aspect-[16/9] w-full overflow-hidden bg-muted">
-        <img
+        <Image
           src={src}
           alt={alt}
-          className="absolute inset-0 h-full w-full object-cover"
-          loading="lazy"
+          fill
+          className="object-cover"
+          sizes="(max-width: 768px) 100vw, 1200px"
         />
       </div>
       {caption && (

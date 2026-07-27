@@ -44,7 +44,7 @@
 
 ### 👥 2-1. 암호화 기반 보안 로그인 & 개인 설정 시스템
 *   **컴파일-프리 보안 인증 (`src/lib/utils/auth.ts`)**:
-    *   기하급수적으로 느린 C++ 빌드를 수반하는 bcrypt 대신, Node.js 내장 크립토의 `crypto.createHash('sha256')`를 기반으로 JWT 스타일의 단방향 해싱 패스워드와 `HMAC SHA-256` 서명 기반의 보안 `session` 쿠키 발급 모듈을 이식하여 고속 세션 검증을 통제합니다.
+    *   기하급수적으로 느린 C++ 빌드를 수반하는 bcrypt 대신, Node.js 내장 크립토의 `crypto.scryptSync`를 기반으로 단방향 해싱 패스워드(형식: `scrypt$salt$hash`)와 `HMAC SHA-256` 서명 기반의 보안 `session` 쿠키 발급 모듈을 이식하여 고속 세션 검증을 통제합니다.
 *   **지능형 수집원 격리 필터링 (`src/lib/rss/db-service.ts` & `src/lib/ai-it/db-service.ts`)**:
     *   사용자가 제외하고 싶은 수집 채널을 설정에서 선택하면, 뉴스 조회 쿼리에 `excludeSourceIds: { notIn: [hiddenIds] }`를 이식하여 데이터베이스 수준에서 기사를 사전에 완전 차단하는 SaaS 개인화 기능입니다.
 
@@ -122,7 +122,7 @@ Railway 서비스에 기동을 위한 다음 비밀 변수들을 기입합니다
 | `KOREA_INVEST_APP_KEY` | *(선택 사항)* | 한국투자증권 앱키 (미 기입 시 자동 시뮬레이션 폴백 기동) |
 
 ### 5-2. 빌드 및 데이터 마이그레이션 (`railway.json`)
-*   배포 파일 업로드 시 **Nixpacks** 빌드 엔진이 `npx prisma db push --skip-generate` 마이그레이션을 자동 선제 수행한 후 Next.js Turbopack 최적화 번들을 가동합니다.
+*   배포 파일 업로드 시 **Nixpacks** 빌드 엔진이 `npx prisma migrate deploy` 마이그레이션을 자동 선제 수행한 후 Next.js Turbopack 최적화 번들을 가동합니다.
 *   빌드 실패가 감지되면 즉각 롤백 정책이 발동되어 상용 런칭의 무장애 운영을 수호합니다.
 
 ---

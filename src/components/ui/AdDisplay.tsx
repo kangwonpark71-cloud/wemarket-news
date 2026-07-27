@@ -1,5 +1,6 @@
 'use client'
 
+import Image from 'next/image'
 import { useEffect, useRef } from 'react'
 import type { AdType } from '@/lib/constants/ads'
 
@@ -41,8 +42,8 @@ export function AdDisplay({ id, adType, title, content, linkUrl }: AdDisplayProp
         onClick={handleClick}
         className="group block overflow-hidden rounded-sm border border-border bg-card transition-shadow hover:shadow-md"
       >
-        <div className="aspect-[16/9] w-full overflow-hidden bg-muted" style={{ maxHeight: '180px' }}>
-          <img src={content} alt={title} className="h-full w-full object-cover" loading="lazy" />
+        <div className="relative aspect-[16/9] w-full overflow-hidden bg-muted" style={{ maxHeight: '180px' }}>
+          <Image src={content} alt={title} fill className="object-cover" sizes="(max-width: 768px) 100vw, 300px" />
         </div>
         <div className="p-2">
           <p className="text-xs font-medium text-foreground line-clamp-2">{title}</p>

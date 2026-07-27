@@ -9,6 +9,7 @@ import { koreaInvestmentService } from '@/lib/services/financial/financial-servi
 import { upbitService } from '@/lib/services/crypto/crypto-service'
 import { marketService } from '@/lib/services/market/market-service'
 import { runJobWithLock } from '@/lib/utils/lock'
+import { prisma } from '@/lib/db'
 
 export interface FinancialSchedulerConfig extends SchedulerConfig {
   stockPriceInterval: number      // ms: default 5 min
@@ -67,6 +68,8 @@ export class FinancialScheduler extends BaseScheduler {
     this.addInterval('crypto-ticker', this.finConfig.cryptoTickerInterval, () => this.updateCryptoTickers())
     this.addInterval('forex', this.finConfig.forexInterval, () => this.updateForexRates())
     this.addInterval('global-index', this.finConfig.globalIndexInterval, () => this.updateGlobalIndices())
+    this.addInterval('daily-stats', 60 * 60 * 1000, () => this.calculateDailyStats())
+    this.addInterval('cleanup-old-data', 24 * 60 * 60 * 1000, () => this.cleanupOldData())
 
     // Daily cron tasks
     this.cronTasks.push(
@@ -120,20 +123,9 @@ export class FinancialScheduler extends BaseScheduler {
     await this.executeJob(
       name,
       async () => {
-        const lockName = `scheduler:job:${name}`
-        const acquired = await this.acquireLock(lockName)
-
+        const acquired = await runJobWithLock(name, jobFn, this.finConfig.lockTimeout)
         if (!acquired) {
           console.log(`[${this.config.name}] Could not acquire lock for ${name}, skipping`)
-          return
-        }
-
-        try {
-          await jobFn()
-        } finally {
-          setTimeout(() => {
-            this.releaseLock(lockName).catch(() => {})
-          }, 5000)
         }
       },
       {
@@ -142,24 +134,6 @@ export class FinancialScheduler extends BaseScheduler {
         timeout: 120000,
       }
     )
-  }
-
-  private async acquireLock(name: string): Promise<boolean> {
-    try {
-      const { cacheService } = await import('@/lib/services/cache/cache-service')
-      return await cacheService.acquireLock(name, this.finConfig.lockTimeout)
-    } catch {
-      return true
-    }
-  }
-
-  private async releaseLock(name: string): Promise<void> {
-    try {
-      const { cacheService } = await import('@/lib/services/cache/cache-service')
-      await cacheService.releaseLock(name)
-    } catch {
-      // Ignore
-    }
   }
 
   // --- Financial data jobs ---
@@ -225,4 +199,166 @@ export class FinancialScheduler extends BaseScheduler {
       throw error
     }
   }
+
+  private async calculateDailyStats(): Promise<void> {
+    const today = new Date()
+    today.setHours(0, 0, 0, 0)
+
+    try {
+      const stockPrices = await prisma.stockPrice.findMany({
+        where: {
+          timestamp: { gte: today },
+        },
+        include: {
+          stock: {
+            select: { code: true, market: true },
+          },
+        },
+      })
+
+      if (stockPrices.length > 0) {
+        const markets = ['KOSPI', 'KOSDAQ']
+        for (const market of markets) {
+          const marketStocks = stockPrices.filter(p =>
+            market === 'KOSPI' ? p.stock.code.startsWith('001') : p.stock.code.startsWith('101')
+          )
+
+          if (marketStocks.length === 0) continue
+
+          const totalStocks = marketStocks.length
+          const advancing = marketStocks.filter(s => Number(s.change) > 0).length
+          const declining = marketStocks.filter(s => Number(s.change) < 0).length
+          const unchanged = totalStocks - advancing - declining
+          const upperLimit = marketStocks.filter(s => Number(s.changeRate) >= 30).length
+          const lowerLimit = marketStocks.filter(s => Number(s.changeRate) <= -30).length
+          const totalVolume = marketStocks.reduce((sum, s) => sum + Number(s.volume), 0)
+          const totalValue = marketStocks.reduce((sum, s) => sum + Number(s.tradingValue), 0)
+
+          await prisma.stockDailyStat.upsert({
+            where: { date: today, market },
+            update: {
+              totalStocks,
+              advancing,
+              declining,
+              unchanged,
+              upperLimit,
+              lowerLimit,
+              totalVolume,
+              totalValue,
+            },
+            create: {
+              date: today,
+              market,
+              totalStocks,
+              advancing,
+              declining,
+              unchanged,
+              upperLimit,
+              lowerLimit,
+              totalVolume,
+              totalValue,
+            },
+          })
+        }
+      }
+
+      const cryptoTickers = await prisma.cryptoTicker.findMany({
+        where: { timestamp: { gte: today } },
+      })
+
+      if (cryptoTickers.length > 0) {
+        const totalMarketCap = cryptoTickers.reduce((sum, t) => sum + Number(t.tradePrice), 0)
+        const totalVolume24h = cryptoTickers.reduce((sum, t) => sum + Number(t.accTradePrice24h), 0)
+
+        await prisma.cryptoDailyStat.upsert({
+          where: { date: today },
+          update: { totalMarketCap, totalVolume24h },
+          create: { date: today, totalMarketCap, totalVolume24h },
+        })
+      }
+
+      const forexRates = await prisma.exchangeRate.findMany({
+        where: { timestamp: { gte: today } },
+      })
+
+      if (forexRates.length > 0) {
+        const usd = forexRates.find(r => r.baseCurrency === 'USD')
+        const jpy = forexRates.find(r => r.baseCurrency === 'JPY')
+        const eur = forexRates.find(r => r.baseCurrency === 'EUR')
+        const cny = forexRates.find(r => r.baseCurrency === 'CNY')
+
+        await prisma.exchangeRateDailyStat.upsert({
+          where: { date: today },
+          update: {
+            usdRate: usd?.rate || 0,
+            usdChange: usd?.change || 0,
+            usdChangeRate: usd?.changeRate || 0,
+            jpyRate: jpy?.rate || 0,
+            jpyChange: jpy?.change || 0,
+            jpyChangeRate: jpy?.changeRate || 0,
+            eurRate: eur?.rate || 0,
+            eurChange: eur?.change || 0,
+            eurChangeRate: eur?.changeRate || 0,
+            cnyRate: cny?.rate || 0,
+            cnyChange: cny?.change || 0,
+            cnyChangeRate: cny?.changeRate || 0,
+          },
+          create: {
+            date: today,
+            usdRate: usd?.rate || 0,
+            usdChange: usd?.change || 0,
+            usdChangeRate: usd?.changeRate || 0,
+            jpyRate: jpy?.rate || 0,
+            jpyChange: jpy?.change || 0,
+            jpyChangeRate: jpy?.changeRate || 0,
+            eurRate: eur?.rate || 0,
+            eurChange: eur?.change || 0,
+            eurChangeRate: eur?.changeRate || 0,
+            cnyRate: cny?.rate || 0,
+            cnyChange: cny?.change || 0,
+            cnyChangeRate: cny?.changeRate || 0,
+          },
+        })
+      }
+    } catch (error) {
+      console.error(`[${this.config.name}] Failed to calculate daily stats:`, error)
+    }
+  }
+
+  private async cleanupOldData(): Promise<void> {
+    try {
+      const thirtyDaysAgo = new Date()
+      thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30)
+
+      await prisma.stockPrice.deleteMany({
+        where: { timestamp: { lt: thirtyDaysAgo } },
+      })
+
+      const sevenDaysAgo = new Date()
+      sevenDaysAgo.setDate(sevenDaysAgo.getDate() - 7)
+
+      await prisma.cryptoTicker.deleteMany({
+        where: { timestamp: { lt: sevenDaysAgo } },
+      })
+
+      await prisma.financialFetchLog.deleteMany({
+        where: { fetchedAt: { lt: thirtyDaysAgo } },
+      })
+
+      const ninetyDaysAgo = new Date()
+      ninetyDaysAgo.setDate(ninetyDaysAgo.getDate() - 90)
+
+      await prisma.cryptoCandle.deleteMany({
+        where: {
+          AND: [
+            { unit: { in: ['days', 'weeks', 'months'] } },
+            { timestamp: { lt: ninetyDaysAgo } },
+          ],
+        },
+      })
+    } catch (error) {
+      console.error(`[${this.config.name}] Failed to cleanup old data:`, error)
+    }
+  }
+
 }

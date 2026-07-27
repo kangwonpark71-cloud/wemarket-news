@@ -26,7 +26,7 @@ export async function GET(request: Request) {
 
     if (token) {
       const { verifySessionToken } = await import('@/lib/utils/auth');
-      const userId = verifySessionToken(token);
+      const userId = await verifySessionToken(token);
       if (userId) {
         const pref = await prisma.userPreference.findUnique({
           where: { userId },

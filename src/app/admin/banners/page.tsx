@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, useEffect, useCallback } from 'react';
+import Image from 'next/image';
 import { BANNER_POSITIONS, type BannerPosition } from '@/lib/constants/banner';
 
 interface Banner {
@@ -303,11 +304,13 @@ export default function AdminBannersPage() {
               >
                 <div className="aspect-[16/9] bg-slate-100 relative overflow-hidden">
                   {banner.imageUrl ? (
-                    <img
+                    <Image
                       src={banner.imageUrl}
                       alt={banner.title}
-                      className="w-full h-full object-cover"
-                      onError={(e) => { (e.target as HTMLImageElement).style.display = 'none'; }}
+                      fill
+                      className="object-cover"
+                      onError={() => {}}
+                      onLoadingComplete={(img) => { if (img.naturalWidth === 0) img.style.display = 'none'; }}
                     />
                   ) : (
                     <div className="flex items-center justify-center h-full text-slate-300 text-xs">No Image</div>

@@ -1,6 +1,7 @@
 import '@testing-library/jest-dom'
 
-// Mock global fetch for route tests
+const originalFetch = global.fetch
+
 beforeAll(() => {
   global.fetch = jest.fn(() =>
     Promise.resolve({
@@ -23,7 +24,10 @@ beforeAll(() => {
   ) as jest.Mock
 })
 
-// Suppress console noise during tests
-jest.spyOn(console, 'warn').mockImplementation(() => {})
-jest.spyOn(console, 'error').mockImplementation(() => {})
-jest.spyOn(console, 'log').mockImplementation(() => {})
+beforeEach(() => {
+  jest.restoreAllMocks()
+})
+
+afterAll(() => {
+  global.fetch = originalFetch
+})
