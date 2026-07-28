@@ -171,12 +171,6 @@ export async function getRelatedAIITArticles(
     where: {
       id: { not: id },
       sourceType: 'AI_IT',
-      OR: [
-        { sourceId: current.sourceId },
-        ...(keywords.length > 0
-          ? [{ summary: { is: { keywords: { contains: keywords[0] } } } }]
-          : []),
-      ],
     },
     include: { source: true, tags: { include: { tag: true } }, summary: true },
     orderBy: { publishedAt: 'desc' },
@@ -324,25 +318,25 @@ export async function upsertSummary(
     difficulty: 'beginner' | 'intermediate' | 'advanced';
   }
 ): Promise<NewsSummary> {
-  // SQLite stores these as comma-separated strings, not arrays
-  const joinList = (arr: string[]) => arr.join(',');
+  // PostgreSQL schema uses String[] for these fields — pass arrays directly.
+  // At the read boundary, parseList() normalises both array and legacy comma-string forms.
   return prisma.newsSummary.upsert({
     where: { articleId: newsId },
     update: {
       translatedTitle: summaryData.translatedTitle,
       summary3Line: summaryData.summary3Line,
-      keywords: joinList(summaryData.keywords),
-      relatedCompanies: joinList(summaryData.relatedCompanies),
-      relatedModels: joinList(summaryData.relatedModels),
+      keywords: summaryData.keywords,
+      relatedCompanies: summaryData.relatedCompanies,
+      relatedModels: summaryData.relatedModels,
       difficulty: summaryData.difficulty,
     },
     create: {
       articleId: newsId,
       translatedTitle: summaryData.translatedTitle,
       summary3Line: summaryData.summary3Line,
-      keywords: joinList(summaryData.keywords),
-      relatedCompanies: joinList(summaryData.relatedCompanies),
-      relatedModels: joinList(summaryData.relatedModels),
+      keywords: summaryData.keywords,
+      relatedCompanies: summaryData.relatedCompanies,
+      relatedModels: summaryData.relatedModels,
       difficulty: summaryData.difficulty,
     },
   });

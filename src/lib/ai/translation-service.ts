@@ -1,7 +1,7 @@
 import prisma from '@/lib/db';
 import { summarizeWithLLMFallback } from './llm-service';
 import type { AISummaryResult } from '../ai-it/summary-service';
-import { parseList, stringifyList } from '@/lib/utils/list-fields';
+import { parseList } from '@/lib/utils/list-fields';
 
 export type TranslationResult = AISummaryResult;
 
@@ -35,9 +35,9 @@ export async function translateArticle(articleId: string): Promise<TranslationRe
       articleId: article.id,
       translatedTitle: result.translatedTitle,
       summary3Line: result.summary3Line,
-      keywords: stringifyList(result.keywords),
-      relatedCompanies: stringifyList(result.relatedCompanies),
-      relatedModels: stringifyList(result.relatedModels),
+      keywords: result.keywords,
+      relatedCompanies: result.relatedCompanies,
+      relatedModels: result.relatedModels,
       difficulty: result.difficulty,
       aiGenerated: true,
       modelUsed: 'gpt-4o-mini',
@@ -135,9 +135,9 @@ export async function translateArticleTitleOnly(articleId: string): Promise<Tran
       articleId: article.id,
       translatedTitle,
       summary3Line: summary3Line || '요약 준비 중',
-      keywords: stringifyList(keywords || []),
-      relatedCompanies: '',
-      relatedModels: '',
+      keywords: keywords || [],
+      relatedCompanies: [],
+      relatedModels: [],
       difficulty: 'intermediate',
       aiGenerated: true,
       modelUsed: 'gpt-4o-mini',

@@ -214,13 +214,9 @@ export async function getSearchSuggestions(query: string, limit = 10): Promise<s
       take: limit,
     }),
     prisma.article.findMany({
-      where: {
-        summary: {
-          relatedCompanies: { contains: query },
-        },
-      },
+      where: { summary: { isNot: null } },
       select: { summary: { select: { relatedCompanies: true } } },
-      take: limit,
+      take: limit * 3,
     }),
   ]);
 
@@ -230,11 +226,11 @@ export async function getSearchSuggestions(query: string, limit = 10): Promise<s
   tagMatches.forEach(t => suggestions.add(t.name));
   companyMatches.forEach(c => {
     const raw = c.summary?.relatedCompanies;
-    if (raw) {
-      const companies = (Array.isArray(raw) ? raw : raw.split(','))
+    if (raw && raw.length > 0) {
+      raw
         .map(comp => comp.trim())
-        .filter(comp => comp.length > 0);
-      companies.forEach(comp => suggestions.add(comp));
+        .filter(comp => comp.length > 0 && comp.toLowerCase().includes(lowerQuery))
+        .forEach(comp => suggestions.add(comp));
     }
   });
 
