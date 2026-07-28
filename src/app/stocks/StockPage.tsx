@@ -70,6 +70,8 @@ export function StockPage() {
   const [searchLoading, setSearchLoading] = useState(false);
   const [showSearchResults, setShowSearchResults] = useState(false);
   const searchRef = useRef<HTMLDivElement>(null);
+  const [watchlist, setWatchlist] = useState<Set<string>>(new Set());
+  const [watchlistOnly, setWatchlistOnly] = useState(false);
 
   const allMasterData = [...masterData, ...addedStocks];
 
@@ -185,6 +187,46 @@ export function StockPage() {
     setSearch('');
   };
 
+  useEffect(() => {
+    const fetchWatchlist = async () => {
+      try {
+        const res = await fetch('/api/stocks/watchlist');
+        const json = await res.json();
+        if (json.success) {
+          setWatchlist(new Set(json.data.map((w: { stockCode: string }) => w.stockCode)));
+        }
+      } catch (error) {
+        console.error('Failed to fetch watchlist:', error);
+      }
+    };
+    void fetchWatchlist();
+  }, []);
+
+  const toggleWatchlist = async (code: string, name: string, e: React.MouseEvent) => {
+    e.stopPropagation();
+    try {
+      const res = await fetch('/api/stocks/watchlist/toggle', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ stockCode: code, stockName: name }),
+      });
+      const json = await res.json();
+      if (json.success) {
+        setWatchlist((prev) => {
+          const next = new Set(prev);
+          if (json.data.watchlisted) {
+            next.add(code);
+          } else {
+            next.delete(code);
+          }
+          return next;
+        });
+      }
+    } catch (error) {
+      console.error('Failed to toggle watchlist:', error);
+    }
+  };
+
   const handleSort = (field: 'changeRate' | 'volume' | 'price') => {
     if (sortBy === field) {
       setSortOrder(sortOrder === 'asc' ? 'desc' : 'asc');
@@ -231,7 +273,9 @@ export function StockPage() {
     );
   }
 
-  const filteredStocks = stocks.filter((s) => s.price !== undefined);
+  const filteredStocks = stocks
+    .filter((s) => s.price !== undefined)
+    .filter((s) => !watchlistOnly || watchlist.has(s.code));
 
   return (
     <div className="mx-auto max-w-7xl px-4 py-6 sm:px-6 lg:px-8">
@@ -272,6 +316,16 @@ export function StockPage() {
               }`}
             >
               KOSDAQ
+            </button>
+            <button
+              onClick={() => setWatchlistOnly(!watchlistOnly)}
+              className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors ${
+                watchlistOnly
+                  ? 'bg-yellow-500 text-white'
+                  : 'bg-background border border-border hover:bg-muted'
+              }`}
+            >
+              ★ 관심종목 {watchlist.size > 0 && `(${watchlist.size})`}
             </button>
             <div className="ml-auto flex items-center gap-2">
               <input
@@ -329,6 +383,7 @@ export function StockPage() {
             <table className="w-full">
               <thead>
                 <tr className="border-b border-border">
+                  <th className="px-4 py-3 text-left text-xs font-medium text-muted-foreground uppercase tracking-wider w-10"></th>
                   <th className="px-4 py-3 text-left text-xs font-medium text-muted-foreground uppercase tracking-wider">순위</th>
                   <th
                     className="px-4 py-3 text-left text-xs font-medium text-muted-foreground uppercase tracking-wider cursor-pointer hover:bg-muted"
@@ -357,6 +412,15 @@ export function StockPage() {
                     onClick={() => handleRowClick(stock)}
                     className="hover:bg-muted cursor-pointer transition-colors"
                   >
+                    <td className="px-4 py-3">
+                      <button
+                        onClick={(e) => toggleWatchlist(stock.code, stock.name, e)}
+                        className={`text-lg transition-colors ${watchlist.has(stock.code) ? 'text-yellow-500 hover:text-yellow-600' : 'text-muted-foreground/30 hover:text-yellow-400'}`}
+                        title={watchlist.has(stock.code) ? '관심종목 해제' : '관심종목 등록'}
+                      >
+                        {watchlist.has(stock.code) ? '★' : '☆'}
+                      </button>
+                    </td>
                     <td className="px-4 py-3 text-sm text-muted-foreground">{index + 1}</td>
                     <td className="px-4 py-3">
                       <div className="font-medium text-foreground">{stock.name}</div>

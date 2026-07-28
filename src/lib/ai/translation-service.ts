@@ -181,7 +181,10 @@ export async function translateUntranslatedOverseas(
   const articles = await prisma.article.findMany({
     where: {
       language: 'en',
-      summary: null,
+      OR: [
+        { summary: null },
+        { summary: { translatedTitle: null } },
+      ],
     },
     take: limit,
     orderBy: { publishedAt: 'desc' },

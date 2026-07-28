@@ -2,6 +2,7 @@ import { Metadata } from 'next'
 import NewsList from '@/components/news/NewsList'
 import { getArticles } from '@/lib/rss/db-service'
 import CategoryPageLayout from '@/components/news/CategoryPageLayout'
+import AutoTranslator from '@/components/news/AutoTranslator'
 
 export const metadata: Metadata = {
   title: '해외 경제 뉴스 - 연준(Fed) 금리, 통화정책, 경제 지표',
@@ -51,6 +52,7 @@ export default async function OverseasPage({ searchParams }: OverseasPageProps) 
       basePath="/overseas"
       extraSearchParams={{ source, search }}
     >
+      <AutoTranslator />
       <NewsList articles={articles} />
     </CategoryPageLayout>
   )

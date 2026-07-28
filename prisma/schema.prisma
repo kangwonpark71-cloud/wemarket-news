@@ -331,6 +331,22 @@ model StockDailyStat {
 }
 
 // =============================================
+// Stock Watchlist (관심종목)
+// =============================================
+
+model StockWatchlist {
+  id        Int      @id @default(autoincrement())
+  createdAt DateTime @default(now()) @map("created_at")
+  stockCode String   @map("stock_code") // Stock.code reference
+  stockName String   @map("stock_name") // Denormalized for quick display
+  userId    String?  @map("user_id") // Optional — for future multi-user support
+
+  @@unique([stockCode, userId])
+  @@index([stockCode])
+  @@map("stock_watchlists")
+}
+
+// =============================================
 // Cryptocurrency Models
 // =============================================
 
