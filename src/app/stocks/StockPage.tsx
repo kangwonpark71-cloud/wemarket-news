@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from 'react';
 import { FinancialDashboard } from '@/components/financial/FinancialDashboard';
+import { FinancialChart } from '@/components/financial/FinancialChart';
 import { formatKRW, formatNumber } from '@/lib/utils/format';
 
 interface StockData {
@@ -46,6 +47,12 @@ interface StockPriceData {
   timestamp?: string;
 }
 
+interface StockDetailData {
+  price: StockData;
+  master: { sector?: string; industry?: string; listingDate?: string; market?: string } | null;
+  week52: { high: number; highDate: string | null; low: number; lowDate: string | null } | null;
+}
+
 export function StockPage() {
   const [stocks, setStocks] = useState<StockData[]>([]);
   const [masterData, setMasterData] = useState<StockMasterData[]>([]);
@@ -55,6 +62,8 @@ export function StockPage() {
   const [sortBy, setSortBy] = useState<'changeRate' | 'volume' | 'price'>('changeRate');
   const [sortOrder, setSortOrder] = useState<'asc' | 'desc'>('desc');
   const [selectedStock, setSelectedStock] = useState<StockData | null>(null);
+  const [stockDetail, setStockDetail] = useState<StockDetailData | null>(null);
+  const [detailLoading, setDetailLoading] = useState(false);
 
   const fetchMasterData = async () => {
     setLoading(true);
@@ -129,8 +138,21 @@ export function StockPage() {
     }
   };
 
-  const handleRowClick = (stock: StockData) => {
+  const handleRowClick = async (stock: StockData) => {
     setSelectedStock(stock);
+    setStockDetail(null);
+    setDetailLoading(true);
+    try {
+      const res = await fetch(`/api/financial/stocks?action=detail&code=${stock.code}`);
+      const json = await res.json();
+      if (json.success) {
+        setStockDetail(json.data);
+      }
+    } catch (error) {
+      console.error('Failed to fetch stock detail:', error);
+    } finally {
+      setDetailLoading(false);
+    }
   };
 
   if (loading && masterData.length === 0) {
@@ -269,60 +291,91 @@ export function StockPage() {
 
           {selectedStock && (
             <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50">
-              <div className="bg-background rounded-xl max-w-2xl w-full max-h-[90vh] overflow-y-auto shadow-xl">
-                <div className="p-4 border-b border-border flex items-center justify-between">
-                  <h2 className="text-lg font-semibold text-foreground">{selectedStock.name} ({selectedStock.code})</h2>
-                  <button onClick={() => setSelectedStock(null)} className="text-muted-foreground hover:text-foreground text-xl">×</button>
-                </div>
-                <div className="p-4 space-y-4">
-                  <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
-                    <div>
-                      <p className="text-sm text-muted-foreground">현재가</p>
-                      <p className="text-2xl font-bold">{formatKRW(selectedStock.price)}</p>
-                    </div>
-                    <div>
-                      <p className="text-sm text-muted-foreground">전일대비</p>
-                      <p className={`text-2xl font-bold ${selectedStock.change && selectedStock.change >= 0 ? 'text-red-500' : 'text-blue-500'}`}>
-                        {selectedStock.change && selectedStock.change >= 0 ? '▲' : '▼'} {formatNumber(Math.abs(selectedStock.change || 0))}
-                      </p>
-                    </div>
-                    <div>
-                      <p className="text-sm text-muted-foreground">등락률</p>
-                      <p className={`text-2xl font-bold ${selectedStock.changeRate && selectedStock.changeRate >= 0 ? 'text-red-500' : 'text-blue-500'}`}>
-                        {selectedStock.changeRate && selectedStock.changeRate >= 0 ? '+' : ''}{Number(selectedStock.changeRate ?? 0).toFixed(2)}%
-                      </p>
-                    </div>
-                    <div>
-                      <p className="text-sm text-muted-foreground">거래량</p>
-                      <p className="text-2xl font-bold">{formatNumber(selectedStock.volume)}</p>
-                    </div>
-                    <div>
-                      <p className="text-sm text-muted-foreground">거래대금</p>
-                      <p className="text-2xl font-bold">{formatKRW(selectedStock.tradingValue || 0)}</p>
-                    </div>
-                    <div>
-                      <p className="text-sm text-muted-foreground">시가총액</p>
-                      <p className="text-2xl font-bold">{selectedStock.marketCap ? formatKRW(selectedStock.marketCap) : '-'}</p>
-                    </div>
-                    <div>
-                      <p className="text-sm text-muted-foreground">시가</p>
-                      <p className="text-2xl font-bold">{formatKRW(selectedStock.openPrice)}</p>
-                    </div>
-                    <div>
-                      <p className="text-sm text-muted-foreground">고가</p>
-                      <p className="text-2xl font-bold">{formatKRW(selectedStock.highPrice)}</p>
-                    </div>
-                    <div>
-                      <p className="text-sm text-muted-foreground">저가</p>
-                      <p className="text-2xl font-bold">{formatKRW(selectedStock.lowPrice)}</p>
-                    </div>
+              <div className="bg-background rounded-xl max-w-3xl w-full max-h-[90vh] overflow-y-auto shadow-xl">
+                <div className="p-4 border-b border-border flex items-center justify-between sticky top-0 bg-background z-10">
+                  <div className="flex items-center gap-2 flex-wrap">
+                    <h2 className="text-lg font-bold text-foreground">{selectedStock.name}</h2>
+                    <span className="text-sm text-muted-foreground">({selectedStock.code})</span>
+                    {stockDetail?.master?.market && (
+                      <span className="px-2 py-0.5 rounded text-xs font-medium bg-primary/10 text-primary">{stockDetail.master.market}</span>
+                    )}
+                    {stockDetail?.master?.sector && (
+                      <span className="px-2 py-0.5 rounded text-xs bg-muted text-muted-foreground">{stockDetail.master.sector}</span>
+                    )}
+                    {stockDetail?.master?.industry && (
+                      <span className="px-2 py-0.5 rounded text-xs bg-muted text-muted-foreground">{stockDetail.master.industry}</span>
+                    )}
                   </div>
-                     <button
-                      onClick={() => setSelectedStock(null)}
-                      className="mt-4 w-full py-2 px-4 rounded-lg bg-muted text-foreground font-medium hover:bg-muted/70 transition-colors"
-                    >
-                      닫기
-                    </button>
+                  <button onClick={() => { setSelectedStock(null); setStockDetail(null); }} className="text-muted-foreground hover:text-foreground text-xl">×</button>
+                </div>
+
+                <div className="p-4 space-y-4">
+                  <div className="flex items-baseline gap-3">
+                    <span className="text-3xl font-bold text-foreground">{formatKRW(selectedStock.price)}</span>
+                    <span className={`text-lg font-bold ${selectedStock.change && selectedStock.change >= 0 ? 'text-red-500' : 'text-blue-500'}`}>
+                      {selectedStock.change && selectedStock.change >= 0 ? '▲' : '▼'} {formatNumber(Math.abs(selectedStock.change || 0))}
+                    </span>
+                    <span className={`text-lg font-bold ${selectedStock.changeRate && selectedStock.changeRate >= 0 ? 'text-red-500' : 'text-blue-500'}`}>
+                      ({selectedStock.changeRate && selectedStock.changeRate >= 0 ? '+' : ''}{Number(selectedStock.changeRate ?? 0).toFixed(2)}%)
+                    </span>
+                  </div>
+
+                  <div className="border border-border rounded-lg overflow-hidden">
+                    {detailLoading ? (
+                      <div className="h-[240px] bg-muted animate-pulse flex items-center justify-center text-sm text-muted-foreground">차트 로딩 중...</div>
+                    ) : (
+                      <FinancialChart symbol={selectedStock.code} type="STOCK" height={240} />
+                    )}
+                  </div>
+
+                  <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+                    {[
+                      { label: '현재가', value: formatKRW(selectedStock.price) },
+                      { label: '전일대비', value: `${selectedStock.change && selectedStock.change >= 0 ? '▲' : '▼'} ${formatNumber(Math.abs(selectedStock.change || 0))}`, color: selectedStock.change && selectedStock.change >= 0 ? 'text-red-500' : 'text-blue-500' },
+                      { label: '등락률', value: `${selectedStock.changeRate && selectedStock.changeRate >= 0 ? '+' : ''}${Number(selectedStock.changeRate ?? 0).toFixed(2)}%`, color: selectedStock.changeRate && selectedStock.changeRate >= 0 ? 'text-red-500' : 'text-blue-500' },
+                      { label: '거래량', value: formatNumber(selectedStock.volume || 0) },
+                      { label: '거래대금', value: formatKRW(selectedStock.tradingValue || 0) },
+                      { label: '시가총액', value: selectedStock.marketCap ? formatKRW(selectedStock.marketCap) : '-' },
+                      { label: '시가', value: formatKRW(selectedStock.openPrice) },
+                      { label: '고가', value: formatKRW(selectedStock.highPrice) },
+                      { label: '저가', value: formatKRW(selectedStock.lowPrice) },
+                      { label: '52주 최고', value: stockDetail?.week52 ? formatKRW(stockDetail.week52.high) : '-' },
+                      { label: '52주 최저', value: stockDetail?.week52 ? formatKRW(stockDetail.week52.low) : '-' },
+                      { label: '상장일', value: stockDetail?.master?.listingDate || '-' },
+                    ].map((item) => (
+                      <div key={item.label} className="bg-muted/30 rounded-lg p-3">
+                        <p className="text-xs text-muted-foreground">{item.label}</p>
+                        <p className={`text-sm font-bold mt-0.5 ${item.color || 'text-foreground'}`}>{item.value}</p>
+                      </div>
+                    ))}
+                  </div>
+
+                  {stockDetail?.week52 && (
+                    <div className="border border-border rounded-lg p-3">
+                      <p className="text-xs text-muted-foreground mb-2">52주 가격 범위</p>
+                      <div className="relative h-3 bg-muted rounded-full overflow-hidden">
+                        <div
+                          className="absolute h-full bg-primary/60 rounded-full"
+                          style={{
+                            left: 0,
+                            width: `${Math.min(100, Math.max(0, ((selectedStock.price || 0) - stockDetail.week52.low) / (stockDetail.week52.high - stockDetail.week52.low) * 100))}%`,
+                          }}
+                        />
+                      </div>
+                      <div className="flex justify-between mt-1 text-xs">
+                        <span className="text-blue-500 font-medium">{formatKRW(stockDetail.week52.low)}</span>
+                        <span className="text-muted-foreground">현재: {formatKRW(selectedStock.price)}</span>
+                        <span className="text-red-500 font-medium">{formatKRW(stockDetail.week52.high)}</span>
+                      </div>
+                    </div>
+                  )}
+
+                  <button
+                    onClick={() => { setSelectedStock(null); setStockDetail(null); }}
+                    className="w-full py-2 px-4 rounded-lg bg-muted text-foreground font-medium hover:bg-muted/70 transition-colors"
+                  >
+                    닫기
+                  </button>
                 </div>
               </div>
             </div>

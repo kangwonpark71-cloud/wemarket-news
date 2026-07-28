@@ -1,5 +1,6 @@
 import { NextResponse } from 'next/server';
 import { koreaInvestmentService } from '@/lib/services/financial/financial-service';
+import { prisma } from '@/lib/db';
 
 export async function GET(request: Request) {
   const { searchParams } = new URL(request.url);
@@ -32,6 +33,50 @@ export async function GET(request: Request) {
         }
         const priceMap = await koreaInvestmentService.getStockPrices(codes);
         result = Array.from(priceMap.values());
+        break;
+
+      case 'detail':
+        if (!code) {
+          return NextResponse.json(
+            { success: false, error: 'Code is required' },
+            { status: 400 }
+          );
+        }
+        const [detailPrice, masterList] = await Promise.all([
+          koreaInvestmentService.getStockPrice(code),
+          koreaInvestmentService.getStockMaster(),
+        ]);
+        const masterInfo = masterList.find((s) => s.code === code) || null;
+
+        let week52: { high: number; highDate: string | null; low: number; lowDate: string | null } | null = null;
+        try {
+          const stock = await prisma.stock.findUnique({ where: { code }, select: { id: true } });
+          if (stock) {
+            const oneYearAgo = new Date();
+            oneYearAgo.setFullYear(oneYearAgo.getFullYear() - 1);
+            const prices = await prisma.stockPrice.findMany({
+              where: { stockId: stock.id, timestamp: { gte: oneYearAgo } },
+              select: { price: true, timestamp: true },
+              orderBy: { timestamp: 'desc' },
+            });
+            if (prices.length > 0) {
+              let high = -Infinity;
+              let low = Infinity;
+              let highDate: string | null = null;
+              let lowDate: string | null = null;
+              for (const p of prices) {
+                const pNum = Number(p.price);
+                if (pNum > high) { high = pNum; highDate = p.timestamp.toISOString(); }
+                if (pNum < low) { low = pNum; lowDate = p.timestamp.toISOString(); }
+              }
+              week52 = { high, highDate, low, lowDate };
+            }
+          }
+        } catch {
+          // empty
+        }
+
+        result = { price: detailPrice, master: masterInfo, week52 };
         break;
 
       case 'market-overview':

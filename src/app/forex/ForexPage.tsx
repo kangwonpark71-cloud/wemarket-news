@@ -27,6 +27,10 @@ const FLAGS: Record<string, string> = {
   HKD: '🇭🇰',
   SGD: '🇸🇬',
   NZD: '🇳🇿',
+  VND: '🇻🇳',
+  PHP: '🇵🇭',
+  THB: '🇹🇭',
+  IDR: '🇮🇩',
 };
 
 const NAMES: Record<string, string> = {
@@ -41,6 +45,10 @@ const NAMES: Record<string, string> = {
   HKD: '홍콩 달러',
   SGD: '싱가포르 달러',
   NZD: '뉴질랜드 달러',
+  VND: '베트남 동',
+  PHP: '필리핀 페소',
+  THB: '태국 바트',
+  IDR: '인도네시아 루피아',
 };
 
 export function ForexPage() {

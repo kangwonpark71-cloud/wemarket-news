@@ -34,38 +34,74 @@ export class ForexService implements FinancialService {
     const cached = await cacheService.get<ExchangeRateData[]>(cacheKey);
     if (cached) return cached;
 
+    const rates: ExchangeRateData[] = [];
+
     try {
       const response = await fetch(`${this.baseUrl}?base=KRW`);
-      if (!response.ok) {
-        console.warn(`[ForexService] Exchange rate API returned ${response.status}`);
-        return [];
+      if (response.ok) {
+        const text = await response.text();
+        if (text && text.trim().length > 0) {
+          const data = JSON.parse(text);
+          if (Array.isArray(data)) {
+            const mananaRates = data
+              .filter((item: MananaExchangeRateItem) => item.name && item.name !== 'KRW=X')
+              .map((item: MananaExchangeRateItem) => {
+                const baseCurrency = item.name.replace('KRW=X', '').replace('=X', '').replace('KRW', '');
+                return {
+                  baseCurrency: baseCurrency || 'USD',
+                  quoteCurrency: 'KRW' as const,
+                  rate: parseFloat(String(item.rate)),
+                  change: 0,
+                  changeRate: 0,
+                  source: 'Manana',
+                  timestamp: new Date(),
+                };
+              });
+            rates.push(...mananaRates);
+          }
+        }
       }
-      const text = await response.text();
-      if (!text || text.trim().length === 0) return [];
-      const data = JSON.parse(text);
-      if (!Array.isArray(data)) return [];
-
-      const rates: ExchangeRateData[] = data
-        .filter((item: MananaExchangeRateItem) => item.name && item.name !== 'KRW=X')
-        .map((item: MananaExchangeRateItem) => {
-          const baseCurrency = item.name.replace('KRW=X', '').replace('=X', '').replace('KRW', '');
-          return {
-            baseCurrency: baseCurrency || 'USD',
-            quoteCurrency: 'KRW',
-            rate: parseFloat(String(item.rate)),
-            change: 0,
-            changeRate: 0,
-            source: 'Manana',
-            timestamp: new Date(),
-          };
-        });
-
-      await cacheService.set('forex:rates:all', rates, { ttl: 300 });
-      return rates;
     } catch (error) {
-      console.error('[ForexService] Failed to get exchange rates:', error);
-      return [];
+      console.warn('[ForexService] Manana API failed:', error);
     }
+
+    const SECONDARY_CURRENCIES = ['EUR', 'CNY', 'VND', 'PHP', 'THB', 'IDR'];
+    try {
+      const response = await fetch('https://open.er-api.com/v6/latest/USD');
+      if (response.ok) {
+        const data = await response.json();
+        if (data.rates) {
+          const usdToKrw = data.rates.KRW;
+          if (usdToKrw) {
+            for (const currency of SECONDARY_CURRENCIES) {
+              const usdToCurrency = data.rates[currency];
+              if (usdToCurrency) {
+                const krwPerCurrency = usdToKrw / usdToCurrency;
+                const existing = rates.find((r) => r.baseCurrency === currency);
+                if (!existing) {
+                  rates.push({
+                    baseCurrency: currency,
+                    quoteCurrency: 'KRW',
+                    rate: Math.round(krwPerCurrency * 100) / 100,
+                    change: 0,
+                    changeRate: 0,
+                    source: 'ExchangeRate',
+                    timestamp: new Date(data.time_last_update_utc || Date.now()),
+                  });
+                }
+              }
+            }
+          }
+        }
+      }
+    } catch (error) {
+      console.warn('[ForexService] ExchangeRate-API failed:', error);
+    }
+
+    if (rates.length > 0) {
+      await cacheService.set(cacheKey, rates, { ttl: 300 });
+    }
+    return rates;
   }
 
   async getExchangeRate(base: string, quote: string = 'KRW'): Promise<ExchangeRateData | null> {

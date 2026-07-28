@@ -22,6 +22,10 @@ export function ForexCard({ forex }: ForexCardProps) {
     JPY: '🇯🇵',
     EUR: '🇪🇺',
     CNY: '🇨🇳',
+    VND: '🇻🇳',
+    PHP: '🇵🇭',
+    THB: '🇹🇭',
+    IDR: '🇮🇩',
   };
 
   const currencyNames: Record<string, string> = {
@@ -29,6 +33,10 @@ export function ForexCard({ forex }: ForexCardProps) {
     JPY: '일본 엔',
     EUR: '유로',
     CNY: '중국 위안',
+    VND: '베트남 동',
+    PHP: '필리핀 페소',
+    THB: '태국 바트',
+    IDR: '인도네시아 루피아',
   };
 
   return (
