@@ -109,6 +109,8 @@ export async function translateArticleTitleOnly(articleId: string): Promise<Tran
       relatedCompanies: parseList(article.summary.relatedCompanies),
       relatedModels: parseList(article.summary.relatedModels),
       difficulty: (article.summary.difficulty as TranslationResult['difficulty']) || 'intermediate',
+      aiGenerated: article.summary.aiGenerated || true,
+      modelUsed: article.summary.modelUsed || 'gpt-4o-mini',
     };
   }
 
@@ -172,6 +174,8 @@ export async function translateArticleTitleOnly(articleId: string): Promise<Tran
     relatedCompanies: [],
     relatedModels: [],
     difficulty: 'intermediate',
+    aiGenerated: true,
+    modelUsed: 'gpt-4o-mini',
   };
 }
 
