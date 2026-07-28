@@ -18,6 +18,7 @@ export default async function EuropePage({ searchParams }: EuropePageProps) {
 
   const { articles, total, totalPages } = await getArticles({
     category: 'overseas',
+    subcategory: 'europe_news',
     page,
     limit: 20,
   })

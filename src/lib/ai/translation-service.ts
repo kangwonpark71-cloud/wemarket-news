@@ -13,9 +13,10 @@ export async function translateArticle(articleId: string): Promise<TranslationRe
 
   if (!article) return null;
   if (article.language !== 'en') return null;
-  if (article.summary) {
+
+  if (article.summary?.translatedTitle) {
     return {
-      translatedTitle: article.summary.translatedTitle || undefined,
+      translatedTitle: article.summary.translatedTitle,
       summary3Line: article.summary.summary3Line,
       keywords: parseList(article.summary.keywords),
       relatedCompanies: parseList(article.summary.relatedCompanies),
@@ -30,19 +31,27 @@ export async function translateArticle(articleId: string): Promise<TranslationRe
     article.content || undefined,
   );
 
-  await prisma.newsSummary.create({
-    data: {
-      articleId: article.id,
-      translatedTitle: result.translatedTitle,
-      summary3Line: result.summary3Line,
-      keywords: result.keywords,
-      relatedCompanies: result.relatedCompanies,
-      relatedModels: result.relatedModels,
-      difficulty: result.difficulty,
-      aiGenerated: true,
-      modelUsed: 'gpt-4o-mini',
-    },
-  });
+  const summaryData = {
+    translatedTitle: result.translatedTitle,
+    summary3Line: result.summary3Line,
+    keywords: result.keywords,
+    relatedCompanies: result.relatedCompanies,
+    relatedModels: result.relatedModels,
+    difficulty: result.difficulty,
+    aiGenerated: true,
+    modelUsed: 'gpt-4o-mini',
+  };
+
+  if (article.summary) {
+    await prisma.newsSummary.update({
+      where: { articleId: article.id },
+      data: summaryData,
+    });
+  } else {
+    await prisma.newsSummary.create({
+      data: { articleId: article.id, ...summaryData },
+    });
+  }
 
   return result;
 }
@@ -55,11 +64,13 @@ export async function translateArticleBatch(
 
   const existing = await prisma.newsSummary.findMany({
     where: { articleId: { in: articleIds } },
-    select: { articleId: true },
+    select: { articleId: true, translatedTitle: true },
   });
-  const existingSet = new Set(existing.map((s) => s.articleId));
+  const completeSet = new Set(
+    existing.filter(s => s.translatedTitle).map((s) => s.articleId)
+  );
 
-  const untranslated = articleIds.filter((id) => !existingSet.has(id));
+  const untranslated = articleIds.filter((id) => !completeSet.has(id));
 
   for (const id of untranslated) {
     try {
@@ -129,9 +140,19 @@ export async function translateArticleTitleOnly(articleId: string): Promise<Tran
   } catch {
   }
 
-  // Store in DB so next visit uses cache
-  await prisma.newsSummary.create({
-    data: {
+  await prisma.newsSummary.upsert({
+    where: { articleId: article.id },
+    update: {
+      translatedTitle,
+      summary3Line: summary3Line || '요약 준비 중',
+      keywords: keywords || [],
+      relatedCompanies: [],
+      relatedModels: [],
+      difficulty: 'intermediate',
+      aiGenerated: true,
+      modelUsed: 'gpt-4o-mini',
+    },
+    create: {
       articleId: article.id,
       translatedTitle,
       summary3Line: summary3Line || '요약 준비 중',

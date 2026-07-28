@@ -18,6 +18,7 @@ export default async function AsiaPage({ searchParams }: AsiaPageProps) {
 
   const { articles, total, totalPages } = await getArticles({
     category: 'overseas',
+    subcategory: 'asia_news',
     page,
     limit: 20,
   })
