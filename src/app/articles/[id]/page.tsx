@@ -88,6 +88,23 @@ export default async function ArticleDetailPage({ params }: Props) {
   const source = article.source
   const translatedTitle = article.summary?.translatedTitle
 
+  const categoryHrefMap: Record<string, string> = {
+    domestic: '/domestic',
+    overseas: '/overseas',
+    medical: '/medical',
+    smallbiz: '/smallbiz',
+  }
+  const backHref = categoryHrefMap[source.category] || '/'
+  const backLabelMap: Record<string, { ko: string; en: string }> = {
+    domestic: { ko: '국내 경제 뉴스로', en: 'Back to Domestic' },
+    overseas: { ko: '해외 경제 뉴스로', en: 'Back to Overseas' },
+    medical: { ko: '의료 뉴스로', en: 'Back to Medical' },
+    smallbiz: { ko: '소상공인 뉴스로', en: 'Back to Small Business' },
+  }
+  const backLabel = isEnglish
+    ? (backLabelMap[source.category]?.en || 'Back to list')
+    : (backLabelMap[source.category]?.ko || '이전 지면으로')
+
   const relatedRaw = await getRelatedArticles(id, 4)
 
   const related: ReaderRelatedArticle[] = relatedRaw.map((rel) => ({
@@ -116,8 +133,8 @@ export default async function ArticleDetailPage({ params }: Props) {
           source: { name: source.name, icon: source.icon, category: source.category },
         }}
         language={language}
-        backHref="/"
-        backLabel={isEnglish ? 'Back to list' : '이전 지면으로'}
+        backHref={backHref}
+        backLabel={backLabel}
       />
 
       {article.thumbnail && (
