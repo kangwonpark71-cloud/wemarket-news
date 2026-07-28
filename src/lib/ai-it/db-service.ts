@@ -3,6 +3,9 @@ import { AIITParsedArticle } from './fetcher';
 import { Prisma, Article, Source, NewsSummary } from '@prisma/client';
 import { scheduleTranslation } from '@/lib/rss/db-service';
 import { stringifyList } from '@/lib/utils/list-fields';
+import { createLogger } from '@/lib/logger';
+
+const log = createLogger('AIITDB');
 
 export type AINewsWithSource = Article & { source: Source; summary?: NewsSummary | null; tags?: { tag: { name: string } }[] };
 export type ITSummaryWithNews = NewsSummary & { news: Article };
@@ -46,7 +49,7 @@ export async function upsertAIITArticles(
         }
       }
     } catch (err) {
-      console.warn(`[AIIT DB] Skipping article "${article.title?.substring(0, 50)}":`, err instanceof Error ? err.message : err)
+      log.warn(`Skipping article "${article.title?.substring(0, 50)}":`, err instanceof Error ? err.message : err)
     }
   }
 
@@ -443,7 +446,7 @@ export async function seedAIITSources(): Promise<number> {
       })
       count++
     } catch (e) {
-      console.warn(`[SeedAIIT] Failed to upsert ${src.nameEn}:`, e)
+      log.warn(`Failed to upsert ${src.nameEn}:`, e)
     }
   }
   return count

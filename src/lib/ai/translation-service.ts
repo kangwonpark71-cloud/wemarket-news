@@ -2,6 +2,9 @@ import prisma from '@/lib/db';
 import { summarizeWithLLMFallback } from './llm-service';
 import type { AISummaryResult } from '../ai-it/summary-service';
 import { parseList, stringifyList } from '@/lib/utils/list-fields';
+import { createLogger } from '@/lib/logger';
+
+const log = createLogger('Translation')
 
 export type TranslationResult = AISummaryResult;
 
@@ -78,7 +81,7 @@ export async function translateArticleBatch(
       if (result) translated++;
       else failed++;
     } catch (err) {
-      console.warn(`[Translation] Failed for article ${id}:`, err);
+      log.warn(`Failed for article ${id}:`, err);
       failed++;
     }
   }

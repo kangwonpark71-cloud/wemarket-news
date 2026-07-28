@@ -1,7 +1,10 @@
 import Parser from 'rss-parser'
 import { RSSSourceConfig } from './sources'
 import { extractThumbnail, extractCategory, fetchWithRetry } from '../utils/rss-helper'
+import { createLogger } from '@/lib/logger'
 export { extractThumbnail, extractCategory } from '../utils/rss-helper'
+
+const log = createLogger('RSSFetcher')
 
 // Standardized crawler integration (backward compatible)
 import { rssCrawler } from '@/lib/crawler';
@@ -120,7 +123,7 @@ export async function fetchFeed(
   } catch (error) {
     const duration = Date.now() - startTime
     const errorMessage = error instanceof Error ? error.message : 'Unknown error'
-    console.error(`[RSS Fetcher] Error fetching ${source.name} (${source.nameEn}) after ${duration}ms: ${errorMessage}`)
+    log.error(`Error fetching ${source.name} (${source.nameEn}) after ${duration}ms: ${errorMessage}`)
 
     return {
       articles: [],

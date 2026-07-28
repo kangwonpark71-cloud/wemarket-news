@@ -1,4 +1,7 @@
 import type { AISummaryResult } from '../ai-it/summary-service'
+import { createLogger } from '@/lib/logger'
+
+const log = createLogger('LLMService')
 
 const LLM_API_URL = 'https://api.openai.com/v1/chat/completions'
 
@@ -153,7 +156,7 @@ export async function summarizeWithLLMFallback(
   try {
     return await summarizeWithLLM(title, description, content)
   } catch (err) {
-    console.warn('[LLM] API call failed, falling back to rule-based summary:', err)
+    log.warn('[LLM] API call failed, falling back to rule-based summary:', err)
     const { generateAISummary } = await import('../ai-it/summary-service')
     return generateAISummary(title, description, content)
   }

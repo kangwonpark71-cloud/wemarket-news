@@ -1,6 +1,9 @@
-import prisma from '@/lib/db'
-import { ParsedArticle } from './fetcher'
-import { Prisma } from '@prisma/client'
+import prisma from '@/lib/db';
+import { ParsedArticle } from './fetcher';
+import { Prisma } from '@prisma/client';
+import { createLogger } from '@/lib/logger';
+
+const log = createLogger('RSSDB');
 
 const BREAKING_KEYWORDS = ['속보', '[속보]', '〈속보〉', '【속보】', '「속보」']
 
@@ -28,7 +31,7 @@ const englishArticleIds: string[] = []
 export function scheduleTranslation(articleId: string) {
   if (englishArticleIds.length >= TRANSLATION_QUEUE_MAX) {
     if (englishArticleIds.length === TRANSLATION_QUEUE_MAX) {
-      console.warn(`[RSS DB] Translation queue at max (${TRANSLATION_QUEUE_MAX}), dropping oldest`)
+      log.warn(`Translation queue at max (${TRANSLATION_QUEUE_MAX}), dropping oldest`)
     }
     englishArticleIds.shift()
   }
@@ -43,10 +46,10 @@ export async function processPendingTranslations() {
     const { translateArticleBatch } = await import('@/lib/ai/translation-service')
     const result = await translateArticleBatch(ids)
     if (result.translated > 0) {
-      console.log(`[RSS DB] Auto-translated ${result.translated} English articles`)
+      log.info(`Auto-translated ${result.translated} English articles`)
     }
   } catch (err) {
-    console.warn('[RSS DB] Batch translation failed:', err)
+    log.warn('Batch translation failed:', err)
   }
 }
 
@@ -88,7 +91,7 @@ export async function upsertArticles(
         }
       }
     } catch (err) {
-      console.warn(`[RSS DB] Skipping article "${article.title?.substring(0, 50)}":`, err instanceof Error ? err.message : err)
+      log.warn(`Skipping article "${article.title?.substring(0, 50)}":`, err instanceof Error ? err.message : err)
     }
   }
 
