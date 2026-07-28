@@ -1,5 +1,8 @@
 import { cacheService } from '@/lib/services/cache/cache-service';
 
+import { createLogger } from '@/lib/logger'
+const log = createLogger('AISummary')
+
 export interface AISummaryResult {
   translatedTitle?: string;
   summary3Line: string;
@@ -154,7 +157,7 @@ export async function generateAISummaryWithLLM(
     const { summarizeWithLLMFallback } = await import('@/lib/ai/llm-fallback')
     return await summarizeWithLLMFallback(title, description, content)
   } catch (llmErr) {
-    console.warn('[AISummary] LLM summarization failed, falling back to rule-based:', llmErr instanceof Error ? llmErr.message : llmErr)
+    log.warn('[AISummary] LLM summarization failed, falling back to rule-based:', llmErr instanceof Error ? llmErr.message : llmErr)
     return generateAISummary(title, description, content)
   }
 }

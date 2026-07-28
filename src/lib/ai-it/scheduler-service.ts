@@ -4,6 +4,9 @@ import { generateAISummaryWithLLM } from './summary-service';
 import { processPendingTranslations } from '@/lib/rss/db-service';
 import type { AIITSourceConfig } from './sources';
 
+import { createLogger } from '@/lib/logger'
+const log = createLogger('AIScheduler')
+
 export async function fetchAndProcessSource(sourceId: string): Promise<{ count: number; newCount: number; error?: string }> {
   const startTime = Date.now();
   
@@ -50,7 +53,7 @@ export async function fetchAndProcessSource(sourceId: string): Promise<{ count: 
           await sendNotificationWebhook(article.title, article.url, targetSource.name, summary.summary3Line);
         }
       } catch (e) {
-        console.warn('[AIITScheduler] Summary generation failed:', e);
+        log.warn('[AIITScheduler] Summary generation failed:', e);
       }
     }
     
@@ -91,14 +94,14 @@ export async function fetchAllAIITNews(): Promise<{ totalCount: number; totalNew
           if (result.value.error) errors++;
         } else {
           errors++;
-          console.error('[AIITScheduler] Source processing failed:', result.reason);
+          log.error('[AIITScheduler] Source processing failed:', result.reason);
         }
       }
     }
     
     return { totalCount, totalNew, errors };
     } catch (error) {
-      console.error('[AIITScheduler] Fatal error:', error);
+      log.error('[AIITScheduler] Fatal error:', error);
       return { totalCount: 0, totalNew: 0, errors: 1 };
     } finally {
       processPendingTranslations().catch(() => {});

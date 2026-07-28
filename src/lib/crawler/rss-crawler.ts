@@ -14,6 +14,10 @@ import type {
   CrawlerFetchResult,
   CrawlerOptions,
 } from './types';
+
+import { createLogger } from '@/lib/logger';
+
+const log = createLogger('RSSCrawler');
 import {
   withRetry,
   normalizeArticle,
@@ -121,7 +125,7 @@ export class RSSCrawler implements Crawler {
       }
 
       const duration = Date.now() - startTime;
-      console.log(
+      log.log(
         `[RSSCrawler] Fetched ${articles.length} articles from ${source.nameEn} in ${duration}ms`,
       );
 
@@ -129,7 +133,7 @@ export class RSSCrawler implements Crawler {
     } catch (error) {
       const duration = Date.now() - startTime;
       const message = error instanceof Error ? error.message : 'Unknown error';
-      console.error(
+      log.error(
         `[RSSCrawler] Error fetching ${source.name} (${source.nameEn}) after ${duration}ms: ${message}`,
       );
 

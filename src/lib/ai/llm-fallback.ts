@@ -6,6 +6,9 @@
 import { AISummaryResult } from '../ai-it/summary-service'
 import { cacheService } from '@/lib/services/cache/cache-service'
 
+import { createLogger } from '@/lib/logger'
+const log = createLogger('LLMFallback')
+
 export interface LLMFallbackConfig {
   maxRetries: number
   retryDelay: number
@@ -57,7 +60,7 @@ function recordFailure(service: string, config: LLMFallbackConfig): void {
 
   if (state.failures >= config.circuitBreakerThreshold) {
     state.isOpen = true
-    console.warn(`[LLM Circuit Breaker] ${service}: Circuit breaker opened after ${state.failures} failures`)
+    log.warn(`[LLM Circuit Breaker] ${service}: Circuit breaker opened after ${state.failures} failures`)
   }
 }
 
@@ -87,7 +90,7 @@ function isCircuitBreakerOpen(service: string, config: LLMFallbackConfig): boole
     if (timeSinceLastFailure > config.circuitBreakerResetTime) {
       state.isOpen = false
       state.failures = 0
-      console.log(`[LLM Circuit Breaker] ${service}: Circuit breaker reset after ${config.circuitBreakerResetTime}ms`)
+      log.log(`[LLM Circuit Breaker] ${service}: Circuit breaker reset after ${config.circuitBreakerResetTime}ms`)
       return false
     }
   }
@@ -169,7 +172,7 @@ async function withRetry<T>(
       lastError = error instanceof Error ? error : new Error(String(error))
       
       if (attempt < maxRetries) {
-        console.warn(`[LLM Retry] Attempt ${attempt + 1} failed, retrying in ${retryDelay}ms...`)
+        log.warn(`[LLM Retry] Attempt ${attempt + 1} failed, retrying in ${retryDelay}ms...`)
         await new Promise(resolve => setTimeout(resolve, retryDelay))
       }
     }
@@ -198,7 +201,7 @@ export async function summarizeWithLLMFallback(
 
   // Check circuit breaker
   if (fullConfig.enableCircuitBreaker && isCircuitBreakerOpen('llm', fullConfig)) {
-    console.warn('[LLM Fallback] Circuit breaker is open, using rule-based summary')
+    log.warn('[LLM Fallback] Circuit breaker is open, using rule-based summary')
     const ruleBased = generateRuleBasedSummary(title, description, content)
     await cacheService.set(cacheKey, ruleBased, { ttl: fullConfig.cacheTTL })
     return ruleBased
@@ -226,7 +229,7 @@ export async function summarizeWithLLMFallback(
       recordFailure('llm', fullConfig)
     }
     
-    console.error('[LLM Fallback] All attempts failed:', err.message)
+    log.error('[LLM Fallback] All attempts failed:', err.message)
     
     // Fall back to rule-based
     const ruleBased = generateRuleBasedSummary(title, description, content)
@@ -251,5 +254,5 @@ export function resetCircuitBreaker(service: string): void {
   state.failures = 0
   state.isOpen = false
   state.lastFailureTime = null
-  console.log(`[LLM Circuit Breaker] ${service}: Circuit breaker manually reset`)
+  log.log(`[LLM Circuit Breaker] ${service}: Circuit breaker manually reset`)
 }

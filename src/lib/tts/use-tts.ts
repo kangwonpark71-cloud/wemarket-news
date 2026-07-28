@@ -2,6 +2,9 @@
 
 import { useState, useRef, useCallback, useEffect } from 'react'
 
+import { createLogger } from '@/lib/logger'
+const log = createLogger('TTS')
+
 export type VoiceGender = 'female' | 'male'
 export type TTSEngine = 'premium' | 'basic'
 
@@ -208,7 +211,7 @@ export function useTTS(): TTSController {
       setState(prev => ({ ...prev, activeId: id }))
       await audio.play()
     } catch (err) {
-      console.warn('[TTS] Premium engine failed, falling back to basic:', err)
+      log.warn('[TTS] Premium engine failed, falling back to basic:', err)
       cleanupPremium()
       setState(prev => ({ ...prev, loading: false }))
       speakBasic(id, text)
@@ -253,7 +256,7 @@ export function useTTS(): TTSController {
     if (state.engine === 'premium') {
       if (audioRef.current && state.paused) {
         audioRef.current.play().catch((err) => {
-          console.warn('[TTS] Resume failed:', err)
+          log.warn('[TTS] Resume failed:', err)
         })
       }
     } else {

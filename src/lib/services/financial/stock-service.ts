@@ -20,6 +20,10 @@ import type {
   FinancialService,
 } from './types';
 
+import { createLogger } from '@/lib/logger';
+
+const log = createLogger('StockService');
+
 // ============================================================================
 // Korea Investment Open API Client
 // ============================================================================
@@ -184,7 +188,7 @@ export class KoreaInvestmentClient {
     const data = await response.json();
 
     if (data.rt_cd !== '0') {
-      console.error(`[KoreaInvestment] Failed to get price for ${code}:`, data.msg1);
+      log.error(`[KoreaInvestment] Failed to get price for ${code}:`, data.msg1);
       return null;
     }
 
@@ -288,7 +292,7 @@ export class KoreaInvestmentClient {
     const data = await response.json();
 
     if (data.rt_cd !== '0' || !data.output) {
-      console.error('[KoreaInvestment] Failed to get stock master:', data.msg1);
+      log.error('[KoreaInvestment] Failed to get stock master:', data.msg1);
       return [];
     }
 
@@ -392,7 +396,7 @@ export class YahooFinanceClient {
       });
 
       if (!response.ok) {
-        console.warn(`[YahooFinance] HTTP ${response.status} for ${yahooSymbol}`);
+        log.warn(`[YahooFinance] HTTP ${response.status} for ${yahooSymbol}`);
         return null;
       }
 
@@ -423,7 +427,7 @@ export class YahooFinanceClient {
       await cacheService.set(cacheKey, quote, { ttl: 60 });
       return quote;
     } catch (error) {
-      console.warn(`[YahooFinance] Failed for ${code}:`, error);
+      log.warn(`[YahooFinance] Failed for ${code}:`, error);
       return null;
     }
   }
@@ -615,7 +619,7 @@ export class StockService implements FinancialService {
           price.price == null || price.change == null || price.changeRate == null ||
           price.openPrice == null || price.highPrice == null || price.lowPrice == null
         ) {
-          console.warn(`[StockService] Skipping ${price.code} — missing required price fields`);
+          log.warn(`[StockService] Skipping ${price.code} — missing required price fields`);
           failed++;
           continue;
         }
@@ -649,13 +653,13 @@ export class StockService implements FinancialService {
         });
         saved++;
       } catch (error) {
-        console.error(`[StockService] Failed to save price for ${price.code}:`, error);
+        log.error(`[StockService] Failed to save price for ${price.code}:`, error);
         failed++;
       }
     }
 
     if (failed > 0) {
-      console.warn(`[StockService] saveStockPricesToDb: ${saved} saved, ${failed} failed out of ${prices.length}`);
+      log.warn(`[StockService] saveStockPricesToDb: ${saved} saved, ${failed} failed out of ${prices.length}`);
     }
   }
 

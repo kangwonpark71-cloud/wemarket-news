@@ -1,5 +1,8 @@
 import Parser from 'rss-parser';
 
+import { createLogger } from '@/lib/logger'
+const log = createLogger('RSSHelper')
+
 export function extractThumbnail(item: Record<string, unknown>): string | undefined {
   const mediaContent = item.mediaContent as { $?: { url?: string } } | undefined;
   const mediaThumbnail = item.mediaThumbnail as { $?: { url?: string } } | undefined;
@@ -38,12 +41,12 @@ export async function fetchWithRetry(
 
       if (attempt < retries) {
         const delay = baseDelay * Math.pow(2, attempt) + Math.random() * 1000;
-        console.warn(`[${logPrefix}] Attempt ${attempt + 1} failed for ${url}: ${lastError.message}. Retrying in ${Math.round(delay)}ms...`);
+        log.warn(`[${logPrefix}] Attempt ${attempt + 1} failed for ${url}: ${lastError.message}. Retrying in ${Math.round(delay)}ms...`);
         await new Promise(resolve => setTimeout(resolve, delay));
       }
     }
   }
 
-  console.error(`[${logPrefix}] All ${retries + 1} attempts failed for ${url}: ${lastError?.message}`);
+  log.error(`[${logPrefix}] All ${retries + 1} attempts failed for ${url}: ${lastError?.message}`);
   return null;
 }

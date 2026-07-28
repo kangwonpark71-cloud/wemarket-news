@@ -17,6 +17,10 @@ import type {
   FinancialService,
 } from './types';
 
+import { createLogger } from '@/lib/logger';
+
+const log = createLogger('ForexService');
+
 interface MananaExchangeRateItem {
   name: string;
   rate: number | string;
@@ -62,7 +66,7 @@ export class ForexService implements FinancialService {
         }
       }
     } catch (error) {
-      console.warn('[ForexService] Manana API failed:', error);
+      log.warn('[ForexService] Manana API failed:', error);
     }
 
     const SECONDARY_CURRENCIES = ['EUR', 'CNY', 'VND', 'PHP', 'THB', 'IDR'];
@@ -95,7 +99,7 @@ export class ForexService implements FinancialService {
         }
       }
     } catch (error) {
-      console.warn('[ForexService] ExchangeRate-API failed:', error);
+      log.warn('[ForexService] ExchangeRate-API failed:', error);
     }
 
     if (rates.length > 0) {
@@ -132,7 +136,7 @@ export class ForexService implements FinancialService {
       await cacheService.set(`forex:rate:${base}:${quote}`, rate, { ttl: 300 });
       return rate;
     } catch (error) {
-      console.error('[ForexService] Failed to get exchange rate:', error);
+      log.error('[ForexService] Failed to get exchange rate:', error);
       return null;
     }
   }
@@ -152,7 +156,7 @@ export class ForexService implements FinancialService {
           },
         });
       } catch (error) {
-        console.error(`[ForexService] Failed to save exchange rate ${rate.baseCurrency}/${rate.quoteCurrency}:`, error);
+        log.error(`[ForexService] Failed to save exchange rate ${rate.baseCurrency}/${rate.quoteCurrency}:`, error);
       }
     }
   }

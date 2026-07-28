@@ -6,6 +6,9 @@ import { extractThumbnail, extractCategory, fetchWithRetry } from '../utils/rss-
 import { crawler } from '@/lib/crawler';
 import type { BaseSourceConfig, CrawlerFetchResult } from '@/lib/crawler';
 
+import { createLogger } from '@/lib/logger'
+const log = createLogger('AIITFetcher')
+
 export async function fetchAIITFeedStandardized(
   source: AIITSourceConfig
 ): Promise<CrawlerFetchResult> {
@@ -142,7 +145,7 @@ export async function fetchAIITFeed(
   } catch (error) {
     const duration = Date.now() - startTime;
     const errorMessage = error instanceof Error ? error.message : 'Unknown error';
-    console.error(`[AIIT RSS Fetcher] Error fetching ${source.name} (${source.nameEn}) after ${duration}ms: ${errorMessage}`);
+    log.error(`[AIIT RSS Fetcher] Error fetching ${source.name} (${source.nameEn}) after ${duration}ms: ${errorMessage}`);
 
     return {
       articles: [],

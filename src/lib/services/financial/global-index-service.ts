@@ -16,6 +16,10 @@ import type {
   FinancialService,
 } from './types';
 
+import { createLogger } from '@/lib/logger';
+
+const log = createLogger('GlobalIndex');
+
 interface FinnhubQuoteResponse {
   c: number;
   d: number;
@@ -88,7 +92,7 @@ export class GlobalIndexService implements FinancialService {
             });
           }
         } catch (error) {
-          console.error(`[GlobalIndexService] Failed to get ${symbol}:`, error);
+          log.error(`[GlobalIndexService] Failed to get ${symbol}:`, error);
         }
       }
     }
@@ -127,7 +131,7 @@ export class GlobalIndexService implements FinancialService {
           }
         }
       } catch (err) {
-        console.error('[GlobalIndexService] DB fallback failed:', err);
+        log.error('[GlobalIndexService] DB fallback failed:', err);
       }
     }
 
@@ -166,7 +170,7 @@ export class GlobalIndexService implements FinancialService {
       await cacheService.set(`global:index:${symbol}`, result, { ttl: 60 });
       return result;
     } catch (error) {
-      console.error(`[GlobalIndexService] Failed to fetch ${symbol}:`, error);
+      log.error(`[GlobalIndexService] Failed to fetch ${symbol}:`, error);
       return null;
     }
   }

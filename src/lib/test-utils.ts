@@ -6,6 +6,9 @@
  */
 
 import type {
+import { createLogger } from '@/lib/logger'
+const log = createLogger('TestUtils')
+
   BaseSourceConfig,
   CrawlerArticle,
   CrawlerFetchResult,
@@ -155,7 +158,7 @@ export async function runAllCleanups(): Promise<void> {
       try {
         await fn();
       } catch (error) {
-        console.warn('[TestUtils] Cleanup error:', error);
+        log.warn('[TestUtils] Cleanup error:', error);
       }
     }
   }

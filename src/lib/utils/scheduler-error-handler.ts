@@ -1,4 +1,7 @@
 /**
+import { createLogger } from '@/lib/logger'
+const log = createLogger('SchedulerErrorHandler')
+
  * Scheduler error handling utilities
  * Provides consistent error handling and logging for all schedulers
  */
@@ -54,7 +57,7 @@ export function logSchedulerError(
   schedulerMetrics.set(scheduler, metrics)
 
   // Log to console with structured format
-  console.error(`[Scheduler Error] ${scheduler}/${job}:`, {
+  log.error(`[Scheduler Error] ${scheduler}/${job}:`, {
     message: error.message,
     stack: error.stack,
     context,
@@ -95,7 +98,7 @@ export function logSchedulerSuccess(
 
   // Log success for debugging (can be disabled in production)
   if (process.env.NODE_ENV === 'development') {
-    console.log(`[Scheduler Success] ${scheduler}/${job}:`, {
+    log.log(`[Scheduler Success] ${scheduler}/${job}:`, {
       duration: `${duration}ms`,
       context,
     })
@@ -150,7 +153,7 @@ export function createSafeSchedulerJob<T>(
         lastError = error instanceof Error ? error : new Error(String(error))
 
         if (attempt < (options?.retryCount || 0)) {
-          console.warn(
+          log.warn(
             `[Scheduler] ${schedulerName}/${jobName} attempt ${attempt + 1} failed, retrying in ${options?.retryDelay || 1000}ms...`
           )
           await new Promise(resolve => setTimeout(resolve, options?.retryDelay || 1000))

@@ -1,4 +1,7 @@
 /**
+import { createLogger } from '@/lib/logger'
+const log = createLogger('BaseScheduler')
+
  * Base Scheduler Interface
  * Provides common interface and utilities for all schedulers
  */
@@ -115,7 +118,7 @@ export abstract class BaseScheduler {
     }
   ): Promise<T | null> {
     if (this.currentJobs >= this.config.maxConcurrentJobs) {
-      console.warn(`[${this.config.name}] Max concurrent jobs reached, skipping ${jobName}`)
+      log.warn(`[${this.config.name}] Max concurrent jobs reached, skipping ${jobName}`)
       return null
     }
 
@@ -140,7 +143,7 @@ export abstract class BaseScheduler {
           this.recordSuccess(duration)
 
           if (this.config.metricsEnabled) {
-            console.log(`[${this.config.name}] ${jobName} completed in ${duration}ms`)
+            log.log(`[${this.config.name}] ${jobName} completed in ${duration}ms`)
           }
 
           return result
@@ -148,7 +151,7 @@ export abstract class BaseScheduler {
           lastError = error instanceof Error ? error : new Error(String(error))
 
           if (attempt < (options?.retryCount || 0)) {
-            console.warn(
+            log.warn(
               `[${this.config.name}] ${jobName} attempt ${attempt + 1} failed, retrying in ${options?.retryDelay || 1000}ms...`
             )
             await new Promise(resolve => setTimeout(resolve, options?.retryDelay || 1000))
@@ -161,7 +164,7 @@ export abstract class BaseScheduler {
       this.recordFailure(duration)
 
       if (lastError) {
-        console.error(`[${this.config.name}] ${jobName} failed after ${(options?.retryCount || 0) + 1} attempts:`, lastError.message)
+        log.error(`[${this.config.name}] ${jobName} failed after ${(options?.retryCount || 0) + 1} attempts:`, lastError.message)
       }
 
       return null

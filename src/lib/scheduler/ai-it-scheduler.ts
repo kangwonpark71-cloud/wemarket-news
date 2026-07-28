@@ -14,6 +14,10 @@ import {
 } from '@/lib/ai-it/scheduler-service'
 import { runJobWithLock } from '@/lib/utils/lock'
 
+import { createLogger } from '@/lib/logger';
+
+const log = createLogger('AIITScheduler');
+
 export interface AIITSchedulerConfig extends SchedulerConfig {
   highPriorityInterval: string   // cron: default '*/15 * * * *'
   midPriorityInterval: string    // cron: default '*/30 * * * *'
@@ -48,16 +52,16 @@ export class AIITScheduler extends BaseScheduler {
 
   async start(): Promise<void> {
     if (!this.config.enabled) {
-      console.log(`[${this.config.name}] Scheduler is disabled`)
+      log.log(`[${this.config.name}] Scheduler is disabled`)
       return
     }
 
     if (this.cronTasks.length > 0) {
-      console.warn(`[${this.config.name}] Scheduler already started`)
+      log.warn(`[${this.config.name}] Scheduler already started`)
       return
     }
 
-    console.log(`[${this.config.name}] Starting scheduler...`)
+    log.log(`[${this.config.name}] Starting scheduler...`)
 
     // High priority: every 15 minutes (OpenAI, Anthropic, Google AI, DeepMind)
     this.cronTasks.push(
@@ -84,7 +88,7 @@ export class AIITScheduler extends BaseScheduler {
     setTimeout(async () => {
       await runJobWithLock('ai-it:initial', async () => {
         await fetchAllAIITNews()
-      }).catch(err => console.error(`[${this.config.name}] Initial fetch error:`, err))
+      }).catch(err => log.error(`[${this.config.name}] Initial fetch error:`, err))
     }, this.aiConfig.initialDelay)
 
     // Seed sources
@@ -92,7 +96,7 @@ export class AIITScheduler extends BaseScheduler {
       await seedAIITSourcesIfEmpty().catch(() => {})
     }, 3000)
 
-    console.log(`[${this.config.name}] Scheduler started`)
+    log.log(`[${this.config.name}] Scheduler started`)
   }
 
   async stop(): Promise<void> {
@@ -100,7 +104,7 @@ export class AIITScheduler extends BaseScheduler {
       task.stop()
     }
     this.cronTasks = []
-    console.log(`[${this.config.name}] Scheduler stopped`)
+    log.log(`[${this.config.name}] Scheduler stopped`)
   }
 
   private async runWithLock(name: string, jobFn: () => Promise<void>): Promise<void> {
@@ -109,7 +113,7 @@ export class AIITScheduler extends BaseScheduler {
       async () => {
         const acquired = await runJobWithLock(name, jobFn, this.aiConfig.lockTimeout)
         if (!acquired) {
-          console.log(`[${this.config.name}] Could not acquire lock for ${name}, skipping`)
+          log.log(`[${this.config.name}] Could not acquire lock for ${name}, skipping`)
         }
       },
       {

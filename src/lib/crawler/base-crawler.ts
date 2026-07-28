@@ -13,6 +13,10 @@ import type {
 } from './types';
 import { DEFAULT_RETRY_CONFIG, DEFAULT_CRAWLER_OPTIONS } from './types';
 
+import { createLogger } from '@/lib/logger';
+
+const log = createLogger('BaseCrawler');
+
 // ============================================================================
 // Retry Utility
 // ============================================================================
@@ -41,7 +45,7 @@ export async function withRetry<T>(
             cfg.baseDelay * Math.pow(cfg.factor || 2, attempt) + Math.random() * 1000,
             cfg.maxDelay || 10000,
           );
-        console.warn(
+        log.warn(
           `[${logPrefix}] Attempt ${attempt + 1} failed: ${lastError.message}. Retrying in ${Math.round(delay)}ms...`,
         );
         await new Promise((resolve) => setTimeout(resolve, delay));
@@ -49,7 +53,7 @@ export async function withRetry<T>(
     }
   }
 
-  console.error(`[${logPrefix}] All ${cfg.retries + 1} attempts failed: ${lastError?.message}`);
+  log.error(`[${logPrefix}] All ${cfg.retries + 1} attempts failed: ${lastError?.message}`);
   return null;
 }
 
@@ -89,7 +93,7 @@ export function parseDate(dateStr: string | undefined): Date {
 
   const parsed = new Date(dateStr);
   if (isNaN(parsed.getTime())) {
-    console.warn(`[BaseCrawler] Invalid date: ${dateStr}, using current time`);
+    log.warn(`[BaseCrawler] Invalid date: ${dateStr}, using current time`);
     return new Date();
   }
   return parsed;
@@ -132,7 +136,7 @@ export function createErrorResult(
   source: BaseSourceConfig,
 ): CrawlerFetchResult {
   const message = error instanceof Error ? error.message : String(error);
-  console.error(
+  log.error(
     `[BaseCrawler] Error fetching ${source.name} (${source.nameEn}): ${message}`,
   );
 

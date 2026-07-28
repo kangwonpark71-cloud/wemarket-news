@@ -17,6 +17,9 @@
 import type { Browser, BrowserContext, Page } from 'playwright';
 import { AIITSourceConfig } from './sources';
 
+import { createLogger } from '@/lib/logger'
+const log = createLogger('PlaywrightCrawler')
+
 // ──────────────────────────────────────────────
 //  Types
 // ──────────────────────────────────────────────
@@ -181,7 +184,7 @@ async function extractArticlesFromPage(
       state: 'attached',
     });
   } catch {
-    console.warn(`[PlaywrightCrawler] Selector failed: ${extraction.containerSelector}`);
+    log.warn(`[PlaywrightCrawler] Selector failed: ${extraction.containerSelector}`);
   }
 
   const articles = await page.evaluate(
@@ -316,7 +319,7 @@ async function crawlPagePagination(
         await basePage.waitForLoadState('load', { timeout: 8000 }).catch(() => {});
         await basePage.waitForTimeout(1500);
       } catch (err) {
-        console.warn('[PlaywrightCrawler] Pagination failed, stopping early:', err);
+        log.warn('[PlaywrightCrawler] Pagination failed, stopping early:', err);
         break;
       }
     }
@@ -359,7 +362,7 @@ async function crawlScrollPagination(
       });
       await page.waitForTimeout(1500 + Math.random() * 1000);
     } catch (err) {
-      console.warn('[PlaywrightCrawler] Scroll failed:', err);
+      log.warn('[PlaywrightCrawler] Scroll failed:', err);
       break;
     }
   }
@@ -452,7 +455,7 @@ export async function crawlWithPlaywright(
   } catch (error) {
     const duration = Date.now() - startTime;
     const message = error instanceof Error ? error.message : String(error);
-    console.error(
+    log.error(
       `[PlaywrightCrawler] ✗ ${source.name} — ${message} (${duration}ms)`,
     );
 

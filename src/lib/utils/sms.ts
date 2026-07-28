@@ -2,6 +2,9 @@
 
 import { prisma } from '@/lib/db';
 
+import { createLogger } from '@/lib/logger'
+const log = createLogger('SMS')
+
 export interface SMSConfig {
   provider: 'twilio' | 'aws-sns' | 'mock';
   accountSid?: string;
@@ -28,7 +31,7 @@ export async function sendSMS(phone: string, message: string): Promise<boolean> 
   };
 
   if (config.provider === 'mock' || !config.accountSid || !config.authToken || !config.fromNumber) {
-    console.log(`[SMS Mock] ${phone}로 메시지 발송 시뮬레이션: ${message}`);
+    log.log(`[SMS Mock] ${phone}로 메시지 발송 시뮬레이션: ${message}`);
     return true;
   }
 
@@ -43,15 +46,15 @@ export async function sendSMS(phone: string, message: string): Promise<boolean> 
         to: phone,
       });
       
-      console.log(`[SMS Twilio] ${phone}로 SMS 발송 성공`);
+      log.log(`[SMS Twilio] ${phone}로 SMS 발송 성공`);
       return true;
     } catch (error) {
-      console.error(`[SMS Twilio] ${phone}로 SMS 발송 실패:`, error);
+      log.error(`[SMS Twilio] ${phone}로 SMS 발송 실패:`, error);
       return false;
     }
   }
 
-  console.log(`[SMS Mock] ${phone}로 메시지 발송 시뮬레이션: ${message}`);
+  log.log(`[SMS Mock] ${phone}로 메시지 발송 시뮬레이션: ${message}`);
   return true;
 }
 

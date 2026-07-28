@@ -10,6 +10,9 @@
 
 import { cacheService, CacheTTL } from '@/lib/services/cache/cache-service';
 
+import { createLogger } from '@/lib/logger'
+const log = createLogger('NaverNews')
+
 // ── Types ──────────────────────────────────────────────────────
 
 export interface NaverNewsItem {
@@ -123,7 +126,7 @@ export async function searchNaverNews(
   const clientSecret = process.env.NAVER_CLIENT_SECRET;
 
   if (!clientId || !clientSecret) {
-    console.warn('[NaverNews] Missing NAVER_CLIENT_ID or NAVER_CLIENT_SECRET');
+    log.warn('[NaverNews] Missing NAVER_CLIENT_ID or NAVER_CLIENT_SECRET');
     return { articles: [], total: 0, display: 0 };
   }
 
@@ -154,7 +157,7 @@ export async function searchNaverNews(
 
     if (!response.ok) {
       const errorBody = await response.text().catch(() => '');
-      console.error(`[NaverNews] HTTP ${response.status}: ${errorBody}`);
+      log.error(`[NaverNews] HTTP ${response.status}: ${errorBody}`);
       return { articles: [], total: 0, display: 0 };
     }
 
@@ -170,7 +173,7 @@ export async function searchNaverNews(
     return result;
   } catch (error) {
     const message = error instanceof Error ? error.message : String(error);
-    console.error(`[NaverNews] Request failed: ${message}`);
+    log.error(`[NaverNews] Request failed: ${message}`);
     return { articles: [], total: 0, display: 0 };
   } finally {
     clearTimeout(timeoutId);

@@ -1,6 +1,9 @@
 import { cacheService, CacheKeys } from '@/lib/services/cache/cache-service';
 import { prisma } from '@/lib/db';
 
+import { createLogger } from '@/lib/logger'
+const log = createLogger('CryptoService')
+
 interface UpbitConfig {
   baseUrl: string;
   accessKey?: string;
@@ -266,7 +269,7 @@ export class UpbitService {
           },
         });
       } catch (error) {
-        console.error(`[CryptoService] Failed to upsert cryptocurrency ${ticker.symbol}:`, error);
+        log.error(`[CryptoService] Failed to upsert cryptocurrency ${ticker.symbol}:`, error);
       }
     }
 
@@ -298,7 +301,7 @@ export class UpbitService {
           },
         });
       } catch (error) {
-        console.error(`[CryptoService] Failed to create ticker for ${ticker.symbol}:`, error);
+        log.error(`[CryptoService] Failed to create ticker for ${ticker.symbol}:`, error);
       }
     }
 
