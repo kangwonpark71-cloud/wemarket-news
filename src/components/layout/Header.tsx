@@ -205,7 +205,7 @@ export default function Header() {
 
       <div className="border-t border-border hidden md:block bg-muted/20">
         <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
-          <nav ref={navRef} className="flex h-11 items-center gap-1 overflow-x-auto scrollbar-none py-1" aria-label="주요 내비게이션">
+          <nav ref={navRef} className="flex h-11 items-center gap-1 py-1" aria-label="주요 내비게이션">
             {NAV_ITEMS.map((item) => {
               const active = item.children ? isSubItemActive(item) : isActive(item.href)
               const hasChildren = !!item.children && item.children.length > 0
@@ -235,9 +235,8 @@ export default function Header() {
 
               return (
                 <div key={item.href} className="relative">
-                  <button
-                    type="button"
-                    onClick={() => setOpenDropdown(openDropdown === item.href ? null : item.href)}
+                  <Link
+                    href={item.href}
                     onMouseEnter={() => setOpenDropdown(item.href)}
                     className={cn(
                       'whitespace-nowrap px-4 py-1.5 text-xs font-semibold tracking-tight transition-colors border-b-2 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary inline-flex items-center gap-1',
@@ -252,7 +251,7 @@ export default function Header() {
                     <svg className="h-3 w-3" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
                     </svg>
-                  </button>
+                  </Link>
 
                   {openDropdown === item.href && (
                     <div
