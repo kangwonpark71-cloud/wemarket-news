@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useRef, useCallback } from 'react';
 import { FinancialDashboard } from '@/components/financial/FinancialDashboard';
 import { FinancialChart } from '@/components/financial/FinancialChart';
 import { formatKRW, formatNumber } from '@/lib/utils/format';
@@ -64,6 +64,14 @@ export function StockPage() {
   const [selectedStock, setSelectedStock] = useState<StockData | null>(null);
   const [stockDetail, setStockDetail] = useState<StockDetailData | null>(null);
   const [detailLoading, setDetailLoading] = useState(false);
+  const [addedStocks, setAddedStocks] = useState<StockMasterData[]>([]);
+  const [searchQuery, setSearchQuery] = useState('');
+  const [searchResults, setSearchResults] = useState<StockMasterData[]>([]);
+  const [searchLoading, setSearchLoading] = useState(false);
+  const [showSearchResults, setShowSearchResults] = useState(false);
+  const searchRef = useRef<HTMLDivElement>(null);
+
+  const allMasterData = [...masterData, ...addedStocks];
 
   const fetchMasterData = async () => {
     setLoading(true);
@@ -87,9 +95,9 @@ export function StockPage() {
   }, [market]);
 
   useEffect(() => {
-    if (masterData.length === 0) return;
+    if (allMasterData.length === 0) return;
 
-    const filtered = masterData.filter((stock) => {
+    const filtered = allMasterData.filter((stock) => {
       if (market !== 'ALL' && stock.market !== market) return false;
       if (search && !stock.name.toLowerCase().includes(search.toLowerCase()) && !stock.code.includes(search)) return false;
       return true;
@@ -127,7 +135,55 @@ export function StockPage() {
     };
 
     void fetchPrices();
-  }, [masterData, market, search, sortBy, sortOrder]);
+  }, [allMasterData, market, search, sortBy, sortOrder]);
+
+  const searchStocks = useCallback(async (query: string) => {
+    if (query.length < 1) {
+      setSearchResults([]);
+      setShowSearchResults(false);
+      return;
+    }
+    setSearchLoading(true);
+    try {
+      const res = await fetch(`/api/financial/stocks?action=search&q=${encodeURIComponent(query)}&limit=10`);
+      const json = await res.json();
+      if (json.success) {
+        setSearchResults(json.data);
+        setShowSearchResults(json.data.length > 0);
+      }
+    } catch (error) {
+      console.error('Failed to search stocks:', error);
+    } finally {
+      setSearchLoading(false);
+    }
+  }, []);
+
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      void searchStocks(searchQuery);
+    }, 300);
+    return () => clearTimeout(timer);
+  }, [searchQuery, searchStocks]);
+
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      if (searchRef.current && !searchRef.current.contains(event.target as Node)) {
+        setShowSearchResults(false);
+      }
+    };
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => document.removeEventListener('mousedown', handleClickOutside);
+  }, []);
+
+  const handleAddStock = async (stock: StockMasterData) => {
+    const alreadyExists = allMasterData.some((s) => s.code === stock.code);
+    if (!alreadyExists) {
+      setAddedStocks((prev) => [...prev, stock]);
+    }
+    setSearchQuery('');
+    setShowSearchResults(false);
+    setSearch('');
+  };
 
   const handleSort = (field: 'changeRate' | 'volume' | 'price') => {
     if (sortBy === field) {
@@ -223,8 +279,49 @@ export function StockPage() {
                 placeholder="종목명/코드 검색..."
                 value={search}
                 onChange={(e) => setSearch(e.target.value)}
-                className="w-full rounded-lg border border-border bg-background px-4 py-2 text-sm text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary sm:w-64"
+                className="w-full rounded-lg border border-border bg-background px-4 py-2 text-sm text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary sm:w-48"
               />
+              <div ref={searchRef} className="relative">
+                <input
+                  type="search"
+                  placeholder="종목 추가..."
+                  value={searchQuery}
+                  onChange={(e) => setSearchQuery(e.target.value)}
+                  onFocus={() => searchQuery.length >= 1 && searchResults.length > 0 && setShowSearchResults(true)}
+                  className="w-full rounded-lg border border-primary/30 bg-background px-4 py-2 text-sm text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary sm:w-48"
+                />
+                {showSearchResults && searchResults.length > 0 && (
+                  <div className="absolute top-full left-0 right-0 mt-1 bg-background border border-border rounded-lg shadow-lg z-50 max-h-60 overflow-y-auto">
+                    {searchLoading && (
+                      <div className="px-4 py-2 text-sm text-muted-foreground">검색 중...</div>
+                    )}
+                    {!searchLoading && searchResults.map((result) => {
+                      const isAdded = allMasterData.some((s) => s.code === result.code);
+                      return (
+                        <button
+                          key={result.code}
+                          onClick={() => handleAddStock(result)}
+                          disabled={isAdded}
+                          className={`w-full px-4 py-2 text-left hover:bg-muted flex items-center justify-between ${isAdded ? 'opacity-50 cursor-not-allowed' : 'cursor-pointer'}`}
+                        >
+                          <div>
+                            <span className="font-medium text-foreground">{result.name}</span>
+                            <span className="ml-2 text-xs text-muted-foreground">{result.code}</span>
+                          </div>
+                          <div className="flex items-center gap-2">
+                            <span className="text-xs text-muted-foreground">{result.market}</span>
+                            {isAdded ? (
+                              <span className="text-xs text-primary">추가됨</span>
+                            ) : (
+                              <span className="text-xs text-primary font-medium">+ 추가</span>
+                            )}
+                          </div>
+                        </button>
+                      );
+                    })}
+                  </div>
+                )}
+              </div>
             </div>
           </div>
 
