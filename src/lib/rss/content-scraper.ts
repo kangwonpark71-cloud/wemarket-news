@@ -44,7 +44,8 @@ function identifySource(url: string): string {
 
 function cleanText(text: string): string {
   let cleaned = text
-    .replace(/\s+/g, ' ')
+    .replace(/\r\n/g, '\n')
+    .replace(/[ \t]+/g, ' ')
     .replace(/\n{3,}/g, '\n\n')
     .replace(/&nbsp;/g, ' ')
     .trim();
@@ -88,7 +89,8 @@ function cleanText(text: string): string {
     .replace(/댓글\s*\d+/g, '')
     .replace(/공유\s*\d*/g, '');
 
-  return cleaned.replace(/\s+/g, ' ').trim();
+  // Collapse horizontal whitespace but preserve paragraph breaks (\n)
+  return cleaned.replace(/[ \t]+/g, ' ').replace(/\n{3,}/g, '\n\n').trim();
 }
 
 function isAdOrIcon(src: string, alt: string, className: string): boolean {
@@ -179,7 +181,7 @@ function extractGeneralContent($: cheerio.CheerioAPI, sourceKey: string, article
       return;
     }
 
-    if (text.length < 10) return
+    if (text.length < 5) return
 
     if (tag === 'li') {
       paragraphs.push(`* ${text}`)
@@ -195,6 +197,15 @@ function extractGeneralContent($: cheerio.CheerioAPI, sourceKey: string, article
       paragraphs.push(text)
     }
   })
+
+  if (paragraphs.length === 0) {
+    contentEl.find('div').each((_, el) => {
+      const text = $(el).text().trim()
+      if (text.length >= 20 && !paragraphs.includes(text)) {
+        paragraphs.push(text)
+      }
+    })
+  }
 
   if (paragraphs.length === 0) {
     return cleanText(contentEl.text())
@@ -277,7 +288,11 @@ export async function scrapeArticleContent(url: string): Promise<ScrapeResult> {
       return { content: '', error: 'Could not extract meaningful content' }
     }
 
-    return { content: cleaned.slice(0, MAX_CONTENT_LENGTH) }
+    if (cleaned.length > MAX_CONTENT_LENGTH) {
+      const cutPoint = cleaned.lastIndexOf('\n\n', MAX_CONTENT_LENGTH)
+      return { content: (cutPoint > 0 ? cleaned.slice(0, cutPoint) : cleaned.slice(0, MAX_CONTENT_LENGTH)) }
+    }
+    return { content: cleaned }
   } catch (err) {
     const message = err instanceof Error ? err.message : 'Unknown error'
     return { content: '', error: message }
