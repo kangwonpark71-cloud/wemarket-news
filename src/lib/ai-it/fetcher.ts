@@ -3,6 +3,28 @@ import { AIITSourceConfig } from './sources';
 import { crawlWithPlaywright } from './playwright-crawler';
 import { extractThumbnail, extractCategory, fetchWithRetry } from '../utils/rss-helper';
 
+import { crawler } from '@/lib/crawler';
+import type { BaseSourceConfig, CrawlerFetchResult } from '@/lib/crawler';
+
+export async function fetchAIITFeedStandardized(
+  source: AIITSourceConfig
+): Promise<CrawlerFetchResult> {
+  const baseSource: BaseSourceConfig = {
+    name: source.name,
+    nameEn: source.nameEn,
+    url: source.url,
+    category: source.category,
+    subcategory: source.subcategory,
+    language: source.language,
+    icon: source.icon,
+    fetchInterval: source.fetchInterval,
+    type: source.type,
+    crawlerConfig: source.crawlerConfig,
+  };
+
+  return crawler.fetch(baseSource);
+}
+
 export interface AIITParsedArticle {
   guid?: string;
   title: string;

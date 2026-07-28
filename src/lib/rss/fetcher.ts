@@ -3,6 +3,28 @@ import { RSSSourceConfig } from './sources'
 import { extractThumbnail, extractCategory, fetchWithRetry } from '../utils/rss-helper'
 export { extractThumbnail, extractCategory } from '../utils/rss-helper'
 
+// Standardized crawler integration (backward compatible)
+import { rssCrawler } from '@/lib/crawler';
+import type { BaseSourceConfig, CrawlerFetchResult } from '@/lib/crawler';
+
+export async function fetchFeedStandardized(
+  source: RSSSourceConfig
+): Promise<CrawlerFetchResult> {
+  const baseSource: BaseSourceConfig = {
+    name: source.name,
+    nameEn: source.nameEn,
+    url: source.url,
+    category: source.category,
+    subcategory: source.subcategory,
+    language: source.language,
+    icon: source.icon,
+    fetchInterval: source.fetchInterval,
+    type: 'rss',
+  };
+
+  return rssCrawler.fetch(baseSource);
+}
+
 export interface ParsedArticle {
   guid?: string
   title: string

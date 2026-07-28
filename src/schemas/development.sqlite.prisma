@@ -1,0 +1,562 @@
+// Economy News - Prisma Schema
+// 통합 뉴스 아그리게이터 (RSS + AI/IT)
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = env("DATABASE_URL")
+}
+
+// =============================================
+// Enums
+// =============================================
+
+enum SourceType {
+  RSS
+  AI_IT
+}
+
+enum UserRole {
+  USER
+  ADMIN
+}
+
+// =============================================
+// Unified Source (RSS + AI/IT)
+// =============================================
+
+model Source {
+  id            String     @id @default(uuid())
+  name          String     // "한국경제", "OpenAI Blog" 등
+  nameEn        String     @unique @map("name_en")
+  url           String     @unique
+  sourceType    SourceType @default(RSS) @map("source_type")
+  category      String     // "domestic" | "overseas" | "ai" | "it"
+  subcategory   String?    // "korean_economy", "official_ai", "tech_news" 등
+  language      String     @default("ko") // "ko" | "en"
+  icon          String?    // 소스 아이콘 URL
+  isActive      Boolean    @default(true) @map("is_active")
+  fetchInterval Int        @default(3) @map("fetch_interval") // 수집 주기 (RSS: 시간, AI/IT: 분)
+  fetchType     String     @default("rss") @map("fetch_type") // "rss" | "crawler"
+  crawlerConfig Json?      @map("crawler_config") // 크롤러 설정 (선택적)
+  createdAt     DateTime   @default(now()) @map("created_at")
+  updatedAt     DateTime   @updatedAt @map("updated_at")
+
+  articles    Article[]
+  fetchLogs   FetchLog[]
+
+  @@index([sourceType, isActive])
+  @@index([category, isActive])
+  @@map("sources")
+}
+
+// 뉴스 기사 (통합: RSS + AI/IT)
+model Article {
+  id              String     @id @default(uuid())
+  sourceId        String     @map("source_id")
+  sourceType      SourceType @default(RSS) @map("source_type")
+  categoryId      String?    @map("category_id") // AI/IT 전용: NewsCategory 참조
+  guid            String?    // RSS GUID (중복 방지용)
+  title           String
+  url             String     @unique
+  description     String?
+  content         String?     // 전체 기사 본문 (스크래핑)
+  author          String?
+  thumbnail       String?    // 썸네일 이미지 URL
+  publishedAt     DateTime   @map("published_at")
+  fetchedAt       DateTime   @default(now()) @map("fetched_at")
+  category        String?   // RSS category (Fed 관련)
+  language        String    @default("ko") // "ko" | "en"
+  isRead          Boolean   @default(false) @map("is_read")
+  isBookmarked    Boolean   @default(false) @map("is_bookmarked")
+  viewCount       Int       @default(0) @map("view_count")
+  keywords        String    @default("") @map("keywords")
+  isBreaking      Boolean   @default(false) @map("is_breaking")
+
+  source          Source             @relation(fields: [sourceId], references: [id], onDelete: Cascade)
+  categoryRef     NewsCategory?      @relation(fields: [categoryId], references: [id], onDelete: SetNull)
+  tags            NewsTagRelation[]  @relation("ArticleTags")
+  summary         NewsSummary?
+
+  @@index([sourceType, publishedAt(sort: Desc)])
+  @@index([sourceId, publishedAt(sort: Desc)])
+  @@index([category, publishedAt(sort: Desc)])
+  @@index([language, publishedAt(sort: Desc)])
+  @@index([publishedAt(sort: Desc)])
+  @@map("articles")
+}
+
+// 수집 로그
+model FetchLog {
+  id          String   @id @default(uuid())
+  sourceId    String   @map("source_id")
+  status      String   // "success" | "error" | "partial"
+  count       Int      @default(0) // 수집된 기사 수
+  newCount    Int      @default(0) @map("new_count") // 새로 수집된 기사 수
+  error       String?
+  duration    Int?     // 소요시간 (ms)
+  fetchedAt   DateTime @default(now()) @map("fetched_at")
+
+  source      Source   @relation(fields: [sourceId], references: [id], onDelete: Cascade)
+
+  @@index([sourceId, fetchedAt(sort: Desc)])
+  @@map("fetch_logs")
+}
+
+// 사용자 회원가입/계정 정보
+model User {
+  id                  String   @id @default(uuid())
+  email               String?  @unique  // 회원가입 시 선택 (가입 후 프로필에서 입력)
+  password            String   
+  name                String?             // 가입 후 프로필에서 입력
+  role                UserRole @default(USER)
+  phone               String?  // 휴대폰번호 (회원가입 필수)
+  phoneVerified       Boolean  @default(false) @map("phone_verified") // 전화번호 인증 여부
+  emailVerified       Boolean  @default(false) @map("email_verified") // 이메일 인증 여부
+  gender              String?             // 남성/여성/기타
+  birthDate           DateTime?           // 생년월일
+  createdAt           DateTime @default(now()) @map("created_at")
+  updatedAt           DateTime @updatedAt @map("updated_at")
+  verifiedAt          DateTime? // 휴대폰 인증 완료 시간
+  verificationCode    String?  @map("verification_code") // 암호화된 SMS 인증 코드
+  verificationExpires DateTime? @map("verification_expires") // 인증 코드 만료 시간
+
+  preferences         UserPreference?
+  pushSubscription  PushSubscription?
+
+  @@map("users")
+}
+
+// 사용자 설정
+model UserPreference {
+  id              String   @id @default(uuid())
+  userId          String   @unique @map("user_id") 
+  hiddenSources   String   @default("") @map("hidden_sources") 
+  pinnedSources   String   @default("") @map("pinned_sources") 
+  theme           String   @default("light") 
+  language        String   @default("all") 
+  interests       String   @default("") @map("interests") // 쉼표 구분 관심분야 IDs (예: "economy,tech,world")
+  createdAt       DateTime @default(now()) @map("created_at")
+  updatedAt       DateTime @updatedAt @map("updated_at")
+
+  user            User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@map("user_preferences")
+}
+
+// =============================================
+// Banner & Advertisement Models
+// =============================================
+
+model Banner {
+  id        String   @id @default(uuid())
+  title     String
+  imageUrl  String   @map("image_url")
+  linkUrl   String?  @map("link_url")
+  position  String   @default("top") // "top" | "sidebar" | "bottom"
+  sortOrder Int      @default(0) @map("sort_order")
+  isActive  Boolean  @default(true) @map("is_active")
+  startDate DateTime? @map("start_date")
+  endDate   DateTime? @map("end_date")
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  @@index([position, isActive])
+  @@index([sortOrder])
+  @@map("banners")
+}
+
+model Advertisement {
+  id          String   @id @default(uuid())
+  title       String
+  adType      String   @default("image") @map("ad_type") // "image" | "text" | "html"
+  content     String   // image URL, text content, or HTML snippet
+  linkUrl     String?  @map("link_url")
+  position    String   @default("sidebar") // "sidebar" | "in-content" | "header" | "footer"
+  isActive    Boolean  @default(true) @map("is_active")
+  startDate   DateTime? @map("start_date")
+  endDate     DateTime? @map("end_date")
+  impressions Int      @default(0)
+  clicks      Int      @default(0)
+  createdAt   DateTime @default(now()) @map("created_at")
+  updatedAt   DateTime @updatedAt @map("updated_at")
+
+  @@index([position, isActive])
+  @@map("advertisements")
+}
+
+// =============================================
+// AI & IT News Models
+// =============================================
+
+model NewsCategory {
+  id          String   @id @default(uuid())
+  name        String   // "OpenAI", "Anthropic", "Google AI" 등
+  nameEn      String   @unique @map("name_en") // "openai", "anthropic", "google_ai" 등
+  parentId    String?  @map("parent_id")
+  category    String   // "ai" | "it"
+  type        String   // "official_ai", "tech_news", "research", "startup", "llm", "agents", "robotics"
+  description String?
+  icon        String?
+  sortOrder   Int      @default(0) @map("sort_order")
+  isActive    Boolean  @default(true) @map("is_active")
+  createdAt   DateTime @default(now()) @map("created_at")
+  updatedAt   DateTime @updatedAt @map("updated_at")
+
+  parent      NewsCategory? @relation("CategoryHierarchy", fields: [parentId], references: [id])
+  children    NewsCategory[] @relation("CategoryHierarchy")
+  unifiedArticles Article[]
+
+  @@index([category, type, isActive])
+  @@index([parentId])
+  @@map("news_categories")
+}
+
+model NewsTag {
+  id        String   @id @default(uuid())
+  name      String   @unique // "GPT-4", "Claude", "LLM", "Agent", "Transformer" 등
+  nameEn    String?  @unique @map("name_en") // 영문 태그명
+  type      String   // "company", "model", "technology", "topic", "difficulty"
+  color     String?  // 태그 색상 (HEX)
+  isActive  Boolean  @default(true) @map("is_active")
+  createdAt DateTime @default(now()) @map("created_at")
+
+  articles  NewsTagRelation[] @relation("ArticleTags")
+  @@index([type, isActive])
+  @@map("news_tags")
+}
+
+model NewsTagRelation {
+  id        String   @id @default(uuid())
+  articleId String   @map("article_id")
+  tagId     String   @map("tag_id")
+  createdAt DateTime @default(now()) @map("created_at")
+
+  article   Article @relation("ArticleTags", fields: [articleId], references: [id], onDelete: Cascade)
+  tag       NewsTag @relation("ArticleTags", fields: [tagId], references: [id], onDelete: Cascade)
+
+  @@unique([articleId, tagId])
+  @@index([articleId])
+  @@index([tagId])
+  @@map("news_tag_relations")
+}
+
+model NewsSummary {
+  id              String   @id @default(uuid())
+  articleId       String   @unique @map("article_id")
+  translatedTitle String?  @map("translated_title")
+  summary3Line    String   @map("summary_3line") // 3줄 요약
+  keywords        String @default("") // 키워드 배열
+  relatedCompanies String @default("") @map("related_companies") // 관련 기업
+  relatedModels   String @default("") @map("related_models") // 관련 AI 모델
+  difficulty      String?  // "beginner", "intermediate", "advanced"
+  aiGenerated     Boolean  @default(true) @map("ai_generated")
+  modelUsed       String?  @map("model_used") // 사용된 AI 모델 (예: "gpt-4o-mini")
+  createdAt       DateTime @default(now()) @map("created_at")
+  updatedAt       DateTime @updatedAt @map("updated_at")
+
+  article         Article @relation(fields: [articleId], references: [id], onDelete: Cascade)
+
+  @@index([aiGenerated])
+  @@map("news_summaries")
+}
+
+// =============================================
+// Financial Market Data Models
+// =============================================
+
+// 한국 주식 시장 - 종목 마스터
+model Stock {
+  id              String   @id @default(uuid())
+  code            String   @unique // 종목코드 (예: 005930)
+  name            String   // 종목명 (예: 삼성전자)
+  market          String   // "KOSPI" | "KOSDAQ" | "KOSPI200"
+  sector          String?  // 업종
+  industry        String?  // 산업
+  listingDate     DateTime? @map("listing_date")
+  isActive        Boolean  @default(true) @map("is_active")
+  createdAt       DateTime @default(now()) @map("created_at")
+  updatedAt       DateTime @updatedAt @map("updated_at")
+
+  prices          StockPrice[]
+
+  @@index([market, isActive])
+  @@index([code])
+  @@map("stocks")
+}
+
+// 주식 현재가/시세
+model StockPrice {
+  id              String   @id @default(uuid())
+  stockId         String   @map("stock_id")
+  price           Float   // 현재가
+  change          Float   // 전일대비
+  changeRate      Float   @map("change_rate") // 등락률 (%)
+  openPrice       Float   @map("open_price") // 시가
+  highPrice       Float   @map("high_price") // 고가
+  lowPrice        Float   @map("low_price") // 저가
+  volume          Int   // 거래량
+  tradingValue    Float   @map("trading_value") // 거래대금
+  marketCap       Float?  @map("market_cap") // 시가총액
+  listedShares    Int?  @map("listed_shares") // 상장주식수
+  timestamp       DateTime @default(now())
+
+  stock           Stock    @relation(fields: [stockId], references: [id], onDelete: Cascade)
+
+  @@index([stockId, timestamp(sort: Desc)])
+  @@map("stock_prices")
+}
+
+// 주식 일별 통계 (상승/하락/거래량 순위용)
+model StockDailyStat {
+  id              String   @id @default(uuid())
+  date            DateTime  @unique
+  market          String   // "KOSPI" | "KOSDAQ"
+  totalStocks     Int      @map("total_stocks")
+  advancing       Int      // 상승 종목 수
+  declining       Int      // 하락 종목 수
+  unchanged       Int      // 보합 종목 수
+  upperLimit      Int      @map("upper_limit") // 상한가
+  lowerLimit      Int      @map("lower_limit") // 하한가
+  totalVolume     Int   @map("total_volume")
+  totalValue      Float   @map("total_value")
+  createdAt       DateTime @default(now()) @map("created_at")
+
+  @@index([date, market])
+  @@map("stock_daily_stats")
+}
+
+// =============================================
+// Cryptocurrency Models
+// =============================================
+
+model Cryptocurrency {
+  id              String   @id @default(uuid())
+  symbol          String   @unique // "BTC", "ETH", "XRP" 등
+  name            String   // "Bitcoin", "Ethereum"
+  nameKr          String?  @map("name_kr") // 한국어명
+  market          String   @default("UPBIT") // 거래소
+  isActive        Boolean  @default(true) @map("is_active")
+  createdAt       DateTime @default(now()) @map("created_at")
+  updatedAt       DateTime @updatedAt @map("updated_at")
+
+  tickers         CryptoTicker[]
+  candles         CryptoCandle[]
+
+  @@index([symbol])
+  @@index([isActive])
+  @@map("cryptocurrencies")
+}
+
+// 암호화폐 현재가 (티커)
+model CryptoTicker {
+  id              String   @id @default(uuid())
+  cryptoId        String   @map("crypto_id")
+  tradePrice      Float   @map("trade_price") // 현재가
+  signedChangePrice Float  @map("signed_change_price") // 전일대비
+  signedChangeRate Float  @map("signed_change_rate") // 등락률
+  askPrice        Float   @map("ask_price") // 매도호가
+  bidPrice        Float   @map("bid_price") // 매수호가
+  accTradePrice24h Float  @map("acc_trade_price_24h") // 24시간 거래대금
+  accTradeVolume24h Float  @map("acc_trade_volume_24h") // 24시간 거래량
+  highPrice24h    Float   @map("high_price_24h") // 24시간 고가
+  lowPrice24h     Float   @map("low_price_24h") // 24시간 저가
+  prevClosingPrice Float  @map("prev_closing_price") // 전일 종가
+  timestamp       DateTime @default(now())
+
+  crypto          Cryptocurrency @relation(fields: [cryptoId], references: [id], onDelete: Cascade)
+
+  @@index([cryptoId, timestamp(sort: Desc)])
+  @@map("crypto_tickers")
+}
+
+// 캔들/차트 데이터
+model CryptoCandle {
+  id              String   @id @default(uuid())
+  cryptoId        String   @map("crypto_id")
+  unit            String   // "minutes/1", "minutes/5", "minutes/15", "minutes/30", "minutes/60", "days", "weeks", "months"
+  openPrice       Float   @map("open_price")
+  highPrice       Float   @map("high_price")
+  lowPrice        Float   @map("low_price")
+  tradePrice      Float   @map("trade_price")
+  candleAccTradeVolume Float  @map("candle_acc_trade_volume")
+  candleAccTradePrice Float  @map("candle_acc_trade_price")
+  timestamp       DateTime // 캔들 기준 시간
+  createdAt       DateTime @default(now()) @map("created_at")
+
+  crypto          Cryptocurrency @relation(fields: [cryptoId], references: [id], onDelete: Cascade)
+
+  @@unique([cryptoId, unit, timestamp])
+  @@index([cryptoId, unit, timestamp(sort: Desc)])
+  @@map("crypto_candles")
+}
+
+// 암호화폐 일별 통계
+model CryptoDailyStat {
+  id              String   @id @default(uuid())
+  date            DateTime  @unique
+  totalMarketCap  Float   @map("total_market_cap")
+  totalVolume24h  Float   @map("total_volume_24h")
+  btcDominance    Float?  @map("btc_dominance")
+  createdAt       DateTime @default(now()) @map("created_at")
+
+  @@index([date(sort: Desc)])
+  @@map("crypto_daily_stats")
+}
+
+// =============================================
+// Exchange Rate Models
+// =============================================
+
+model ExchangeRate {
+  id              String   @id @default(uuid())
+  baseCurrency    String   @map("base_currency") // "USD", "JPY", "EUR", "CNY"
+  quoteCurrency   String   @default("KRW") @map("quote_currency")
+  rate            Float   // 환율
+  change          Float   // 전일대비
+  changeRate      Float   @map("change_rate") // 등락률 (%)
+  source          String   @default("BOK") // 한국은행, 서울외국환중개 등
+  timestamp       DateTime @default(now())
+
+  @@unique([baseCurrency, quoteCurrency, timestamp])
+  @@index([baseCurrency, quoteCurrency, timestamp(sort: Desc)])
+  @@map("exchange_rates")
+}
+
+// 환율 일별 통계
+model ExchangeRateDailyStat {
+  id              String   @id @default(uuid())
+  date            DateTime  @unique
+  usdRate         Float   @map("usd_rate")
+  usdChange       Float   @map("usd_change")
+  usdChangeRate   Float   @map("usd_change_rate")
+  jpyRate         Float   @map("jpy_rate")
+  jpyChange       Float   @map("jpy_change")
+  jpyChangeRate   Float   @map("jpy_change_rate")
+  eurRate         Float   @map("eur_rate")
+  eurChange       Float   @map("eur_change")
+  eurChangeRate   Float   @map("eur_change_rate")
+  cnyRate         Float   @map("cny_rate")
+  cnyChange       Float   @map("cny_change")
+  cnyChangeRate   Float   @map("cny_change_rate")
+  createdAt       DateTime @default(now()) @map("created_at")
+
+  @@index([date(sort: Desc)])
+  @@map("exchange_rate_daily_stats")
+}
+
+// =============================================
+// Global Markets Models
+// =============================================
+
+model GlobalIndex {
+  id              String   @id @default(uuid())
+  symbol          String   @unique // "^DJI", "^IXIC", "^GSPC", "^RUT", "^VIX"
+  name            String   // "Dow Jones", "NASDAQ", "S&P 500"
+  nameKr          String?  @map("name_kr")
+  country         String   @default("US")
+  category        String   // "INDEX" | "VIX"
+  isActive        Boolean  @default(true) @map("is_active")
+  createdAt       DateTime @default(now()) @map("created_at")
+  updatedAt       DateTime @updatedAt @map("updated_at")
+
+  quotes          GlobalIndexQuote[]
+
+  @@index([symbol])
+  @@index([isActive])
+  @@map("global_indices")
+}
+
+model GlobalIndexQuote {
+  id              String   @id @default(uuid())
+  indexId         String   @map("index_id")
+  price           Float  
+  change          Float  
+  changeRate      Float   @map("change_rate")
+  openPrice       Float?  @map("open_price")
+  highPrice       Float?  @map("high_price")
+  lowPrice        Float?  @map("low_price")
+  previousClose   Float?  @map("previous_close")
+  volume          Int?
+  timestamp       DateTime @default(now())
+
+  index           GlobalIndex @relation(fields: [indexId], references: [id], onDelete: Cascade)
+
+  @@index([indexId, timestamp(sort: Desc)])
+  @@map("global_index_quotes")
+}
+
+// =============================================
+// Historical Chart Data (Generic)
+// =============================================
+
+model PriceHistory {
+  id              String   @id @default(uuid())
+  symbol          String   // 종목 심볼 (주식 코드, 코인 심볼, 지수 심볼, 환율 심볼)
+  type            String   // "STOCK" | "CRYPTO" | "INDEX" | "FOREX"
+  timeframe       String   // "1m", "5m", "15m", "30m", "1h", "1d", "1w", "1M"
+  openPrice       Float   @map("open_price")
+  highPrice       Float   @map("high_price")
+  lowPrice        Float   @map("low_price")
+  closePrice      Float   @map("close_price")
+  volume          Float? 
+  timestamp       DateTime
+  createdAt       DateTime @default(now()) @map("created_at")
+
+  @@unique([symbol, type, timeframe, timestamp])
+  @@index([symbol, type, timeframe, timestamp(sort: Desc)])
+  @@map("price_histories")
+}
+
+// 수집 로그 (기존 FetchLog 확장)
+model FinancialFetchLog {
+  id          String   @id @default(uuid())
+  service     String   // "STOCK" | "CRYPTO" | "FOREX" | "GLOBAL_INDEX"
+  endpoint    String   // 호출된 API 엔드포인트
+  status      String   // "success" | "error" | "partial"
+  count       Int      @default(0) // 수집된 데이터 수
+  error       String?
+  duration    Int?     // 소요시간 (ms)
+  fetchedAt   DateTime @default(now()) @map("fetched_at")
+
+  @@index([service, fetchedAt(sort: Desc)])
+  @@map("financial_fetch_logs")
+}
+
+// 분산 락 테이블 (Redis 없을 때 데이터베이스를 통한 다중 노드 동기화용)
+model DistributedLock {
+  id        String   @id @default(uuid())
+  lockName  String   @unique @map("lock_name")
+  owner     String   
+  expiresAt DateTime @map("expires_at")
+  createdAt DateTime @default(now()) @map("created_at")
+
+  @@map("distributed_locks")
+}
+
+// 이메일 뉴스레터 구독 테이블
+model NewsletterSubscription {
+  id        String   @id @default(uuid())
+  email     String   @unique
+  isActive  Boolean  @default(true) @map("is_active")
+  createdAt DateTime @default(now()) @map("created_at")
+
+  @@map("newsletter_subscriptions")
+}
+
+// PUSH 알림 구독 테이블
+model PushSubscription {
+  id              String   @id @default(uuid())
+  userId          String   @unique @map("user_id")
+  endpoint        String   @unique
+  keysP256dh      String   @map("keys_p256dh")
+  auth            String
+  user            User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  createdAt       DateTime @default(now()) @map("created_at")
+  updatedAt       DateTime @updatedAt @map("updated_at")
+
+  @@map("push_subscriptions")
+}
