@@ -21,17 +21,19 @@ export async function GET() {
 // POST /api/stocks/watchlist — Add stock to watchlist
 export async function POST(request: Request) {
   try {
-    const { code, name } = await request.json()
+    const body = await request.json()
+    const stockCode = body.stockCode || body.code
+    const stockName = body.stockName || body.name
 
-    if (!code || !name) {
+    if (!stockCode || !stockName) {
       return NextResponse.json(
-        { success: false, error: 'code and name are required' },
+        { success: false, error: 'stockCode and stockName are required' },
         { status: 400 }
       )
     }
 
     const existing = await prisma.stockWatchlist.findFirst({
-      where: { stockCode: code, userId: null },
+      where: { stockCode, userId: null },
     })
 
     if (existing) {
@@ -42,7 +44,7 @@ export async function POST(request: Request) {
     }
 
     const item = await prisma.stockWatchlist.create({
-      data: { stockCode: code, stockName: name },
+      data: { stockCode, stockName },
     })
 
     return NextResponse.json({ success: true, data: item })
@@ -58,17 +60,18 @@ export async function POST(request: Request) {
 // DELETE /api/stocks/watchlist — Remove stock from watchlist
 export async function DELETE(request: Request) {
   try {
-    const { code } = await request.json()
+    const body = await request.json()
+    const stockCode = body.stockCode || body.code
 
-    if (!code) {
+    if (!stockCode) {
       return NextResponse.json(
-        { success: false, error: 'code is required' },
+        { success: false, error: 'stockCode is required' },
         { status: 400 }
       )
     }
 
     await prisma.stockWatchlist.deleteMany({
-      where: { stockCode: code, userId: null },
+      where: { stockCode, userId: null },
     })
 
     return NextResponse.json({ success: true })

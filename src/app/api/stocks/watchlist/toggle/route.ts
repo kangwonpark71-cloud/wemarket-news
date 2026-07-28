@@ -4,17 +4,19 @@ import prisma from '@/lib/db'
 // POST /api/stocks/watchlist/toggle — Toggle watchlist status
 export async function POST(request: Request) {
   try {
-    const { code, name } = await request.json()
+    const body = await request.json()
+    const stockCode = body.stockCode || body.code
+    const stockName = body.stockName || body.name
 
-    if (!code || !name) {
+    if (!stockCode || !stockName) {
       return NextResponse.json(
-        { success: false, error: 'code and name are required' },
+        { success: false, error: 'stockCode and stockName are required' },
         { status: 400 }
       )
     }
 
     const existing = await prisma.stockWatchlist.findFirst({
-      where: { stockCode: code, userId: null },
+      where: { stockCode, userId: null },
     })
 
     if (existing) {
@@ -22,7 +24,7 @@ export async function POST(request: Request) {
       return NextResponse.json({ success: true, data: { watchlisted: false } })
     } else {
       await prisma.stockWatchlist.create({
-        data: { stockCode: code, stockName: name },
+        data: { stockCode, stockName },
       })
       return NextResponse.json({ success: true, data: { watchlisted: true } })
     }

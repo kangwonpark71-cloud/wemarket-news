@@ -415,7 +415,7 @@ export function StockPage() {
                     <td className="px-4 py-3">
                       <button
                         onClick={(e) => toggleWatchlist(stock.code, stock.name, e)}
-                        className={`text-lg transition-colors ${watchlist.has(stock.code) ? 'text-yellow-500 hover:text-yellow-600' : 'text-muted-foreground/30 hover:text-yellow-400'}`}
+                        className={`text-lg transition-colors ${watchlist.has(stock.code) ? 'text-yellow-500 hover:text-yellow-600' : 'text-gray-300 dark:text-gray-600 hover:text-yellow-400'}`}
                         title={watchlist.has(stock.code) ? '관심종목 해제' : '관심종목 등록'}
                       >
                         {watchlist.has(stock.code) ? '★' : '☆'}
@@ -448,6 +448,12 @@ export function StockPage() {
                 ))}
               </tbody>
             </table>
+            {watchlistOnly && filteredStocks.length === 0 && (
+              <div className="py-12 text-center text-muted-foreground">
+                <p className="text-lg mb-2">★ 관심종목이 없습니다</p>
+                <p className="text-sm">종목별 ☆ 버튼을 클릭하여 관심종목을 등록하세요</p>
+              </div>
+            )}
           </div>
 
           {selectedStock && (
