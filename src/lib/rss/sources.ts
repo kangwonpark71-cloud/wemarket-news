@@ -116,13 +116,22 @@ export const DOMESTIC_CATEGORY_SOURCES: RSSSourceConfig[] = [
   },
   // 연예
   {
-    name: '연합뉴스TV 연예',
-    nameEn: 'yonhapnewstv_entertainment',
-    url: 'http://www.yonhapnewstv.co.kr/category/news/entertainment/feed/',
+    name: '한국경제 연예',
+    nameEn: 'hankyung_entertainment',
+    url: 'https://www.hankyung.com/feed/entertainment',
     category: 'domestic',
     subcategory: 'entertainment',
     language: 'ko',
     icon: '🎬',
+  },
+  {
+    name: '서울경제 서경스타',
+    nameEn: 'sedaily_entertainment',
+    url: 'https://www.sedaily.com/Rss/Entertainment',
+    category: 'domestic',
+    subcategory: 'entertainment',
+    language: 'ko',
+    icon: '🌟',
   },
   // 스포츠
   {
