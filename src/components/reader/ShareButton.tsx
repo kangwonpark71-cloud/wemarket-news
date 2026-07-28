@@ -10,9 +10,11 @@ interface ShareButtonProps {
   className?: string
 }
 
-type ShareNetwork = 'x' | 'facebook' | 'line'
+type ShareNetwork = 'kakao' | 'x' | 'facebook' | 'line'
 
 const SHARE_TARGETS: Record<ShareNetwork, (url: string, title: string) => string> = {
+  kakao: (url, title) =>
+    `kakaotalk://msg/text/${encodeURIComponent(`${title}\n\n${url}`)}`,
   x: (url, title) =>
     `https://twitter.com/intent/tweet?text=${encodeURIComponent(title)}&url=${encodeURIComponent(url)}`,
   facebook: (url) => `https://www.facebook.com/sharer/sharer.php?u=${encodeURIComponent(url)}`,
@@ -36,6 +38,7 @@ export function ShareButton({
     copy: language === 'ko' ? '링크 복사' : 'Copy link',
     copied: language === 'ko' ? '복사됨' : 'Copied',
     native: language === 'ko' ? '다른 앱으로 공유' : 'Share via…',
+    kakao: '카카오톡',
     x: 'X',
     facebook: 'Facebook',
     line: 'LINE',
@@ -115,7 +118,7 @@ export function ShareButton({
             >
               {copied ? labels.copied : labels.copy}
             </button>
-            {(['x', 'facebook', 'line'] as ShareNetwork[]).map((network) => (
+            {(['kakao', 'x', 'facebook', 'line'] as ShareNetwork[]).map((network) => (
               <button
                 key={network}
                 type="button"

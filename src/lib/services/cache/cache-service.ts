@@ -5,6 +5,9 @@
 
 import { prisma } from '@/lib/db';
 import type { Redis } from 'ioredis';
+import { createLogger } from '@/lib/logger';
+
+const log = createLogger('Cache');
 
 class CacheService {
   private redis: Redis | null = null;
@@ -37,15 +40,15 @@ class CacheService {
 
         redis.on('error', (err: Error) => {
           this.useRedis = false;
-          console.warn('[Cache] Redis error, falling back to memory:', err.message);
+          log.warn('Redis error, falling back to memory:', err.message);
         });
 
         await redis.connect();
       } else {
-        console.log('[Cache] Redis URL not configured, using in-memory cache');
+        log.info('Redis URL not configured, using in-memory cache');
       }
     } catch (error) {
-      console.warn('[Cache] Failed to initialize Redis, using in-memory cache:', error);
+      log.warn('Failed to initialize Redis, using in-memory cache:', error);
     }
   }
 
@@ -68,7 +71,7 @@ class CacheService {
         const value = await this.redis.get(fullKey);
         if (value) return JSON.parse(value) as T;
       } catch (error) {
-        console.warn('[Cache] Redis get failed, falling back to memory:', error);
+        log.warn('Redis get failed, falling back to memory:', error);
       }
     }
 
@@ -91,7 +94,7 @@ class CacheService {
         await this.redis.setex(fullKey, ttl, JSON.stringify(value));
         return;
       } catch (error) {
-        console.warn('[Cache] Redis set failed, falling back to memory:', error);
+        log.warn('Redis set failed, falling back to memory:', error);
       }
     }
 
@@ -108,7 +111,7 @@ class CacheService {
       try {
         await this.redis.del(fullKey);
       } catch (error) {
-        console.warn('[Cache] Redis delete failed:', error);
+        log.warn('Redis delete failed:', error);
       }
     }
 
@@ -139,7 +142,7 @@ class CacheService {
           await this.redis.del(...keys);
         }
       } catch (error) {
-        console.warn('[Cache] Redis deleteByPattern failed:', error);
+        log.warn('Redis deleteByPattern failed:', error);
       }
     }
 
@@ -169,7 +172,7 @@ class CacheService {
         const result = await this.redis.set(fullKey, uniqueVal, 'EX', ttlSeconds, 'NX');
         return result === 'OK';
       } catch (error) {
-        console.warn('[Cache] Redis acquireLock failed, falling back to DB:', error);
+        log.warn('Redis acquireLock failed, falling back to DB:', error);
       }
     }
 
@@ -203,7 +206,7 @@ class CacheService {
         throw createErr;
       }
     } catch (err) {
-      console.warn('[Cache] Non-Redis acquireLock failed:', err);
+      log.warn('Non-Redis acquireLock failed:', err);
       return false;
     }
   }
@@ -218,7 +221,7 @@ class CacheService {
         await this.redis.del(fullKey);
         return;
       } catch (error) {
-        console.warn('[Cache] Redis releaseLock failed:', error);
+        log.warn('Redis releaseLock failed:', error);
       }
     }
 

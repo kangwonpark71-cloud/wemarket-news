@@ -10,6 +10,9 @@ import { upbitService } from '@/lib/services/crypto/crypto-service'
 import { marketService } from '@/lib/services/market/market-service'
 import { runJobWithLock } from '@/lib/utils/lock'
 import { prisma } from '@/lib/db'
+import { createLogger } from '@/lib/logger'
+
+const log = createLogger('FinancialScheduler')
 
 export interface FinancialSchedulerConfig extends SchedulerConfig {
   stockPriceInterval: number      // ms: default 5 min
@@ -52,16 +55,16 @@ export class FinancialScheduler extends BaseScheduler {
 
   async start(): Promise<void> {
     if (!this.config.enabled) {
-      console.log(`[${this.config.name}] Scheduler is disabled`)
+      log.info('Scheduler is disabled')
       return
     }
 
     if (this.cronTasks.length > 0 || this.intervalIds.length > 0) {
-      console.warn(`[${this.config.name}] Scheduler already started`)
+      log.warn('Scheduler already started')
       return
     }
 
-    console.log(`[${this.config.name}] Starting scheduler...`)
+    log.info('Starting scheduler...')
 
     // Periodic interval-based tasks
     this.addInterval('stock-price', this.finConfig.stockPriceInterval, () => this.updateStockPrices())
@@ -92,10 +95,10 @@ export class FinancialScheduler extends BaseScheduler {
         await this.updateCryptoTickers().catch(() => {})
         await this.updateForexRates().catch(() => {})
         await this.updateGlobalIndices().catch(() => {})
-      }).catch(err => console.error(`[${this.config.name}] Initial sync error:`, err))
+      }).catch(err => log.error('Initial sync error:', err))
     }, this.finConfig.initialDelay)
 
-    console.log(`[${this.config.name}] Scheduler started`)
+    log.info('Scheduler started')
   }
 
   async stop(): Promise<void> {
@@ -109,7 +112,7 @@ export class FinancialScheduler extends BaseScheduler {
     }
     this.intervalIds = []
 
-    console.log(`[${this.config.name}] Scheduler stopped`)
+    log.info('Scheduler stopped')
   }
 
   private addInterval(name: string, intervalMs: number, jobFn: () => Promise<void>): void {
@@ -125,7 +128,7 @@ export class FinancialScheduler extends BaseScheduler {
       async () => {
         const acquired = await runJobWithLock(name, jobFn, this.finConfig.lockTimeout)
         if (!acquired) {
-          console.log(`[${this.config.name}] Could not acquire lock for ${name}, skipping`)
+          log.info(`Could not acquire lock for ${name}, skipping`)
         }
       },
       {
@@ -147,7 +150,7 @@ export class FinancialScheduler extends BaseScheduler {
       const pricesArray = Array.from(prices.values())
       await koreaInvestmentService.saveStockPricesToDb(pricesArray)
     } catch (error) {
-      console.error(`[${this.config.name}] Failed to update stock prices:`, error)
+      log.error('Failed to update stock prices:', error)
       throw error
     }
   }
@@ -157,7 +160,7 @@ export class FinancialScheduler extends BaseScheduler {
       const tickers = await upbitService.getAllTickers()
       await upbitService.saveTickersToDb(tickers)
     } catch (error) {
-      console.error(`[${this.config.name}] Failed to update crypto tickers:`, error)
+      log.error('Failed to update crypto tickers:', error)
       throw error
     }
   }
@@ -167,7 +170,7 @@ export class FinancialScheduler extends BaseScheduler {
       const rates = await marketService.getAllExchangeRates()
       await marketService.saveExchangeRatesToDb(rates)
     } catch (error) {
-      console.error(`[${this.config.name}] Failed to update forex rates:`, error)
+      log.error('Failed to update forex rates:', error)
       throw error
     }
   }
@@ -177,7 +180,7 @@ export class FinancialScheduler extends BaseScheduler {
       const indices = await marketService.getGlobalIndices()
       await marketService.saveGlobalIndicesToDb(indices)
     } catch (error) {
-      console.error(`[${this.config.name}] Failed to update global indices:`, error)
+      log.error('Failed to update global indices:', error)
       throw error
     }
   }
@@ -186,7 +189,7 @@ export class FinancialScheduler extends BaseScheduler {
     try {
       await koreaInvestmentService.syncStockMasterToDb()
     } catch (error) {
-      console.error(`[${this.config.name}] Failed to sync stock master:`, error)
+      log.error('Failed to sync stock master:', error)
       throw error
     }
   }
@@ -195,7 +198,7 @@ export class FinancialScheduler extends BaseScheduler {
     try {
       await upbitService.syncMarketsToDb()
     } catch (error) {
-      console.error(`[${this.config.name}] Failed to sync crypto markets:`, error)
+      log.error('Failed to sync crypto markets:', error)
       throw error
     }
   }
@@ -321,7 +324,7 @@ export class FinancialScheduler extends BaseScheduler {
         })
       }
     } catch (error) {
-      console.error(`[${this.config.name}] Failed to calculate daily stats:`, error)
+      log.error('Failed to calculate daily stats:', error)
     }
   }
 
@@ -357,7 +360,7 @@ export class FinancialScheduler extends BaseScheduler {
         },
       })
     } catch (error) {
-      console.error(`[${this.config.name}] Failed to cleanup old data:`, error)
+      log.error('Failed to cleanup old data:', error)
     }
   }
 

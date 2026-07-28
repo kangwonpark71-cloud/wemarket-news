@@ -7,6 +7,9 @@ import { BaseScheduler, SchedulerMetrics } from './base-scheduler'
 import { RSSScheduler } from './rss-scheduler'
 import { AIITScheduler } from './ai-it-scheduler'
 import { FinancialScheduler } from './financial-scheduler'
+import { createLogger } from '@/lib/logger'
+
+const log = createLogger('SchedulerManager')
 
 export interface SchedulerManagerConfig {
   enabled: boolean
@@ -42,7 +45,7 @@ export class SchedulerManager {
    */
   register(name: string, scheduler: BaseScheduler): void {
     if (this.schedulers.has(name)) {
-      console.warn(`[SchedulerManager] Scheduler '${name}' already registered`)
+      log.warn(`Scheduler '${name}' already registered`)
       return
     }
 
@@ -51,7 +54,7 @@ export class SchedulerManager {
       restartAttempts: 0,
     })
 
-    console.log(`[SchedulerManager] Registered scheduler: ${name}`)
+    log.info(`Registered scheduler: ${name}`)
   }
 
   /**
@@ -59,7 +62,7 @@ export class SchedulerManager {
    */
   unregister(name: string): void {
     this.schedulers.delete(name)
-    console.log(`[SchedulerManager] Unregistered scheduler: ${name}`)
+    log.info(`Unregistered scheduler: ${name}`)
   }
 
   /**
@@ -67,18 +70,18 @@ export class SchedulerManager {
    */
   async startAll(): Promise<void> {
     if (!this.config.enabled) {
-      console.log('[SchedulerManager] Manager is disabled')
+      log.info('Manager is disabled')
       return
     }
 
-    console.log('[SchedulerManager] Starting all schedulers...')
+    log.info('Starting all schedulers...')
 
     const startPromises = Array.from(this.schedulers.entries()).map(async ([name, entry]) => {
       try {
         await entry.scheduler.start()
-        console.log(`[SchedulerManager] Started scheduler: ${name}`)
+        log.info(`Started scheduler: ${name}`)
       } catch (error) {
-        console.error(`[SchedulerManager] Failed to start scheduler '${name}':`, error)
+        log.error(`Failed to start scheduler '${name}':`, error)
       }
     })
 
@@ -87,14 +90,14 @@ export class SchedulerManager {
     // Start health checks
     this.startHealthChecks()
 
-    console.log('[SchedulerManager] All schedulers started')
+    log.info('All schedulers started')
   }
 
   /**
    * Stop all schedulers
    */
   async stopAll(): Promise<void> {
-    console.log('[SchedulerManager] Stopping all schedulers...')
+    log.info('Stopping all schedulers...')
 
     // Stop health checks
     if (this.healthCheckTimer) {
@@ -105,14 +108,14 @@ export class SchedulerManager {
     const stopPromises = Array.from(this.schedulers.entries()).map(async ([name, entry]) => {
       try {
         await entry.scheduler.stop()
-        console.log(`[SchedulerManager] Stopped scheduler: ${name}`)
+        log.info(`Stopped scheduler: ${name}`)
       } catch (error) {
-        console.error(`[SchedulerManager] Failed to stop scheduler '${name}':`, error)
+        log.error(`Failed to stop scheduler '${name}':`, error)
       }
     })
 
     await Promise.allSettled(stopPromises)
-    console.log('[SchedulerManager] All schedulers stopped')
+    log.info('All schedulers stopped')
   }
 
   /**
@@ -127,7 +130,7 @@ export class SchedulerManager {
       await this.checkHealth()
     }, this.config.healthCheckInterval)
 
-    console.log(`[SchedulerManager] Health checks started (interval: ${this.config.healthCheckInterval}ms)`)
+    log.info(`Health checks started (interval: ${this.config.healthCheckInterval}ms)`)
   }
 
   /**
@@ -138,13 +141,13 @@ export class SchedulerManager {
       const health = entry.scheduler.getHealthStatus()
 
       if (!health.healthy) {
-        console.warn(`[SchedulerManager] Scheduler '${name}' is unhealthy:`, health.issues)
+        log.warn(`Scheduler '${name}' is unhealthy:`, health.issues)
 
         // Attempt restart if under limit
         if (entry.restartAttempts < this.config.maxRestartAttempts) {
           await this.restartScheduler(name)
         } else {
-          console.error(`[SchedulerManager] Scheduler '${name}' exceeded max restart attempts`)
+          log.error(`Scheduler '${name}' exceeded max restart attempts`)
         }
       }
     }
@@ -156,7 +159,7 @@ export class SchedulerManager {
   async restartScheduler(name: string): Promise<boolean> {
     const entry = this.schedulers.get(name)
     if (!entry) {
-      console.error(`[SchedulerManager] Scheduler '${name}' not found`)
+      log.error(`Scheduler '${name}' not found`)
       return false
     }
 
@@ -164,12 +167,12 @@ export class SchedulerManager {
     if (entry.lastRestart) {
       const timeSinceLastRestart = Date.now() - entry.lastRestart.getTime()
       if (timeSinceLastRestart < this.config.restartDelay) {
-        console.warn(`[SchedulerManager] Scheduler '${name}' recently restarted, skipping`)
+        log.warn(`Scheduler '${name}' recently restarted, skipping`)
         return false
       }
     }
 
-    console.log(`[SchedulerManager] Restarting scheduler: ${name}`)
+    log.info(`Restarting scheduler: ${name}`)
 
     try {
       await entry.scheduler.stop()
@@ -179,10 +182,10 @@ export class SchedulerManager {
       entry.restartAttempts++
       entry.lastRestart = new Date()
 
-      console.log(`[SchedulerManager] Scheduler '${name}' restarted successfully`)
+      log.info(`Scheduler '${name}' restarted successfully`)
       return true
     } catch (error) {
-      console.error(`[SchedulerManager] Failed to restart scheduler '${name}':`, error)
+      log.error(`Failed to restart scheduler '${name}':`, error)
       return false
     }
   }

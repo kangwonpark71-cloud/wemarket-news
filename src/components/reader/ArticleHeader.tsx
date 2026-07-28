@@ -1,5 +1,6 @@
 import Link from 'next/link'
 import { formatDate } from '@/lib/utils'
+import { calculateReadingTime, formatReadingTime } from '@/lib/reading-time'
 import type { ReaderArticle, ReaderLanguage } from './types'
 import VoiceButton from '@/components/news/VoiceButton'
 
@@ -72,6 +73,12 @@ export function ArticleHeader({ article, language, backHref, backLabel }: Articl
         </time>
         <span aria-hidden="true" className="text-muted-foreground/40">·</span>
         <span className="capitalize">{isKorean ? '한국어' : 'English'}</span>
+        {article.content && (
+          <>
+            <span aria-hidden="true" className="text-muted-foreground/40">·</span>
+            <span>약 {formatReadingTime(calculateReadingTime(article.content, article.language))} 소요</span>
+          </>
+        )}
       </div>
     </header>
   )

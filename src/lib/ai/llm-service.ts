@@ -59,7 +59,8 @@ export async function summarizeWithLLM(
   }
 
   const data = await response.json()
-  const parsed: AISummaryResult = JSON.parse(data.choices[0].message.content)
+  const responseContent = data.choices[0].message.content as string
+  const parsed = JSON.parse(responseContent) as AISummaryResult
 
   return {
     translatedTitle: parsed.translatedTitle,
@@ -104,7 +105,7 @@ export async function translateTitleQuick(title: string): Promise<string> {
   }
 
   const data = await response.json();
-  const parsed = JSON.parse(data.choices[0].message.content);
+  const parsed = JSON.parse(data.choices[0].message.content) as { translatedTitle?: string };
   return parsed.translatedTitle || title;
 }
 
