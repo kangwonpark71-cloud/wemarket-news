@@ -7,6 +7,10 @@ import { fetchProgressPubSub } from '@/lib/sse/pubsub'
 import { runJobWithLock } from '@/lib/utils/lock'
 import { logSchedulerError, logSchedulerSuccess, createSafeSchedulerJob } from '@/lib/utils/scheduler-error-handler'
 
+import { createLogger } from '@/lib/logger'
+
+const log = createLogger('RSSFinder')
+
 export interface FetchResult {
   source: string
   status: 'success' | 'partial' | 'error' | 'skipped'
@@ -121,18 +125,18 @@ export function startRssScheduler() {
     retryCount: 2,
     retryDelay: 5000,
     onError: (error) => {
-      console.error('[Scheduler] Cron error:', error.message)
+      log.error('[Scheduler] Cron error:', error.message)
     },
   })
 
   cron.schedule('0 */3 * * *', () => {
-    safeRssFetch().catch(err => console.error('[Scheduler] Cron error:', err))
+    safeRssFetch().catch(err => log.error('[Scheduler] Cron error:', err))
   })
 
   setTimeout(() => {
     safeRssFetch().then(results => {
       if (!results || results.length === 0) return;
-    }).catch(err => console.error('[Scheduler] Initial fetch error:', err))
+    }).catch(err => log.error('[Scheduler] Initial fetch error:', err))
   }, 2000)
 
 }

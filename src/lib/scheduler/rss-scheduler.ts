@@ -7,6 +7,9 @@ import cron, { type ScheduledTask } from 'node-cron'
 import { BaseScheduler, SchedulerConfig } from './base-scheduler'
 import { runRssFetch } from '@/lib/rss/scheduler'
 import { cacheService } from '@/lib/services/cache/cache-service'
+import { createLogger } from '@/lib/logger'
+
+const log = createLogger('RSSScheduler')
 
 export interface RSSSchedulerConfig extends SchedulerConfig {
   fetchInterval: string // cron expression
@@ -38,16 +41,16 @@ export class RSSScheduler extends BaseScheduler {
 
   async start(): Promise<void> {
     if (!this.config.enabled) {
-      console.log(`[${this.config.name}] Scheduler is disabled`)
+      log.info('Scheduler is disabled')
       return
     }
 
     if (this.cronTask) {
-      console.warn(`[${this.config.name}] Scheduler already started`)
+      log.warn('Scheduler already started')
       return
     }
 
-    console.log(`[${this.config.name}] Starting scheduler with interval: ${this.rssConfig.fetchInterval}`)
+    log.info(`Starting scheduler with interval: ${this.rssConfig.fetchInterval}`)
 
     // Schedule cron job
     this.cronTask = cron.schedule(this.rssConfig.fetchInterval, async () => {
@@ -59,14 +62,14 @@ export class RSSScheduler extends BaseScheduler {
       await this.runFetchJob()
     }, this.rssConfig.initialDelay)
 
-    console.log(`[${this.config.name}] Scheduler started`)
+    log.info('Scheduler started')
   }
 
   async stop(): Promise<void> {
     if (this.cronTask) {
       this.cronTask.stop()
       this.cronTask = null
-      console.log(`[${this.config.name}] Scheduler stopped`)
+      log.info('Scheduler stopped')
     }
   }
 
@@ -78,7 +81,7 @@ export class RSSScheduler extends BaseScheduler {
         const acquired = await cacheService.acquireLock(lockName, this.rssConfig.lockTimeout)
 
         if (!acquired) {
-          console.log(`[${this.config.name}] Could not acquire lock, skipping`)
+          log.info(`Could not acquire lock, skipping`)
           return []
         }
 
@@ -88,7 +91,7 @@ export class RSSScheduler extends BaseScheduler {
           if (results && results.length > 0) {
             const successCount = results.filter(r => r.status === 'success' || r.status === 'partial').length
             const errorCount = results.filter(r => r.status === 'error').length
-            console.log(`[${this.config.name}] Fetch completed: ${successCount} success, ${errorCount} errors`)
+            log.info(`Fetch completed: ${successCount} success, ${errorCount} errors`)
           }
 
           return results ?? []
@@ -110,7 +113,7 @@ export class RSSScheduler extends BaseScheduler {
    * Trigger immediate fetch (for manual triggers)
    */
   async triggerFetch(): Promise<void> {
-    console.log(`[${this.config.name}] Manual fetch triggered`)
+    log.info('Manual fetch triggered')
     await this.runFetchJob()
   }
 

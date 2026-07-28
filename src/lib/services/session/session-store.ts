@@ -1,5 +1,8 @@
 import crypto from 'crypto';
 import type { Redis } from 'ioredis';
+import { createLogger } from '@/lib/logger';
+
+const log = createLogger('SessionStore');
 
 const SESSION_PREFIX = 'economy-news:session:';
 const SESSION_TTL = 7 * 24 * 60 * 60; // 7 days in seconds
@@ -35,18 +38,18 @@ class SessionStore {
 
         redis.on('connect', () => {
           this.useRedis = true;
-          console.log('[Session] Redis connected');
+          log.info('Redis connected');
         });
 
         redis.on('error', (err: Error) => {
           this.useRedis = false;
-          console.warn('[Session] Redis error, falling back to memory:', err.message);
+          log.warn('Redis error, falling back to memory:', err.message);
         });
 
         await redis.connect();
       }
     } catch (error) {
-      console.warn('[Session] Failed to initialize Redis, using in-memory session store:', error);
+      log.warn('Failed to initialize Redis, using in-memory session store:', error);
     }
   }
 
@@ -81,7 +84,7 @@ class SessionStore {
         );
         return sessionId;
       } catch (error) {
-        console.warn('[Session] Redis set failed, falling back to memory:', error);
+        log.warn('Redis set failed, falling back to memory:', error)
       }
     }
 
@@ -103,7 +106,7 @@ class SessionStore {
         }
         return null;
       } catch (error) {
-        console.warn('[Session] Redis get failed, falling back to memory:', error);
+        log.warn('Redis get failed, falling back to memory:', error)
       }
     }
 
@@ -124,7 +127,7 @@ class SessionStore {
       try {
         await this.redis.del(key);
       } catch (error) {
-        console.warn('[Session] Redis delete failed:', error);
+        log.warn('Redis delete failed:', error)
       }
     }
 
@@ -160,7 +163,7 @@ class SessionStore {
           }
         }
       } catch (error) {
-        console.warn('[Session] Redis deleteAllUserSessions failed:', error);
+        log.warn('Redis deleteAllUserSessions failed:', error)
       }
     }
 
@@ -183,7 +186,7 @@ class SessionStore {
         }
         return false;
       } catch (error) {
-        console.warn('[Session] Redis extend failed:', error);
+        log.warn('Redis extend failed:', error)
       }
     }
 
