@@ -1,6 +1,7 @@
 import prisma from '@/lib/db';
 import { Prisma } from '@prisma/client';
 import { containsFilter } from '@/lib/db-utils';
+import { parseList } from '@/lib/utils/list-fields';
 
 export interface SearchParams {
   query?: string;
@@ -226,11 +227,12 @@ export async function getSearchSuggestions(query: string, limit = 10): Promise<s
   tagMatches.forEach(t => suggestions.add(t.name));
   companyMatches.forEach(c => {
     const raw = c.summary?.relatedCompanies;
-    if (raw && raw.length > 0) {
-      raw
+    const companies = parseList(raw);
+    if (companies.length > 0) {
+      companies
         .map(comp => comp.trim())
-        .filter(comp => comp.length > 0 && comp.toLowerCase().includes(lowerQuery))
-        .forEach(comp => suggestions.add(comp));
+        .filter((comp: string) => comp.length > 0 && comp.toLowerCase().includes(lowerQuery))
+        .forEach((comp: string) => suggestions.add(comp));
     }
   });
 
@@ -264,9 +266,9 @@ export async function getTrendingTopics(hours = 24, limit = 10): Promise<{ topic
   const topicCounts = new Map<string, number>();
 
   for (const article of articles) {
-    const keywords = article.summary?.keywords || [];
-    const models = article.summary?.relatedModels || [];
-    const companies = article.summary?.relatedCompanies || [];
+    const keywords = parseList(article.summary?.keywords);
+    const models = parseList(article.summary?.relatedModels);
+    const companies = parseList(article.summary?.relatedCompanies);
     const tags = article.tags.map(t => t.tag.name);
 
     for (const term of [...keywords, ...models, ...companies, ...tags]) {

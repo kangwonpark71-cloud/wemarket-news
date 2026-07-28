@@ -2,6 +2,7 @@ import prisma from '@/lib/db';
 import { AIITParsedArticle } from './fetcher';
 import { Prisma, Article, Source, NewsSummary } from '@prisma/client';
 import { scheduleTranslation } from '@/lib/rss/db-service';
+import { stringifyList } from '@/lib/utils/list-fields';
 
 export type AINewsWithSource = Article & { source: Source; summary?: NewsSummary | null; tags?: { tag: { name: string } }[] };
 export type ITSummaryWithNews = NewsSummary & { news: Article };
@@ -325,18 +326,18 @@ export async function upsertSummary(
     update: {
       translatedTitle: summaryData.translatedTitle,
       summary3Line: summaryData.summary3Line,
-      keywords: summaryData.keywords,
-      relatedCompanies: summaryData.relatedCompanies,
-      relatedModels: summaryData.relatedModels,
+      keywords: stringifyList(summaryData.keywords),
+      relatedCompanies: stringifyList(summaryData.relatedCompanies),
+      relatedModels: stringifyList(summaryData.relatedModels),
       difficulty: summaryData.difficulty,
     },
     create: {
       articleId: newsId,
       translatedTitle: summaryData.translatedTitle,
       summary3Line: summaryData.summary3Line,
-      keywords: summaryData.keywords,
-      relatedCompanies: summaryData.relatedCompanies,
-      relatedModels: summaryData.relatedModels,
+      keywords: stringifyList(summaryData.keywords),
+      relatedCompanies: stringifyList(summaryData.relatedCompanies),
+      relatedModels: stringifyList(summaryData.relatedModels),
       difficulty: summaryData.difficulty,
     },
   });

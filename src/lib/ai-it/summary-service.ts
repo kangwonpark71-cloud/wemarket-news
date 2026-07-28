@@ -7,6 +7,8 @@ export interface AISummaryResult {
   relatedCompanies: string[];
   relatedModels: string[];
   difficulty: 'beginner' | 'intermediate' | 'advanced';
+  aiGenerated?: boolean;
+  modelUsed?: string;
 }
 
 const COMPANY_KEYWORDS = [
