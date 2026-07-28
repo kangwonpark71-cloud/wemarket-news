@@ -1,5 +1,6 @@
-import { getArticleById, getRelatedArticles, saveArticleContent } from '@/lib/rss/db-service'
+import { getArticleById, getRelatedArticles, saveArticleContent, saveTranslatedContent } from '@/lib/rss/db-service'
 import { scrapeArticleContent, stripJunkPatterns } from '@/lib/rss/content-scraper'
+import { translateFullContent } from '@/lib/ai/llm-service'
 import type { Metadata } from 'next'
 import { notFound } from 'next/navigation'
 import { absoluteUrl } from '@/lib/utils'
@@ -71,6 +72,18 @@ export default async function ArticleDetailPage({ params }: Props) {
   }
 
   const isEnglish = article.language === 'en'
+
+  if (isEnglish && article.content && !article.translatedContent) {
+    try {
+      const translated = await translateFullContent(article.title, article.content)
+      if (translated) {
+        await saveTranslatedContent(id, translated)
+        article.translatedContent = translated
+      }
+    } catch (err) {
+      console.warn('[Article] Full translation failed:', err)
+    }
+  }
   const language: ReaderLanguage = isEnglish ? 'en' : 'ko'
   const source = article.source
   const translatedTitle = article.summary?.translatedTitle
@@ -118,7 +131,31 @@ export default async function ArticleDetailPage({ params }: Props) {
       {article.description && <ArticleLead text={article.description} />}
 
       {article.content ? (
-        <ArticleBody content={article.content} />
+        <div>
+          <ArticleBody content={article.content} />
+
+          {isEnglish && article.translatedContent && (
+            <div className="mt-8">
+              <div className="relative my-6">
+                <div className="absolute inset-0 flex items-center">
+                  <div className="w-full border-t border-border" />
+                </div>
+                <div className="relative flex justify-center">
+                  <span className="bg-background px-4 text-sm font-medium text-muted-foreground">
+                    한국어 번역
+                  </span>
+                </div>
+              </div>
+              <ArticleBody content={article.translatedContent} />
+            </div>
+          )}
+
+          {isEnglish && !article.translatedContent && (
+            <div className="mt-8 text-center">
+              <p className="text-sm text-muted-foreground">한국어 번역을 준비 중입니다...</p>
+            </div>
+          )}
+        </div>
       ) : (
         <div className="rounded-sm bg-muted/50 p-8 text-center text-muted-foreground" role="alert">
           <p className="mb-4 text-lg">

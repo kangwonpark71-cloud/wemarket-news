@@ -108,6 +108,42 @@ export async function translateTitleQuick(title: string): Promise<string> {
   return parsed.translatedTitle || title;
 }
 
+export async function translateFullContent(title: string, content: string): Promise<string> {
+  const truncated = content.length > 12000 ? content.substring(0, 12000) + '\n...(truncated)' : content
+
+  const response = await fetch(LLM_API_URL, {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      Authorization: `Bearer ${getApiKey()}`,
+    },
+    body: JSON.stringify({
+      model: 'gpt-4o-mini',
+      messages: [
+        {
+          role: 'system',
+          content:
+            'You are a professional Korean translator. Translate the following English news article into natural, fluent Korean. Preserve the article structure (paragraphs). Do NOT add any commentary or explanation — return ONLY the Korean translation.',
+        },
+        {
+          role: 'user',
+          content: `Translate this English news article to Korean:\n\nTitle: ${title}\n\nContent:\n${truncated}`,
+        },
+      ],
+      temperature: 0.2,
+      max_tokens: 4000,
+    }),
+  })
+
+  if (!response.ok) {
+    const errText = await response.text().catch(() => 'unknown')
+    throw new Error(`LLM API error ${response.status}: ${errText}`)
+  }
+
+  const data = await response.json()
+  return data.choices[0].message.content || ''
+}
+
 export async function summarizeWithLLMFallback(
   title: string,
   description?: string,

@@ -52,6 +52,163 @@ export const DOMESTIC_SOURCES: RSSSourceConfig[] = [
   },
 ]
 
+// =============================================
+// 국내 카테고리별 소스 (정치, 사회, 문화, 연예, 스포츠)
+// =============================================
+
+export const DOMESTIC_CATEGORY_SOURCES: RSSSourceConfig[] = [
+  // 정치
+  {
+    name: '연합뉴스TV 정치',
+    nameEn: 'yonhapnewstv_politics',
+    url: 'http://www.yonhapnewstv.co.kr/category/news/politics/feed/',
+    category: 'domestic',
+    subcategory: 'politics',
+    language: 'ko',
+    icon: '🏛️',
+  },
+  {
+    name: 'YTN 정치',
+    nameEn: 'ytn_politics',
+    url: 'https://www.ytn.co.kr/rss/rss_politics.xml',
+    category: 'domestic',
+    subcategory: 'politics',
+    language: 'ko',
+    icon: '📺',
+  },
+  // 사회
+  {
+    name: '연합뉴스TV 사회',
+    nameEn: 'yonhapnewstv_society',
+    url: 'http://www.yonhapnewstv.co.kr/category/news/society/feed/',
+    category: 'domestic',
+    subcategory: 'society',
+    language: 'ko',
+    icon: '👥',
+  },
+  {
+    name: 'YTN 사회',
+    nameEn: 'ytn_society',
+    url: 'https://www.ytn.co.kr/rss/rss_society.xml',
+    category: 'domestic',
+    subcategory: 'society',
+    language: 'ko',
+    icon: '📺',
+  },
+  // 문화
+  {
+    name: '연합뉴스TV 문화',
+    nameEn: 'yonhapnewstv_culture',
+    url: 'http://www.yonhapnewstv.co.kr/category/news/culture/feed/',
+    category: 'domestic',
+    subcategory: 'culture',
+    language: 'ko',
+    icon: '🎭',
+  },
+  {
+    name: 'YTN 문화',
+    nameEn: 'ytn_culture',
+    url: 'https://www.ytn.co.kr/rss/rss_culture.xml',
+    category: 'domestic',
+    subcategory: 'culture',
+    language: 'ko',
+    icon: '📺',
+  },
+  // 연예
+  {
+    name: '연합뉴스TV 연예',
+    nameEn: 'yonhapnewstv_entertainment',
+    url: 'http://www.yonhapnewstv.co.kr/category/news/entertainment/feed/',
+    category: 'domestic',
+    subcategory: 'entertainment',
+    language: 'ko',
+    icon: '🎬',
+  },
+  // 스포츠
+  {
+    name: '연합뉴스TV 스포츠',
+    nameEn: 'yonhapnewstv_sports',
+    url: 'http://www.yonhapnewstv.co.kr/category/news/sports/feed/',
+    category: 'domestic',
+    subcategory: 'sports',
+    language: 'ko',
+    icon: '⚽',
+  },
+  {
+    name: 'YTN 스포츠',
+    nameEn: 'ytn_sports',
+    url: 'https://www.ytn.co.kr/rss/rss_sports.xml',
+    category: 'domestic',
+    subcategory: 'sports',
+    language: 'ko',
+    icon: '📺',
+  },
+]
+
+// =============================================
+// 해외 카테고리별 소스 (미국, 유럽, 아시아)
+// =============================================
+
+export const OVERSEAS_CATEGORY_SOURCES: RSSSourceConfig[] = [
+  // 미국
+  {
+    name: 'CNBC Top News',
+    nameEn: 'cnbc_top',
+    url: 'https://search.cnbc.com/rs/search/combinedcms/view.xml?partnerId=wrss01&id=100003114',
+    category: 'overseas',
+    subcategory: 'us_news',
+    language: 'en',
+    icon: '🇺🇸',
+  },
+  {
+    name: 'NPR Top News',
+    nameEn: 'npr_top',
+    url: 'https://feeds.npr.org/1001/rss.xml',
+    category: 'overseas',
+    subcategory: 'us_news',
+    language: 'en',
+    icon: '🇺🇸',
+  },
+  {
+    name: 'BBC US & Canada',
+    nameEn: 'bbc_us',
+    url: 'http://feeds.bbci.co.uk/news/world/us_and_canada/rss.xml',
+    category: 'overseas',
+    subcategory: 'us_news',
+    language: 'en',
+    icon: '🇺🇸',
+  },
+  // 유럽
+  {
+    name: 'BBC Europe',
+    nameEn: 'bbc_europe',
+    url: 'http://feeds.bbci.co.uk/news/world/europe/rss.xml',
+    category: 'overseas',
+    subcategory: 'europe_news',
+    language: 'en',
+    icon: '🇪🇺',
+  },
+  // 아시아
+  {
+    name: 'BBC Asia',
+    nameEn: 'bbc_asia',
+    url: 'http://feeds.bbci.co.uk/news/world/asia/rss.xml',
+    category: 'overseas',
+    subcategory: 'asia_news',
+    language: 'en',
+    icon: '🌏',
+  },
+  {
+    name: 'BBC Middle East',
+    nameEn: 'bbc_middle_east',
+    url: 'http://feeds.bbci.co.uk/news/world/middle_east/rss.xml',
+    category: 'overseas',
+    subcategory: 'asia_news',
+    language: 'en',
+    icon: '🌏',
+  },
+]
+
 // 해외 경제 소스 (연준/Fed)
 export const OVERSEAS_SOURCES: RSSSourceConfig[] = [
   {
@@ -188,7 +345,14 @@ export const SMALLBIZ_SOURCES: RSSSourceConfig[] = [
 ]
 
 // 모든 소스 통합
-export const ALL_SOURCES: RSSSourceConfig[] = [...DOMESTIC_SOURCES, ...OVERSEAS_SOURCES, ...MEDICAL_SOURCES, ...SMALLBIZ_SOURCES]
+export const ALL_SOURCES: RSSSourceConfig[] = [
+  ...DOMESTIC_SOURCES,
+  ...DOMESTIC_CATEGORY_SOURCES,
+  ...OVERSEAS_SOURCES,
+  ...OVERSEAS_CATEGORY_SOURCES,
+  ...MEDICAL_SOURCES,
+  ...SMALLBIZ_SOURCES,
+]
 
 // 카테고리별 소스 가져오기
 export function getSourcesByCategory(category: 'domestic' | 'overseas' | 'medical' | 'smallbiz'): RSSSourceConfig[] {
@@ -202,23 +366,27 @@ export function getSourceByName(nameEn: string): RSSSourceConfig | undefined {
 
 // 서브카테고리 한글 매핑
 export const SUBCATEGORY_LABELS: Record<string, string> = {
-  // 국내
   korean_economy: '한국 경제',
   mk_economy: '매일 경제',
   yonhapnewstv_economy: '연합뉴스TV 경제',
   yonhapnewstv_latest: '연합뉴스TV 최신',
-  // 해외
+  politics: '정치',
+  society: '사회',
+  culture: '문화',
+  entertainment: '연예',
+  sports: '스포츠',
   press_releases: 'Press Releases',
   monetary_policy: 'Monetary Policy',
   speeches: 'Speeches & Testimony',
   feds_notes: 'FEDS Notes',
   interest_rates: 'Selected Interest Rates',
   exchange_rates: 'Foreign Exchange Rates',
-  // 의료
+  us_news: '미국 뉴스',
+  europe_news: '유럽 뉴스',
+  asia_news: '아시아 뉴스',
   medical_policy: '의료정책',
   medical_pharma: '제약·신약',
   medical_research: '해외 의학 연구',
-  // 소상공인
   sbiz_general: '일반 소상공인',
   sbiz_food: '외식·카페',
 }

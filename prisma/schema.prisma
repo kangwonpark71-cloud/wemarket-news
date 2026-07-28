@@ -64,6 +64,7 @@ model Article {
   url             String     @unique
   description     String?
   content         String?    @db.Text // 전체 기사 본문 (스크래핑)
+  translatedContent String?  @db.Text @map("translated_content") // 한국어 번역본 (해외 기사)
   author          String?
   thumbnail       String?    // 썸네일 이미지 URL
   publishedAt     DateTime   @map("published_at")

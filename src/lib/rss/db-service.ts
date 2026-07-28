@@ -244,6 +244,13 @@ export async function saveArticleContent(id: string, content: string): Promise<v
   })
 }
 
+export async function saveTranslatedContent(id: string, translatedContent: string): Promise<void> {
+  await prisma.article.update({
+    where: { id },
+    data: { translatedContent },
+  })
+}
+
 export async function markAsRead(id: string): Promise<void> {
   await prisma.article.update({
     where: { id },
