@@ -79,14 +79,12 @@ export default async function HomePage({ searchParams }: HomePageProps) {
               {breakingArticles.map((article) => (
                 <div key={article.id} className="flex items-start gap-2">
                   <span className="mt-1 h-1.5 w-1.5 flex-shrink-0 rounded-full bg-red-500" />
-                  <a
-                    href={article.url}
-                    target="_blank"
-                    rel="noopener noreferrer"
+                  <Link
+                    href={`/articles/${article.id}`}
                     className="text-sm font-medium text-foreground hover:text-red-600 dark:hover:text-red-400 line-clamp-1"
                   >
                     {article.title}
-                  </a>
+                  </Link>
                   <span className="flex-shrink-0 text-xs text-muted-foreground">
                     {article.source.name}
                   </span>
