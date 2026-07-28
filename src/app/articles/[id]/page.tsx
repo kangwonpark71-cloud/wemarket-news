@@ -1,5 +1,5 @@
 import { getArticleById, getRelatedArticles, saveArticleContent } from '@/lib/rss/db-service'
-import { scrapeArticleContent } from '@/lib/rss/content-scraper'
+import { scrapeArticleContent, stripJunkPatterns } from '@/lib/rss/content-scraper'
 import type { Metadata } from 'next'
 import { notFound } from 'next/navigation'
 import { absoluteUrl } from '@/lib/utils'
@@ -59,6 +59,14 @@ export default async function ArticleDetailPage({ params }: Props) {
     if (result.content) {
       await saveArticleContent(id, result.content)
       article.content = result.content
+    }
+  }
+
+  if (article.content) {
+    const cleaned = stripJunkPatterns(article.content)
+    if (cleaned !== article.content) {
+      await saveArticleContent(id, cleaned)
+      article.content = cleaned
     }
   }
 

@@ -20,6 +20,14 @@ const SOURCE_PATTERNS: Record<string, { selector: string; clean?: string[] }> = 
     selector: '.article-body, .news_cnt, [itemprop="articleBody"]',
     clean: ['.ad', '.banner', '.related_news'],
   },
+  yonhapnewstv: {
+    selector: '.news_CNT, .article_body, .article-content, [itemprop="articleBody"], article .content',
+    clean: [
+      '.ad', '.banner', '.related_news', '.recommend', '.sns_area', '.btn_area',
+      '.video_area', '.player_area', '.tag_area', '.news_keyword', '.article_tag',
+      '.social_share', '.share_area', '.comment_area', '.replay_area',
+    ],
+  },
   default: {
     selector: 'article, [role="main"], main, .post-content, .entry-content, #content, .content',
     clean: ['.ad', '.banner', '.sidebar', '.comments', '.nav'],
@@ -29,6 +37,7 @@ const SOURCE_PATTERNS: Record<string, { selector: string; clean?: string[] }> = 
 function identifySource(url: string): string {
   if (url.includes('hankyung.com')) return 'hankyung'
   if (url.includes('mk.co.kr')) return 'mk'
+  if (url.includes('yonhapnewstv.co.kr')) return 'yonhapnewstv'
   if (url.includes('federalreserve.gov')) return 'fed'
   return 'default'
 }
@@ -40,15 +49,44 @@ function cleanText(text: string): string {
     .replace(/&nbsp;/g, ' ')
     .trim();
 
+  // 이메일 주소 제거
   cleaned = cleaned.replace(/[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}/g, '');
 
+  // 네이버 구독/바로가기
   cleaned = cleaned
     .replace(/▶\s*네이버\s*(에서)?\s*(메인)?\s*에서\s*.*구독하기/gi, '')
-    .replace(/▶\s*.*바로가기/g, '')
-    .replace(/무단\s*전재\s*및\s*재배포\s*금지/gi, '')
+    .replace(/▶\s*.*바로가기/g, '');
+
+  // 저작권/무단전재 고지
+  cleaned = cleaned
+    .replace(/무단\s*전재\s*및?\s*재배포\s*(금지|합니다)/gi, '')
     .replace(/저작권자\s*ⓒ\s*.*금지/gi, '')
-    .replace(/Copyrights\s*ⓒ\s*.*All\s*rights\s*reserved/gi, '')
-    .replace(/\[\s*관련\s*기사\s*\]/gi, '');
+    .replace(/Copyrights?\s*ⓒ\s*.*All\s*rights?\s*reserved/gi, '')
+    .replace(/ⓒ\s*\S+.*무단\s*전재-재배포/gi, '')
+    .replace(/ⓒ\S+.*(?:전재|재배포|학습|활용)\s*금지/gi, '');
+
+  // 관련기사
+  cleaned = cleaned.replace(/\[\s*관련\s*기사\s*\]/gi, '');
+
+  // 비디오 태그 미지원 메시지
+  cleaned = cleaned
+    .replace(/브라우저가\s*video\s*태그를\s*지원하지\s* 않습니다[^.]*\./gi, '')
+    .replace(/죄송하지만\s*다른\s*브라우저를\s*사용하여\s*주십시오\.?/gi, '');
+
+  // SNS/메신저 홍보 (카카오톡, 라인, 텔레그램 등)
+  cleaned = cleaned
+    .replace(/.*(?:카카오톡|카톡)\s*앱에서\s*['"]?\w+['"]?\s*친구\s*추가.*/gi, '')
+    .replace(/.*라인\s*앱에서\s*['"]?\w+['"]?\s*친구\s*추가.*/gi, '')
+    .replace(/.*텔레그램에서\s*['"]?\w+['"]?\s*(친구|채널)\s*추가.*/gi, '')
+    .replace(/.*당신이\s*담은\s*순간이\s*뉴스입니다.*/gi, '');
+
+  // 좋아요/응원해요/후속원해요 등 버튼 텍스트
+  cleaned = cleaned
+    .replace(/좋아요\s*\d+/g, '')
+    .replace(/응원해요\s*\d+/g, '')
+    .replace(/후속\s*원해요\s*\d+/g, '')
+    .replace(/댓글\s*\d+/g, '')
+    .replace(/공유\s*\d*/g, '');
 
   return cleaned.replace(/\s+/g, ' ').trim();
 }
@@ -129,6 +167,10 @@ function extractGeneralContent($: cheerio.CheerioAPI, sourceKey: string, article
       return;
     }
 
+    if (tag === 'video') {
+      return;
+    }
+
     if (tag === 'a') {
       const href = $(el).attr('href') || '';
       if (href.includes('youtube.com/watch') || href.includes('youtu.be/')) {
@@ -159,6 +201,44 @@ function extractGeneralContent($: cheerio.CheerioAPI, sourceKey: string, article
   }
 
   return paragraphs.join('\n\n')
+}
+
+export function stripJunkPatterns(text: string): string {
+  let cleaned = text;
+
+  cleaned = cleaned.replace(/[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}/g, '');
+
+  cleaned = cleaned
+    .replace(/▶\s*네이버\s*(에서)?\s*(메인)?\s*에서\s*.*구독하기/gi, '')
+    .replace(/▶\s*.*바로가기/g, '');
+
+  cleaned = cleaned
+    .replace(/무단\s*전재\s*및?\s*재배포\s*(금지|합니다)/gi, '')
+    .replace(/저작권자\s*ⓒ\s*.*금지/gi, '')
+    .replace(/Copyrights?\s*ⓒ\s*.*All\s*rights?\s*reserved/gi, '')
+    .replace(/ⓒ\s*\S+.*무단\s*전재-재배포/gi, '')
+    .replace(/ⓒ\S+.*(?:전재|재배포|학습|활용)\s*금지/gi, '');
+
+  cleaned = cleaned.replace(/\[\s*관련\s*기사\s*\]/gi, '');
+
+  cleaned = cleaned
+    .replace(/브라우저가\s*video\s*태그를\s*지원하지\s* 않습니다[^.]*\./gi, '')
+    .replace(/죄송하지만\s*다른\s*브라우저를\s*사용하여\s*주십시오\.?/gi, '');
+
+  cleaned = cleaned
+    .replace(/.*(?:카카오톡|카톡)\s*앱에서\s*['"]?\w+['"]?\s*친구\s*추가.*/gim, '')
+    .replace(/.*라인\s*앱에서\s*['"]?\w+['"]?\s*친구\s*추가.*/gim, '')
+    .replace(/.*텔레그램에서\s*['"]?\w+['"]?\s*(친구|채널)\s*추가.*/gim, '')
+    .replace(/.*당신이\s*담은\s*순간이\s*뉴스입니다.*/gim, '');
+
+  cleaned = cleaned
+    .replace(/좋아요\s*\d+/g, '')
+    .replace(/응원해요\s*\d+/g, '')
+    .replace(/후속\s*원해요\s*\d+/g, '')
+    .replace(/댓글\s*\d+/g, '')
+    .replace(/공유\s*\d*/g, '');
+
+  return cleaned.replace(/\n{3,}/g, '\n\n').trim();
 }
 
 export async function scrapeArticleContent(url: string): Promise<ScrapeResult> {
