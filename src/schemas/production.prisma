@@ -64,6 +64,7 @@ model Article {
   url             String     @unique
   description     String?
   content         String?    @db.Text // 전체 기사 본문 (스크래핑)
+  translatedContent String?  @db.Text @map("translated_content") // 한국어 번역본 (해외 기사)
   author          String?
   thumbnail       String?    // 썸네일 이미지 URL
   publishedAt     DateTime   @map("published_at")
@@ -327,6 +328,22 @@ model StockDailyStat {
 
   @@index([date, market])
   @@map("stock_daily_stats")
+}
+
+// =============================================
+// Stock Watchlist (관심종목)
+// =============================================
+
+model StockWatchlist {
+  id        Int      @id @default(autoincrement())
+  createdAt DateTime @default(now()) @map("created_at")
+  stockCode String   @map("stock_code") // Stock.code reference
+  stockName String   @map("stock_name") // Denormalized for quick display
+  userId    String?  @map("user_id") // Optional — for future multi-user support
+
+  @@unique([stockCode, userId])
+  @@index([stockCode])
+  @@map("stock_watchlists")
 }
 
 // =============================================
