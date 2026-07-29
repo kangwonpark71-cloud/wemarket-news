@@ -117,6 +117,19 @@ export default async function BookmarksPage({ searchParams }: BookmarksPageProps
           <div className="mt-4 text-center text-xs text-muted-foreground">
             총 {total.toLocaleString()}건
           </div>
+
+          <div className="mt-6 text-center text-xs text-muted-foreground">
+            <span>위마켓_뉴스 3시간 알림 비서</span>
+            {' · '}
+            <a
+              href="https://url9.vercel.app/"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="text-primary hover:underline"
+            >
+              더 보기 →
+            </a>
+          </div>
         </>
       )}
     </main>
