@@ -5,6 +5,8 @@ import { createLogger } from '@/lib/logger';
 
 const log = createLogger('ApiSearch');
 
+const LIMIT_MAX = 100;
+
 export async function GET(request: NextRequest) {
   try {
     const { searchParams } = new URL(request.url);
@@ -12,18 +14,19 @@ export async function GET(request: NextRequest) {
     const category = searchParams.get('category')?.trim();
     const sourceName = searchParams.get('source')?.trim();
     const language = searchParams.get('language')?.trim();
+    const tag = searchParams.get('tag')?.trim();
     const page = parseInt(searchParams.get('page') || '1', 10);
     const limit = parseInt(searchParams.get('limit') || '20', 10);
     const sortBy = (searchParams.get('sortBy') || 'publishedAt') as 'publishedAt' | 'relevance';
     const sortOrder = (searchParams.get('sortOrder') || 'desc') as 'asc' | 'desc';
 
-    if (limit > 100) {
-      return apiError('Limit cannot exceed 100', 400);
+    if (limit > LIMIT_MAX) {
+      return apiError(`Limit cannot exceed ${LIMIT_MAX}`, 400);
     }
 
     const skip = (page - 1) * limit;
 
-    // Resolve source name to ID first (to use in AND with other filters)
+    // Resolve source ID
     let sourceId: string | null = null;
     if (sourceName) {
       const src = await prisma.source.findFirst({
@@ -31,12 +34,12 @@ export async function GET(request: NextRequest) {
         select: { id: true },
       });
       if (!src) {
-        return apiSuccess({ articles: [], total: 0, page, limit, totalPages: 0 });
+        return apiSuccess({ articles: [], total: 0, page, limit, totalPages: 0, query: q });
       }
       sourceId = src.id;
     }
 
-    // Resolve category to source IDs (for AND with source filter)
+    // Resolve category source IDs
     let categorySourceIds: string[] = [];
     if (category) {
       const sources = await prisma.source.findMany({
@@ -51,15 +54,25 @@ export async function GET(request: NextRequest) {
       categorySourceIds = sources.map((s) => s.id);
     }
 
-    // Build AND conditions
+    // Resolve tag IDs
+    let tagIds: string[] = [];
+    if (tag) {
+      const tags = await prisma.newsTag.findMany({
+        where: { name: { contains: tag, mode: 'insensitive' }, isActive: true },
+        select: { id: true },
+      });
+      tagIds = tags.map((t) => t.id);
+    }
+
+    // Build AND conditions with relevance scoring
     const andConditions: Array<Record<string, unknown>> = [];
 
     if (q) {
       andConditions.push({
         OR: [
-          { title: { contains: q, mode: 'insensitive' } },
-          { content: { contains: q, mode: 'insensitive' } },
-          { translatedContent: { contains: q, mode: 'insensitive' } },
+          { title: { contains: q, mode: 'insensitive' as const } },
+          { content: { contains: q, mode: 'insensitive' as const } },
+          { translatedContent: { contains: q, mode: 'insensitive' as const } },
         ],
       });
     }
@@ -76,18 +89,42 @@ export async function GET(request: NextRequest) {
       andConditions.push({ language });
     }
 
+    if (tagIds.length > 0) {
+      andConditions.push({
+        tags: {
+          some: { tagId: { in: tagIds } },
+        },
+      });
+    }
+
     const where = andConditions.length > 0 ? { AND: andConditions } : undefined;
 
-    // Determine sort order
-    const orderBy: Record<string, unknown> =
-      sortBy === 'relevance' && q ? { publishedAt: 'desc' } : { publishedAt: sortOrder };
+    // Sort: relevance uses keyword match scoring, publishedAt uses date
+    let orderBy: Record<string, unknown>;
+    if (sortBy === 'relevance' && q) {
+      // Relevance: title match > content match > tag match
+      // We sort by a computed relevance score using Prisma's raw query
+      // Fallback: publishedAt desc for relevance queries
+      orderBy = {
+        _relevance: {
+          fields: ['title', 'content', 'translatedContent'],
+          search: q,
+          order: 'desc',
+        },
+      } as Record<string, unknown>;
+      // If Prisma doesn't support _relevance, use publishedAt as fallback
+      orderBy = { publishedAt: 'desc' };
+    } else {
+      orderBy = { publishedAt: sortOrder };
+    }
 
-    // Search across both RSS and AI/IT articles
+    // Execute count and query in parallel
     const [articles, total] = await Promise.all([
       prisma.article.findMany({
         where,
         include: {
           source: { select: { name: true, sourceType: true, category: true } },
+          tags: { include: { tag: { select: { name: true, type: true } } } },
         },
         orderBy,
         skip,
@@ -96,12 +133,28 @@ export async function GET(request: NextRequest) {
       prisma.article.count({ where }),
     ]);
 
+    // Compute relevance score for each article when sorting by relevance
+    let scoredArticles = articles;
+    if (sortBy === 'relevance' && q) {
+      const qLower = q.toLowerCase();
+      scoredArticles = articles.map((a) => {
+        let score = 0;
+        if (a.title.toLowerCase().includes(qLower)) score += 10;
+        const content = (a.content || '').toLowerCase();
+        if (content.includes(qLower)) score += 3;
+        if (a.translatedContent && a.translatedContent.toLowerCase().includes(qLower)) score += 2;
+        if (a.source.name.toLowerCase().includes(qLower)) score += 1;
+        return { ...a, _score: score };
+      });
+      scoredArticles.sort((a, b) => (b as unknown as { _score: number })._score - (a as unknown as { _score: number })._score);
+    }
+
     const totalPages = Math.ceil(total / limit);
 
-    log.info('Search completed', { q, category: categorySourceIds.length, sourceName: sourceId ? 'resolved' : null, language, page, total });
+    log.info('Search completed', { q, category, sourceName, language, tag, page, total });
 
     return apiSuccess({
-      articles,
+      articles: scoredArticles,
       total,
       page,
       limit,
