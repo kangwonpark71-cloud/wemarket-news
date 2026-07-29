@@ -294,4 +294,6 @@ export const CacheTTL = {
   HOUR: 3600,
   HOUR_12: 43200,
   DAY: 86400,
+  AI_SUMMARY: 3600,  // 1 hour TTL for AI summaries
+
 } as const;

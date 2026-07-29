@@ -1,4 +1,5 @@
 import { cacheService } from '@/lib/services/cache/cache-service';
+import { CacheTTL } from '@/lib/services/cache/cache-service';
 
 import { createLogger } from '@/lib/logger';
 const log = createLogger('AISummary')
@@ -143,7 +144,7 @@ export async function generateAISummary(
     difficulty,
   };
   
-  await cacheService.set(cacheKey, result, { ttl: 86400 });
+  await cacheService.set(cacheKey, { ...result, _generatedAt: Date.now() }, { ttl: CacheTTL.AI_SUMMARY });
   
   return result;
 }
