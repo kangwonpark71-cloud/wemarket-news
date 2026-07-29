@@ -8,15 +8,15 @@ interface ArticleHeroProps {
 
 export function ArticleHero({ src, alt, caption }: ArticleHeroProps) {
   return (
-    <figure className="mb-8 -mx-5 sm:-mx-6 lg:mb-12 lg:-mx-16">
-      <div className="relative aspect-[16/9] w-full overflow-hidden bg-muted">
+    <figure className="mb-8 mx-auto max-w-[50%]">
+      <div className="relative aspect-[16/9] w-full overflow-hidden rounded-sm bg-muted">
         <Image
           src={src}
           alt={alt}
           fill
           className="object-cover"
           priority
-          sizes="(max-width: 768px) 100vw, 1200px"
+          sizes="(max-width: 768px) 100vw, 600px"
         />
       </div>
       {caption && (
