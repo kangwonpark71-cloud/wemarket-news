@@ -16,7 +16,8 @@ export function ArticleHero({ src, alt, caption }: ArticleHeroProps) {
           fill
           className="object-cover"
           priority
-          sizes="(max-width: 768px) 100vw, 600px"
+          sizes="(max-width: 768px) 100vw, (max-width: 1024px) 50vw, 600px"
+          quality={85}
         />
       </div>
       {caption && (
