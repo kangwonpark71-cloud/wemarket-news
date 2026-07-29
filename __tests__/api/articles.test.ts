@@ -133,7 +133,7 @@ describe('/api/articles', () => {
   })
 
   it('hides hidden sources for authenticated users', async () => {
-    mockVerifySessionToken.mockReturnValue('user-123')
+    mockVerifySessionToken.mockResolvedValue('user-123')
     ;(prisma.userPreference.findUnique as jest.Mock).mockResolvedValue({
       hiddenSources: 'source-a,source-b',
     })

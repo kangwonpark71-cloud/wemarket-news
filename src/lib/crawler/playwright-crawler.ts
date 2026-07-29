@@ -13,14 +13,13 @@ import type {
   Crawler,
   CrawlerArticle,
   CrawlerFetchResult,
-  CrawlerOptions,
 } from './types';
 import { createErrorResult } from './base-crawler';
 
 export class PlaywrightCrawler implements Crawler {
   readonly name = 'PlaywrightCrawler';
 
-  constructor(_options?: CrawlerOptions) {}
+  constructor() {}
 
   async fetch(source: BaseSourceConfig): Promise<CrawlerFetchResult> {
     try {

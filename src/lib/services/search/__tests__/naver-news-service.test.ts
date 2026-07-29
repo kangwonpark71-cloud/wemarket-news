@@ -221,13 +221,13 @@ describe('searchNaverNewsByDate', () => {
 
 describe('edge cases', () => {
   it('handles missing items field', async () => {
-    setOK({ items: undefined as unknown as object[] })
+    setOK({ items: [] as typeof mockApiResponse.items })
     const result = await searchNaverNews('test')
     expect(result.articles).toHaveLength(0)
   })
 
   it('handles empty items array', async () => {
-    setOK({ items: [] })
+    setOK({ items: [] as typeof mockApiResponse.items })
     const result = await searchNaverNews('test')
     expect(result.articles).toHaveLength(0)
     expect(result.total).toBe(2)

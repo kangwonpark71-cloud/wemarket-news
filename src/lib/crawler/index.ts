@@ -37,7 +37,7 @@ export class UnifiedCrawler implements Crawler {
 
   constructor(options?: CrawlerOptions) {
     this.rss = new RSSCrawler(options);
-    this.playwright = new PlaywrightCrawler(options);
+    this.playwright = new PlaywrightCrawler();
   }
 
   async fetch(source: BaseSourceConfig): Promise<CrawlerFetchResult> {

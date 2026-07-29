@@ -79,7 +79,7 @@ describe('Crawler Test Infrastructure', () => {
   describe('RSSCrawler', () => {
     let RSSCrawler: typeof import('@/lib/crawler/rss-crawler').RSSCrawler;
 
-    beforeAll(() => {
+    beforeAll(async () => {
       jest.resetModules();
       jest.doMock('rss-parser', () => {
         return jest.fn().mockImplementation(() => ({
@@ -97,7 +97,8 @@ describe('Crawler Test Infrastructure', () => {
           }),
         }));
       });
-      RSSCrawler = require('@/lib/crawler/rss-crawler').RSSCrawler;
+      const mod = await import('@/lib/crawler/rss-crawler');
+      RSSCrawler = mod.RSSCrawler;
     });
 
     it('has correct name', () => {
@@ -150,7 +151,7 @@ describe('Crawler Test Infrastructure', () => {
           }),
         }));
       });
-      const { RSSCrawler: MultiRSSCrawler } = require('@/lib/crawler/rss-crawler');
+      const { RSSCrawler: MultiRSSCrawler } = await import('@/lib/crawler/rss-crawler');
 
       const crawler = new MultiRSSCrawler();
       const sources = [
@@ -167,14 +168,14 @@ describe('Crawler Test Infrastructure', () => {
   });
 
   describe('UnifiedCrawler routing', () => {
-    it('creates instance without errors', () => {
-      const { UnifiedCrawler } = require('@/lib/crawler');
+    it('creates instance without errors', async () => {
+      const { UnifiedCrawler } = await import('@/lib/crawler');
       const crawler = new UnifiedCrawler();
       expect(crawler.name).toBe('UnifiedCrawler');
     });
 
     it('fetchAll handles empty source list', async () => {
-      const { UnifiedCrawler } = require('@/lib/crawler');
+      const { UnifiedCrawler } = await import('@/lib/crawler');
       const crawler = new UnifiedCrawler();
       const results = await crawler.fetchAll([]);
       expect(results.size).toBe(0);

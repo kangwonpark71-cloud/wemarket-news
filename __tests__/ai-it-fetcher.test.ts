@@ -69,7 +69,16 @@ const mockCrawlerSource: AIITSourceConfig = {
   },
 }
 
-const mockFeedItems = [
+const mockFeedItems: Array<{
+  title: string;
+  link: string;
+  pubDate: string;
+  isoDate?: string;
+  guid?: string;
+  contentSnippet?: string;
+  content?: string;
+  creator?: string;
+}> = [
   {
     title: '  GPT-5 Released  ',
     link: '  https://openai.com/blog/gpt5  ',

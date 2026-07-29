@@ -76,6 +76,7 @@ describe('Article Upsert', () => {
           publishedAt: new Date('2024-01-15T10:00:00Z'),
           category: 'economy',
           language: 'ko',
+          isBreaking: false,
         },
         include: { source: true },
       })

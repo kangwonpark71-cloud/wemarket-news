@@ -51,7 +51,10 @@ const DEFAULT_SYMBOLS = ['^DJI', '^IXIC', '^GSPC', '^RUT', '^VIX'];
 
 export class GlobalIndexService implements FinancialService {
   private finnhubBaseUrl = 'https://finnhub.io/api/v1';
-  private finnhubApiKey = process.env.FINNHUB_API_KEY || '';
+
+  private get finnhubApiKey(): string {
+    return process.env.FINNHUB_API_KEY || '';
+  }
 
   getProviderInfo(): ProviderInfo {
     return {

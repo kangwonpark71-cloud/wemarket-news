@@ -472,12 +472,14 @@ export class StockService implements FinancialService {
   private kisClient: KoreaInvestmentClient;
   private yahooClient: YahooFinanceClient;
   private useYahooFallback: boolean;
-  private isFallbackMock = false;
+  private isFallbackMock: boolean;
 
   constructor() {
     this.kisClient = new KoreaInvestmentClient();
     this.yahooClient = new YahooFinanceClient();
     this.useYahooFallback = !this.kisClient.isConfigured();
+    // When no KIS credentials, we're in fallback/simulated mode from the start
+    this.isFallbackMock = this.useYahooFallback;
   }
 
   getProviderInfo(): ProviderInfo {

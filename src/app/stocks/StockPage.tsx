@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useState, useRef, useCallback } from 'react';
+import { useEffect, useState, useRef, useCallback, useMemo } from 'react';
 import { FinancialDashboard } from '@/components/financial/FinancialDashboard';
 import { FinancialChart } from '@/components/financial/FinancialChart';
 import { formatKRW, formatNumber } from '@/lib/utils/format';
@@ -76,7 +76,7 @@ export function StockPage() {
   const [watchlist, setWatchlist] = useState<Set<string>>(new Set());
   const [watchlistOnly, setWatchlistOnly] = useState(false);
 
-  const allMasterData = [...masterData, ...addedStocks];
+  const allMasterData = useMemo(() => [...masterData, ...addedStocks], [masterData, addedStocks]);
 
   const fetchMasterData = async () => {
     setLoading(true);
