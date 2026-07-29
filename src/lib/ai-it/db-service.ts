@@ -3,7 +3,7 @@ import { AIITParsedArticle } from './fetcher';
 import { Prisma, Article, Source, NewsSummary } from '@prisma/client';
 import { scheduleTranslation } from '@/lib/rss/db-service';
 
-import { createLogger } from '@/lib/logger';;
+import { createLogger } from '@/lib/logger'
 
 const log = createLogger('AIITDB');
 

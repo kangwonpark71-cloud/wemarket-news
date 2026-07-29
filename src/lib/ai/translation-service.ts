@@ -2,7 +2,7 @@ import prisma from '@/lib/db';
 import { summarizeWithLLMFallback } from './llm-service';
 import type { AISummaryResult } from '../ai-it/summary-service';
 import { parseList } from '@/lib/utils/list-fields';
-import { createLogger } from '@/lib/logger';
+import { createLogger } from '@/lib/logger'
 
 const log = createLogger('Translation')
 
