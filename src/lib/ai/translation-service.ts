@@ -15,7 +15,7 @@ export async function translateArticle(articleId: string): Promise<TranslationRe
   });
 
   if (!article) return null;
-  if (article.language !== 'en') return null;
+  if (!['en', 'ja', 'zh'].includes(article.language)) return null;
 
   if (article.summary?.translatedTitle) {
     return {
@@ -102,7 +102,7 @@ export async function translateArticleTitleOnly(articleId: string): Promise<Tran
   });
 
   if (!article) return null;
-  if (article.language !== 'en') return null;
+  if (!['en', 'ja', 'zh'].includes(article.language)) return null;
 
   // If already have a full summary, just return it
   if (article.summary?.translatedTitle) {
