@@ -3,6 +3,9 @@
 import { useState, useEffect, useCallback } from 'react';
 import Image from 'next/image';
 import { BANNER_POSITIONS, type BannerPosition } from '@/lib/constants/banner';
+import { createLogger } from '@/lib/logger';
+
+const log = createLogger('AdminBannersPage')
 
 interface Banner {
   id: string;
@@ -44,7 +47,7 @@ export default function AdminBannersPage() {
       const json = await res.json();
       if (json.success) setBanners(json.banners);
     } catch (err) {
-      console.error('Failed to load banners:', err);
+      log.error('Failed to load banners:', err);
     } finally {
       setLoading(false);
     }
@@ -150,7 +153,7 @@ export default function AdminBannersPage() {
         setBanners((prev) => prev.map((b) => (b.id === banner.id ? json.banner : b)));
       }
     } catch (err) {
-      console.error('Toggle error:', err);
+      log.error('Toggle error:', err);
     }
   };
 

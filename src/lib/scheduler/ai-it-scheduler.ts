@@ -14,7 +14,7 @@ import {
 } from '@/lib/ai-it/scheduler-service'
 import { runJobWithLock } from '@/lib/utils/lock'
 
-import { createLogger } from '@/lib/logger';
+import { createLogger } from '@/lib/logger';;
 
 const log = createLogger('AIITScheduler');
 
@@ -52,7 +52,7 @@ export class AIITScheduler extends BaseScheduler {
 
   async start(): Promise<void> {
     if (!this.config.enabled) {
-      log.log(`[${this.config.name}] Scheduler is disabled`)
+      log.info(`[${this.config.name}] Scheduler is disabled`)
       return
     }
 
@@ -61,7 +61,7 @@ export class AIITScheduler extends BaseScheduler {
       return
     }
 
-    log.log(`[${this.config.name}] Starting scheduler...`)
+    log.info(`[${this.config.name}] Starting scheduler...`)
 
     // High priority: every 15 minutes (OpenAI, Anthropic, Google AI, DeepMind)
     this.cronTasks.push(
@@ -96,7 +96,7 @@ export class AIITScheduler extends BaseScheduler {
       await seedAIITSourcesIfEmpty().catch(() => {})
     }, 3000)
 
-    log.log(`[${this.config.name}] Scheduler started`)
+    log.info(`[${this.config.name}] Scheduler started`)
   }
 
   async stop(): Promise<void> {
@@ -104,7 +104,7 @@ export class AIITScheduler extends BaseScheduler {
       task.stop()
     }
     this.cronTasks = []
-    log.log(`[${this.config.name}] Scheduler stopped`)
+    log.info(`[${this.config.name}] Scheduler stopped`)
   }
 
   private async runWithLock(name: string, jobFn: () => Promise<void>): Promise<void> {
@@ -113,7 +113,7 @@ export class AIITScheduler extends BaseScheduler {
       async () => {
         const acquired = await runJobWithLock(name, jobFn, this.aiConfig.lockTimeout)
         if (!acquired) {
-          log.log(`[${this.config.name}] Could not acquire lock for ${name}, skipping`)
+          log.warn(`[${this.config.name}] Could not acquire lock for ${name}, skipping`)
         }
       },
       {

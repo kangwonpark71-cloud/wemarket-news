@@ -13,7 +13,7 @@ import type {
 } from './types';
 import { DEFAULT_RETRY_CONFIG, DEFAULT_CRAWLER_OPTIONS } from './types';
 
-import { createLogger } from '@/lib/logger';
+import { createLogger } from '@/lib/logger';;
 
 const log = createLogger('BaseCrawler');
 

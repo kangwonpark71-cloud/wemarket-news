@@ -1,5 +1,8 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { fetchAllAIITNews, fetchAIITNewsByCategory, fetchAIITNewsBySubcategory, triggerFetch, run15MinJob, run30MinJob, run60MinJob } from '@/lib/ai-it/scheduler-service';
+import { createLogger } from '@/lib/logger';
+
+const log = createLogger('ApiAiitFetch')
 
 export async function POST(request: NextRequest) {
   try {
@@ -54,7 +57,7 @@ export async function POST(request: NextRequest) {
 
     return NextResponse.json({ success: true, ...result });
   } catch (error) {
-    console.error('[API] AI/IT Fetch error:', error);
+    log.error('[API] AI/IT Fetch error:', error);
     return NextResponse.json(
       { success: false, error: 'Failed to trigger fetch' },
       { status: 500 }

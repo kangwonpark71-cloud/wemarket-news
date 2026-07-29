@@ -1,6 +1,9 @@
 'use client'
 
 import React from 'react'
+import { createLogger } from '@/lib/logger';
+
+const log = createLogger('ComponentsUiSchedulererrorboundary')
 
 interface SchedulerErrorBoundaryProps {
   children: React.ReactNode
@@ -30,7 +33,7 @@ export class SchedulerErrorBoundary extends React.Component<
     this.setState({ errorInfo })
     
     // Log error to console for debugging
-    console.error('[Scheduler Error Boundary]', error, errorInfo)
+    log.error('[Scheduler Error Boundary]', error, errorInfo)
     
     // Call onError callback if provided
     if (this.props.onError) {

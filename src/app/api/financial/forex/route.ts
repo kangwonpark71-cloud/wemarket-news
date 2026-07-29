@@ -1,5 +1,8 @@
 import { NextResponse } from 'next/server';
 import { marketService } from '@/lib/services/market/market-service';
+import { createLogger } from '@/lib/logger';
+
+const log = createLogger('ApiFinancialForex')
 
 export async function GET(request: Request) {
   const { searchParams } = new URL(request.url);
@@ -39,7 +42,7 @@ export async function GET(request: Request) {
 
     return NextResponse.json({ success: true, data: result });
   } catch (error) {
-    console.error('[API] Forex error:', error);
+    log.error('[API] Forex error:', error);
     return NextResponse.json(
       { success: false, error: 'Failed to fetch forex data' },
       { status: 500 }

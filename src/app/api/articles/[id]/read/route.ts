@@ -1,5 +1,8 @@
 import { NextResponse } from 'next/server'
 import prisma from '@/lib/db'
+import { createLogger } from '@/lib/logger';
+
+const log = createLogger('ApiArticles[id]Read')
 
 export async function POST(
   _request: Request,
@@ -19,7 +22,7 @@ export async function POST(
       data: article,
     })
   } catch (error) {
-    console.error('Failed to mark as read:', error)
+    log.error('Failed to mark as read:', error)
     return NextResponse.json(
       { success: false, error: 'Failed to mark as read' },
       { status: 500 }

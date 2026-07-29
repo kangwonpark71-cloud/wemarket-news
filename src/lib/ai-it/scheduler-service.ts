@@ -4,7 +4,7 @@ import { generateAISummaryWithLLM } from './summary-service';
 import { processPendingTranslations } from '@/lib/rss/db-service';
 import type { AIITSourceConfig } from './sources';
 
-import { createLogger } from '@/lib/logger'
+import { createLogger } from '@/lib/logger';
 const log = createLogger('AIScheduler')
 
 export async function fetchAndProcessSource(sourceId: string): Promise<{ count: number; newCount: number; error?: string }> {

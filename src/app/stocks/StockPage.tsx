@@ -4,6 +4,9 @@ import { useEffect, useState, useRef, useCallback } from 'react';
 import { FinancialDashboard } from '@/components/financial/FinancialDashboard';
 import { FinancialChart } from '@/components/financial/FinancialChart';
 import { formatKRW, formatNumber } from '@/lib/utils/format';
+import { createLogger } from '@/lib/logger';
+
+const log = createLogger('StocksStockpage')
 
 interface StockData {
   code: string;
@@ -84,7 +87,7 @@ export function StockPage() {
         setMasterData(json.data);
       }
     } catch (error) {
-      console.error('Failed to fetch stock master:', error);
+      log.error('Failed to fetch stock master:', error);
     } finally {
       setLoading(false);
     }
@@ -132,7 +135,7 @@ export function StockPage() {
           setStocks(stocksWithPrices);
         }
       } catch (error) {
-        console.error('Failed to fetch prices:', error);
+        log.error('Failed to fetch prices:', error);
       }
     };
 
@@ -154,7 +157,7 @@ export function StockPage() {
         setShowSearchResults(json.data.length > 0);
       }
     } catch (error) {
-      console.error('Failed to search stocks:', error);
+      log.error('Failed to search stocks:', error);
     } finally {
       setSearchLoading(false);
     }
@@ -196,7 +199,7 @@ export function StockPage() {
           setWatchlist(new Set(json.data.map((w: { stockCode: string }) => w.stockCode)));
         }
       } catch (error) {
-        console.error('Failed to fetch watchlist:', error);
+        log.error('Failed to fetch watchlist:', error);
       }
     };
     void fetchWatchlist();
@@ -223,7 +226,7 @@ export function StockPage() {
         });
       }
     } catch (error) {
-      console.error('Failed to toggle watchlist:', error);
+      log.error('Failed to toggle watchlist:', error);
     }
   };
 
@@ -247,7 +250,7 @@ export function StockPage() {
         setStockDetail(json.data);
       }
     } catch (error) {
-      console.error('Failed to fetch stock detail:', error);
+      log.error('Failed to fetch stock detail:', error);
     } finally {
       setDetailLoading(false);
     }

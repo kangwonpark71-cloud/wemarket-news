@@ -2,6 +2,9 @@ import { NextResponse } from 'next/server';
 import { prisma } from '@/lib/db';
 import { getSessionUser } from '@/lib/utils/auth';
 import { isBannerPosition } from '@/lib/constants/banner';
+import { createLogger } from '@/lib/logger';
+
+const log = createLogger('ApiAdminBanners')
 
 async function requireAdmin(request: Request) {
   const user = await getSessionUser(request);
@@ -29,7 +32,7 @@ export async function GET(request: Request) {
 
     return NextResponse.json({ success: true, banners });
   } catch (error) {
-    console.error('Banners list error:', error);
+    log.error('Banners list error:', error);
     return NextResponse.json({ success: false, error: 'Failed to load banners' }, { status: 500 });
   }
 }
@@ -67,7 +70,7 @@ export async function POST(request: Request) {
 
     return NextResponse.json({ success: true, banner }, { status: 201 });
   } catch (error) {
-    console.error('Banner create error:', error);
+    log.error('Banner create error:', error);
     return NextResponse.json({ success: false, error: 'Failed to create banner' }, { status: 500 });
   }
 }
@@ -103,7 +106,7 @@ export async function PATCH(request: Request) {
 
     return NextResponse.json({ success: true, banner });
   } catch (error) {
-    console.error('Banner update error:', error);
+    log.error('Banner update error:', error);
     return NextResponse.json({ success: false, error: 'Failed to update banner' }, { status: 500 });
   }
 }
@@ -125,7 +128,7 @@ export async function DELETE(request: Request) {
 
     return NextResponse.json({ success: true });
   } catch (error) {
-    console.error('Banner delete error:', error);
+    log.error('Banner delete error:', error);
     return NextResponse.json({ success: false, error: 'Failed to delete banner' }, { status: 500 });
   }
 }

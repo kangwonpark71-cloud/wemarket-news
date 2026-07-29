@@ -1,5 +1,8 @@
 import { NextResponse } from 'next/server';
 import { translateArticle, translateArticleTitleOnly } from '@/lib/ai/translation-service';
+import { createLogger } from '@/lib/logger';
+
+const log = createLogger('ApiArticlesTranslate')
 
 export async function POST(request: Request) {
   try {
@@ -25,7 +28,7 @@ export async function POST(request: Request) {
 
     return NextResponse.json({ success: true, translation: result });
   } catch (error) {
-    console.error('[POST /api/articles/translate]', error);
+    log.error('[POST /api/articles/translate]', error);
     return NextResponse.json(
       { success: false, error: 'Translation failed' },
       { status: 500 },

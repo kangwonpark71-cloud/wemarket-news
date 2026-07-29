@@ -10,7 +10,7 @@
 
 import { cacheService, CacheTTL } from '@/lib/services/cache/cache-service';
 
-import { createLogger } from '@/lib/logger'
+import { createLogger } from '@/lib/logger';
 const log = createLogger('NaverNews')
 
 // ── Types ──────────────────────────────────────────────────────

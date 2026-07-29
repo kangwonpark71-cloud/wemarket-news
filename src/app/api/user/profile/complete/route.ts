@@ -2,6 +2,9 @@ import { NextResponse } from 'next/server';
 import { prisma } from '@/lib/db';
 import { getSessionUser } from '@/lib/utils/auth';
 import { z } from 'zod';
+import { createLogger } from '@/lib/logger';
+
+const log = createLogger('ApiUserProfileComplete')
 
 const profileCompletionSchema = z.object({
   name: z.string().min(2, '이름은 최소 2자 이상이어야 합니다.').max(50),
@@ -100,7 +103,7 @@ export async function POST(request: Request) {
       message: '프로필이 성공적으로 완료되었습니다.',
     });
   } catch (error) {
-    console.error('Profile completion error:', error);
+    log.error('Profile completion error:', error);
     return NextResponse.json(
       { success: false, error: '프로필 저장 중 서버 오류가 발생했습니다.' },
       { status: 500 }

@@ -1,5 +1,8 @@
 import { NextResponse } from 'next/server';
 import { searchNaverNews, searchNaverNewsByDate } from '@/lib/services/search/naver-news-service';
+import { createLogger } from '@/lib/logger';
+
+const log = createLogger('ApiSearchNaver')
 
 export async function GET(request: Request) {
   const { searchParams } = new URL(request.url);
@@ -32,7 +35,7 @@ export async function GET(request: Request) {
     });
   } catch (error) {
     const message = error instanceof Error ? error.message : 'Internal server error';
-    console.error(`[NaverSearch API] ${message}`);
+    log.error(`[NaverSearch API] ${message}`);
     return NextResponse.json(
       { success: false, error: message },
       { status: 500 },

@@ -1,6 +1,9 @@
 'use client';
 
 import { useState, useEffect, useCallback } from 'react';
+import { createLogger } from '@/lib/logger';
+
+const log = createLogger('AdminLogsPage')
 
 interface LogEntry {
   id: string;
@@ -54,7 +57,7 @@ export default function AdminLogsPage() {
       const json = await res.json();
       if (json.success) setData(json.data);
     } catch (err) {
-      console.error('Failed to load logs:', err);
+      log.error('Failed to load logs:', err);
     } finally {
       setLoading(false);
     }

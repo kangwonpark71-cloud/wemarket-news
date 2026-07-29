@@ -1,5 +1,8 @@
 import { NextResponse } from 'next/server';
 import { marketService } from '@/lib/services/market/market-service';
+import { createLogger } from '@/lib/logger';
+
+const log = createLogger('ApiFinancialGlobal')
 
 export async function GET(request: Request) {
   const { searchParams } = new URL(request.url);
@@ -34,7 +37,7 @@ export async function GET(request: Request) {
 
     return NextResponse.json({ success: true, data: result });
   } catch (error) {
-    console.error('[API] Global indices error:', error);
+    log.error('[API] Global indices error:', error);
     return NextResponse.json(
       { success: false, error: 'Failed to fetch global indices' },
       { status: 500 }

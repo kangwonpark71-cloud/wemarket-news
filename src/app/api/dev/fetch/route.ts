@@ -1,5 +1,8 @@
 import { NextResponse } from 'next/server'
 import { runRssFetch } from '@/lib/rss/scheduler'
+import { createLogger } from '@/lib/logger';
+
+const log = createLogger('ApiDevFetch')
 
 export async function GET(request: Request) {
   if (process.env.NODE_ENV === 'production') {
@@ -31,7 +34,7 @@ export async function GET(request: Request) {
       results,
     })
   } catch (error) {
-    console.error('Dev fetch failed:', error)
+    log.error('Dev fetch failed:', error)
     return NextResponse.json(
       { success: false, error: 'Dev fetch failed' },
       { status: 500 }

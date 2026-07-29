@@ -3,6 +3,9 @@ import { prisma } from '@/lib/db';
 import { hashPassword } from '@/lib/utils/auth';
 import { z } from 'zod';
 import { validatePhoneNumber, generateVerificationCode, storeVerificationCode, canRequestVerification, sendSMS, isMockMode } from '@/lib/utils/sms';
+import { createLogger } from '@/lib/logger';
+
+const log = createLogger('ApiAuthSignup')
 
 // 회원가입: 전화번호 + 비밀번호만 필요 (이름/이메일은 가입 후 프로필에서 입력)
 const signupSchema = z.object({
@@ -96,7 +99,7 @@ export async function POST(request: Request) {
     const smsSent = await sendSMS(phoneValidation.normalized, smsMessage);
     
     if (!smsSent) {
-      console.error(`[SMS] ${phoneValidation.normalized}로 SMS 발송 실패`);
+      log.error(`[SMS] ${phoneValidation.normalized}로 SMS 발송 실패`);
     }
 
     const response: Record<string, unknown> = {
@@ -116,7 +119,7 @@ export async function POST(request: Request) {
       status: 201,
     });
   } catch (error) {
-    console.error('Signup error:', error);
+    log.error('Signup error:', error);
     
     if (error instanceof Error && error.message.includes('P2002')) {
       return NextResponse.json(

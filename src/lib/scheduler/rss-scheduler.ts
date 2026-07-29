@@ -7,7 +7,7 @@ import cron, { type ScheduledTask } from 'node-cron'
 import { BaseScheduler, SchedulerConfig } from './base-scheduler'
 import { runRssFetch } from '@/lib/rss/scheduler'
 import { cacheService } from '@/lib/services/cache/cache-service'
-import { createLogger } from '@/lib/logger'
+import { createLogger } from '@/lib/logger';
 
 const log = createLogger('RSSScheduler')
 

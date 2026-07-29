@@ -2,6 +2,9 @@ import { NextResponse } from 'next/server';
 import { prisma } from '@/lib/db';
 import { verifyPassword, createSessionToken } from '@/lib/utils/auth';
 import { validatePhoneNumber } from '@/lib/utils/sms';
+import { createLogger } from '@/lib/logger';
+
+const log = createLogger('ApiAuthLogin')
 
 export async function POST(request: Request) {
   try {
@@ -75,7 +78,7 @@ export async function POST(request: Request) {
 
     return response;
   } catch (error) {
-    console.error('Login error:', error);
+    log.error('Login error:', error);
     return NextResponse.json(
       { success: false, error: '로그인에 실패했습니다.' },
       { status: 500 }

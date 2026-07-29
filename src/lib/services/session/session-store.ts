@@ -1,6 +1,6 @@
 import crypto from 'crypto';
 import type { Redis } from 'ioredis';
-import { createLogger } from '@/lib/logger';
+import { createLogger } from '@/lib/logger';;
 
 const log = createLogger('SessionStore');
 

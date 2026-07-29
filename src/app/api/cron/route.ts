@@ -1,5 +1,8 @@
 import { NextResponse } from 'next/server'
 import { runRssFetch } from '@/lib/rss/scheduler'
+import { createLogger } from '@/lib/logger';
+
+const log = createLogger('ApiCron')
 
 export async function POST(request: Request) {
   const authHeader = request.headers.get('authorization')
@@ -40,7 +43,7 @@ export async function POST(request: Request) {
       results,
     })
   } catch (error) {
-    console.error('Cron RSS fetch failed:', error)
+    log.error('Cron RSS fetch failed:', error)
     return NextResponse.json(
       { success: false, error: 'RSS fetch failed' },
       { status: 500 }

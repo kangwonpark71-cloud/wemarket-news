@@ -1,5 +1,8 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { searchAIITNews, getSearchSuggestions, getPopularSearches, getTrendingTopics } from '@/lib/ai-it/search-service';
+import { createLogger } from '@/lib/logger';
+
+const log = createLogger('ApiAiitSearch')
 
 export async function GET(request: NextRequest) {
   try {
@@ -54,7 +57,7 @@ export async function GET(request: NextRequest) {
 
     return NextResponse.json({ success: true, ...result });
   } catch (error) {
-    console.error('[API] AI/IT Search error:', error);
+    log.error('[API] AI/IT Search error:', error);
     return NextResponse.json(
       { success: false, error: 'Failed to search' },
       { status: 500 }

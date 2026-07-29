@@ -1,4 +1,7 @@
 import { NextResponse } from 'next/server'
+import { createLogger } from '@/lib/logger';
+
+const log = createLogger('ApiWeather')
 
 const STATION_NAMES: Record<string, string> = {
   '108': '서울',
@@ -93,7 +96,7 @@ export async function GET(request: Request) {
       },
     })
   } catch (error) {
-    console.error('Failed to fetch weather data:', error)
+    log.error('Failed to fetch weather data:', error)
     return NextResponse.json(
       { success: false, error: '기상청 날씨 데이터를 가져오는 데 실패했습니다.' },
       { status: 500 }

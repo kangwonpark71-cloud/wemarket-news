@@ -4,6 +4,9 @@ import { useEffect, useState, useMemo } from 'react';
 import { FinancialDashboard } from '@/components/financial/FinancialDashboard';
 import { FinancialChart } from '@/components/financial/FinancialChart';
 import { formatKRWDecimal, formatNumber } from '@/lib/utils/format';
+import { createLogger } from '@/lib/logger';
+
+const log = createLogger('GlobalGlobalpage')
 
 interface GlobalIndexData {
   symbol: string;
@@ -36,7 +39,7 @@ export function GlobalPage() {
         setIndices(json.data);
       }
     } catch (err) {
-      console.error('Failed to fetch global indices:', err);
+      log.error('Failed to fetch global indices:', err);
     } finally {
       setLoading(false);
     }

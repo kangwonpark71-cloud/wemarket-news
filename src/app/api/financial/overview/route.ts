@@ -4,6 +4,9 @@ import { upbitService } from '@/lib/services/crypto/crypto-service';
 import { marketService } from '@/lib/services/market/market-service';
 import { cacheService, CacheKeys, CacheTTL } from '@/lib/services/cache/cache-service';
 import { prisma } from '@/lib/db';
+import { createLogger } from '@/lib/logger';
+
+const log = createLogger('ApiFinancialOverview')
 
 export async function GET() {
   const cacheKey = CacheKeys.financialDashboard();
@@ -13,19 +16,19 @@ export async function GET() {
   try {
     const [marketOverview, cryptoTickers, forexRates, globalIndices] = await Promise.all([
       koreaInvestmentService.getMarketOverview().catch(err => {
-        console.warn('[Overview] KOSPI/KOSDAQ failed:', err);
+        log.warn('[Overview] KOSPI/KOSDAQ failed:', err);
         return { kospi: { value: 0, change: 0, changeRate: 0 }, kosdaq: { value: 0, change: 0, changeRate: 0 } };
       }),
       upbitService.getAllTickers().catch(err => {
-        console.warn('[Overview] Upbit tickers failed:', err);
+        log.warn('[Overview] Upbit tickers failed:', err);
         return [];
       }),
       marketService.getAllExchangeRates().catch(err => {
-        console.warn('[Overview] Forex rates failed:', err);
+        log.warn('[Overview] Forex rates failed:', err);
         return [];
       }),
       marketService.getGlobalIndices().catch(err => {
-        console.warn('[Overview] Global indices failed:', err);
+        log.warn('[Overview] Global indices failed:', err);
         return [];
       }),
     ]);
@@ -66,7 +69,7 @@ export async function GET() {
 
     return NextResponse.json({ success: true, data: overview });
   } catch (error) {
-    console.error('[API] Overview error:', error);
+    log.error('[API] Overview error:', error);
     return NextResponse.json(
       { success: false, error: 'Failed to fetch overview' },
       { status: 500 }

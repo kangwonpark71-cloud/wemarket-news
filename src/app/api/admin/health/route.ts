@@ -1,6 +1,9 @@
 import { NextResponse } from 'next/server';
 import { prisma } from '@/lib/db';
 import { getSessionUser } from '@/lib/utils/auth';
+import { createLogger } from '@/lib/logger';
+
+const log = createLogger('ApiAdminHealth')
 
 async function requireAdmin(request: Request) {
   const user = await getSessionUser(request);
@@ -136,7 +139,7 @@ export async function GET(request: Request) {
       },
     });
   } catch (error) {
-    console.error('Health endpoint error:', error);
+    log.error('Health endpoint error:', error);
     return NextResponse.json(
       { success: false, error: 'Failed to get system health' },
       { status: 500 }

@@ -1,6 +1,9 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { getAIITArticles, getAIITArticleById, getAIITArticleByUrl, getAIITArticleStats, getSubcategoriesWithCount } from '@/lib/ai-it/db-service';
 import { cacheService, CacheKeys, CacheTTL } from '@/lib/services/cache/cache-service';
+import { createLogger } from '@/lib/logger';
+
+const log = createLogger('ApiAiitArticles')
 
 export async function GET(request: NextRequest) {
   try {
@@ -116,7 +119,7 @@ export async function GET(request: NextRequest) {
 
     return NextResponse.json({ success: true, ...result });
   } catch (error) {
-    console.error('[API] AI/IT Articles error:', error);
+    log.error('[API] AI/IT Articles error:', error);
     return NextResponse.json(
       { success: false, error: 'Failed to fetch articles' },
       { status: 500 }

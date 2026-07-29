@@ -1,7 +1,7 @@
 import Parser from 'rss-parser'
 import { RSSSourceConfig } from './sources'
 import { extractThumbnail, extractCategory, fetchWithRetry } from '../utils/rss-helper'
-import { createLogger } from '@/lib/logger'
+import { createLogger } from '@/lib/logger';
 export { extractThumbnail, extractCategory } from '../utils/rss-helper'
 
 const log = createLogger('RSSFetcher')

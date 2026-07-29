@@ -14,8 +14,6 @@ export default function AutoTranslator() {
     if (hasTriggered.current) return
     hasTriggered.current = true
 
-    let timeoutId: NodeJS.Timeout
-
     async function translateBatch() {
       try {
         const res = await fetch(BATCH_TRANSLATE_API, {
@@ -35,7 +33,7 @@ export default function AutoTranslator() {
     }
 
     // Delay translation slightly so page renders first
-    timeoutId = setTimeout(translateBatch, 1000)
+    const timeoutId = setTimeout(translateBatch, 1000)
 
     return () => clearTimeout(timeoutId)
   }, [router])

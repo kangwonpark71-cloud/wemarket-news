@@ -7,7 +7,7 @@ import { fetchProgressPubSub } from '@/lib/sse/pubsub'
 import { runJobWithLock } from '@/lib/utils/lock'
 import { logSchedulerError, logSchedulerSuccess, createSafeSchedulerJob } from '@/lib/utils/scheduler-error-handler'
 
-import { createLogger } from '@/lib/logger'
+import { createLogger } from '@/lib/logger';
 
 const log = createLogger('RSSFinder')
 

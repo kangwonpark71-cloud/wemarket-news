@@ -4,6 +4,9 @@ import { upbitService } from '@/lib/services/crypto/crypto-service';
 import { marketService } from '@/lib/services/market/market-service';
 import { cacheService, CacheKeys } from '@/lib/services/cache/cache-service';
 import { prisma } from '@/lib/db';
+import { createLogger } from '@/lib/logger';
+
+const log = createLogger('ApiFinancialDashboard')
 
 export async function GET() {
   const cacheKey = CacheKeys.financialDashboard();
@@ -13,19 +16,19 @@ export async function GET() {
   try {
     const [stockPrices, , forexRates, globalIndices] = await Promise.all([
       koreaInvestmentService.getMarketOverview().catch(err => {
-        console.warn('[Dashboard] KOSPI/KOSDAQ overview failed:', err);
+        log.warn('[Dashboard] KOSPI/KOSDAQ overview failed:', err);
         return { kospi: { value: 0, change: 0, changeRate: 0 }, kosdaq: { value: 0, change: 0, changeRate: 0 }, simulated: false };
       }),
       upbitService.getAllTickers().catch(err => {
-        console.warn('[Dashboard] Upbit tickers failed:', err);
+        log.warn('[Dashboard] Upbit tickers failed:', err);
         return [];
       }),
       marketService.getAllExchangeRates().catch(err => {
-        console.warn('[Dashboard] Forex rates failed:', err);
+        log.warn('[Dashboard] Forex rates failed:', err);
         return [];
       }),
       marketService.getGlobalIndices().catch(err => {
-        console.warn('[Dashboard] Global indices failed:', err);
+        log.warn('[Dashboard] Global indices failed:', err);
         return [];
       }),
     ]);
@@ -45,7 +48,7 @@ export async function GET() {
         }),
       ]);
     } catch (dbErr) {
-      console.warn('[Dashboard] DB ticker query failed:', dbErr);
+      log.warn('[Dashboard] DB ticker query failed:', dbErr);
     }
 
     const dashboard = {
@@ -75,7 +78,7 @@ export async function GET() {
 
     return NextResponse.json({ success: true, data: dashboard });
   } catch (error) {
-    console.error('[API] Dashboard error:', error);
+    log.error('[API] Dashboard error:', error);
     return NextResponse.json(
       { success: false, error: 'Failed to fetch dashboard' },
       { status: 500 }

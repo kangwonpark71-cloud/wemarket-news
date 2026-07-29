@@ -1,5 +1,8 @@
 import { NextResponse } from 'next/server'
 import prisma from '@/lib/db'
+import { createLogger } from '@/lib/logger';
+
+const log = createLogger('ApiStats')
 
 export async function GET() {
   try {
@@ -88,7 +91,7 @@ export async function GET() {
       },
     })
   } catch (error) {
-    console.error('Failed to fetch stats:', error)
+    log.error('Failed to fetch stats:', error)
     return NextResponse.json(
       { success: false, error: 'Failed to fetch stats' },
       { status: 500 }

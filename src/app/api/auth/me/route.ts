@@ -1,6 +1,9 @@
 import { NextResponse } from 'next/server';
 import { prisma } from '@/lib/db';
 import { getSessionUser } from '@/lib/utils/auth';
+import { createLogger } from '@/lib/logger';
+
+const log = createLogger('ApiAuthMe')
 
 export async function GET(request: Request) {
   try {
@@ -40,7 +43,7 @@ export async function GET(request: Request) {
 
     return NextResponse.json({ success: true, data: user });
   } catch (error) {
-    console.error('Me endpoint error:', error);
+    log.error('Me endpoint error:', error);
     return NextResponse.json(
       { success: false, error: 'Server error' },
       { status: 500 }

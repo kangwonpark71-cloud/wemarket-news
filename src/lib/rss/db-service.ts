@@ -1,7 +1,7 @@
 import prisma from '@/lib/db';
 import { ParsedArticle } from './fetcher';
 import { Prisma } from '@prisma/client';
-import { createLogger } from '@/lib/logger';
+import { createLogger } from '@/lib/logger';;
 
 const log = createLogger('RSSDB');
 

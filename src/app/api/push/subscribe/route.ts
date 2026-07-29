@@ -1,6 +1,9 @@
 import { NextResponse } from 'next/server'
 import { getSessionUser } from '@/lib/utils/auth'
 import prisma from '@/lib/db'
+import { createLogger } from '@/lib/logger';
+
+const log = createLogger('ApiPushSubscribe')
 
 export async function POST(request: Request) {
   try {
@@ -39,7 +42,7 @@ export async function POST(request: Request) {
 
     return NextResponse.json({ success: true })
   } catch (error) {
-    console.error('Push subscribe error:', error)
+    log.error('Push subscribe error:', error)
     return NextResponse.json(
       { success: false, error: 'Failed to subscribe' },
       { status: 500 },
@@ -61,7 +64,7 @@ export async function GET(request: Request) {
 
     return NextResponse.json({ success: true, subscribed: !!sub })
   } catch (error) {
-    console.error('Push status error:', error)
+    log.error('Push status error:', error)
     return NextResponse.json(
       { success: false, error: 'Failed to check subscription' },
       { status: 500 },
@@ -82,7 +85,7 @@ export async function DELETE(request: Request) {
 
     return NextResponse.json({ success: true })
   } catch (error) {
-    console.error('Push unsubscribe error:', error)
+    log.error('Push unsubscribe error:', error)
     return NextResponse.json(
       { success: false, error: 'Failed to unsubscribe' },
       { status: 500 },

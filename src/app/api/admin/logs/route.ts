@@ -1,6 +1,9 @@
 import { NextResponse } from 'next/server';
 import { prisma } from '@/lib/db';
 import { getSessionUser } from '@/lib/utils/auth';
+import { createLogger } from '@/lib/logger';
+
+const log = createLogger('ApiAdminLogs')
 
 async function requireAdmin(request: Request) {
   const user = await getSessionUser(request);
@@ -107,7 +110,7 @@ export async function GET(request: Request) {
       data: { logs, total, page, totalPages: Math.ceil(total / limit) },
     });
   } catch (error) {
-    console.error('Admin logs error:', error);
+    log.error('Admin logs error:', error);
     return NextResponse.json(
       { success: false, error: 'Failed to fetch logs' },
       { status: 500 }

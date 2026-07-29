@@ -1,5 +1,8 @@
 import { NextResponse } from 'next/server'
 import prisma from '@/lib/db'
+import { createLogger } from '@/lib/logger';
+
+const log = createLogger('ApiStocksWatchlist')
 
 // GET /api/stocks/watchlist — Returns all watchlisted stocks
 export async function GET() {
@@ -10,7 +13,7 @@ export async function GET() {
 
     return NextResponse.json({ success: true, data: watchlist })
   } catch (error) {
-    console.error('Failed to fetch watchlist:', error)
+    log.error('Failed to fetch watchlist:', error)
     return NextResponse.json(
       { success: false, error: 'Failed to fetch watchlist' },
       { status: 500 }
@@ -49,7 +52,7 @@ export async function POST(request: Request) {
 
     return NextResponse.json({ success: true, data: item })
   } catch (error) {
-    console.error('Failed to add to watchlist:', error)
+    log.error('Failed to add to watchlist:', error)
     return NextResponse.json(
       { success: false, error: 'Failed to add to watchlist' },
       { status: 500 }
@@ -76,7 +79,7 @@ export async function DELETE(request: Request) {
 
     return NextResponse.json({ success: true })
   } catch (error) {
-    console.error('Failed to remove from watchlist:', error)
+    log.error('Failed to remove from watchlist:', error)
     return NextResponse.json(
       { success: false, error: 'Failed to remove from watchlist' },
       { status: 500 }

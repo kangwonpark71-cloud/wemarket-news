@@ -5,7 +5,7 @@
 
 import { prisma } from '@/lib/db';
 import type { Redis } from 'ioredis';
-import { createLogger } from '@/lib/logger';
+import { createLogger } from '@/lib/logger';;
 
 const log = createLogger('Cache');
 

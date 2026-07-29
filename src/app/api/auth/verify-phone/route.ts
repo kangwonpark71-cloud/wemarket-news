@@ -2,6 +2,9 @@ import { NextResponse } from 'next/server';
 import { prisma } from '@/lib/db';
 import { verifyCode, validatePhoneNumber } from '@/lib/utils/sms';
 import { z } from 'zod';
+import { createLogger } from '@/lib/logger';
+
+const log = createLogger('ApiAuthVerifyphone')
 
 // Phone verification schema
 const verifyPhoneSchema = z.object({
@@ -87,7 +90,7 @@ export async function POST(request: Request) {
 
     return response;
   } catch (error) {
-    console.error('Phone verification error:', error);
+    log.error('Phone verification error:', error);
     return NextResponse.json(
       { success: false, error: '인증 중 서버 오류가 발생했습니다.' },
       { status: 500 }

@@ -1,6 +1,9 @@
 import { NextResponse } from 'next/server'
 import { getBreakingArticles } from '@/lib/rss/db-service'
 import { cacheService, CacheKeys, CacheTTL } from '@/lib/services/cache/cache-service'
+import { createLogger } from '@/lib/logger';
+
+const log = createLogger('ApiBreaking')
 
 export async function GET(request: Request) {
   const { searchParams } = new URL(request.url)
@@ -20,7 +23,7 @@ export async function GET(request: Request) {
 
     return NextResponse.json({ success: true, data: result })
   } catch (error) {
-    console.error('Failed to fetch breaking articles:', error)
+    log.error('Failed to fetch breaking articles:', error)
     return NextResponse.json(
       { success: false, error: 'Failed to fetch breaking articles' },
       { status: 500 }

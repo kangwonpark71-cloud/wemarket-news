@@ -2,6 +2,9 @@
 
 import { useEffect, useState, useCallback, useRef } from 'react';
 import { formatKRW, formatNumber } from '@/lib/utils/format';
+import { createLogger } from '@/lib/logger';
+
+const log = createLogger('ComponentsFinancialFinancialdashboard')
 
 interface DashboardData {
   kospi: { value: number; change: number; changeRate: number };
@@ -132,7 +135,7 @@ export function FinancialDashboard() {
         await fetch('/api/financial/refresh', { method: 'POST' });
         await fetchData();
       } catch (err) {
-        console.error(err);
+        log.error('Backend refresh failed:', err);
       }
     }, 3 * 60 * 60 * 1000);
 

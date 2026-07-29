@@ -6,13 +6,13 @@
  */
 
 import type {
-import { createLogger } from '@/lib/logger'
-const log = createLogger('TestUtils')
-
   BaseSourceConfig,
   CrawlerArticle,
   CrawlerFetchResult,
 } from '@/lib/crawler';
+import { createLogger } from '@/lib/logger';
+
+const log = createLogger('TestUtils');
 
 // ============================================================================
 // Mock Factory: BaseSourceConfig

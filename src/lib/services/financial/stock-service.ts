@@ -20,7 +20,7 @@ import type {
   FinancialService,
 } from './types';
 
-import { createLogger } from '@/lib/logger';
+import { createLogger } from '@/lib/logger';;
 
 const log = createLogger('StockService');
 

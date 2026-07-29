@@ -1,6 +1,9 @@
 import { NextResponse } from 'next/server';
 import { prisma } from '@/lib/db';
 import { cacheService, CacheKeys } from '@/lib/services/cache/cache-service';
+import { createLogger } from '@/lib/logger';
+
+const log = createLogger('ApiFinancialCharts')
 
 export async function GET(request: Request) {
   const { searchParams } = new URL(request.url);
@@ -151,7 +154,7 @@ export async function GET(request: Request) {
 
     return NextResponse.json({ success: true, data: result });
   } catch (error) {
-    console.error('[API] Chart error:', error);
+    log.error('[API] Chart error:', error);
     return NextResponse.json(
       { success: false, error: 'Failed to fetch chart data' },
       { status: 500 }

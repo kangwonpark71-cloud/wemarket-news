@@ -1,6 +1,9 @@
 import { NextResponse } from 'next/server'
 import prisma from '@/lib/db'
 import { getAllActiveSources } from '@/lib/rss/service'
+import { createLogger } from '@/lib/logger';
+
+const log = createLogger('ApiSources')
 
 export async function GET(request: Request) {
   const { searchParams } = new URL(request.url)
@@ -24,7 +27,7 @@ export async function GET(request: Request) {
       logs,
     })
   } catch (error) {
-    console.error('Failed to fetch sources:', error)
+    log.error('Failed to fetch sources:', error)
     return NextResponse.json(
       { success: false, error: 'Failed to fetch sources' },
       { status: 500 }

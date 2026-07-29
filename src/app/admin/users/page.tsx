@@ -1,6 +1,9 @@
 'use client';
 
 import { useState, useEffect } from 'react';
+import { createLogger } from '@/lib/logger';
+
+const log = createLogger('AdminUsersPage')
 
 interface AdminUser {
   id: string;
@@ -23,7 +26,7 @@ export default function AdminUsersPage() {
         setUsers(json.users);
       }
     } catch (err) {
-      console.error('Failed to load users:', err);
+      log.error('Failed to load users:', err);
     } finally {
       setLoading(false);
     }

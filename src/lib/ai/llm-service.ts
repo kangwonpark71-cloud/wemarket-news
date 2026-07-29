@@ -1,5 +1,5 @@
 import type { AISummaryResult } from '../ai-it/summary-service'
-import { createLogger } from '@/lib/logger'
+import { createLogger } from '@/lib/logger';
 
 const log = createLogger('LLMService')
 

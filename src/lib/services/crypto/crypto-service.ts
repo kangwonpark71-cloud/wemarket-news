@@ -1,7 +1,7 @@
 import { cacheService, CacheKeys } from '@/lib/services/cache/cache-service';
 import { prisma } from '@/lib/db';
 
-import { createLogger } from '@/lib/logger'
+import { createLogger } from '@/lib/logger';
 const log = createLogger('CryptoService')
 
 interface UpbitConfig {

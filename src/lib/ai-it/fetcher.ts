@@ -6,7 +6,7 @@ import { extractThumbnail, extractCategory, fetchWithRetry } from '../utils/rss-
 import { crawler } from '@/lib/crawler';
 import type { BaseSourceConfig, CrawlerFetchResult } from '@/lib/crawler';
 
-import { createLogger } from '@/lib/logger'
+import { createLogger } from '@/lib/logger';
 const log = createLogger('AIITFetcher')
 
 export async function fetchAIITFeedStandardized(

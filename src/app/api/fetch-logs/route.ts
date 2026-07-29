@@ -1,5 +1,8 @@
 import { NextResponse } from 'next/server'
 import prisma from '@/lib/db'
+import { createLogger } from '@/lib/logger';
+
+const log = createLogger('ApiFetchlogs')
 
 export async function GET(request: Request) {
   const { searchParams } = new URL(request.url)
@@ -35,7 +38,7 @@ export async function GET(request: Request) {
       },
     })
   } catch (error) {
-    console.error('Failed to fetch logs:', error)
+    log.error('Failed to fetch logs:', error)
     return NextResponse.json(
       { success: false, error: 'Failed to fetch logs' },
       { status: 500 }

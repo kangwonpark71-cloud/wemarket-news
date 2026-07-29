@@ -1,6 +1,9 @@
 'use client';
 
 import { useEffect, useState } from 'react';
+import { createLogger } from '@/lib/logger';
+
+const log = createLogger('SettingsSettingspage')
 
 interface Source {
   id: string;
@@ -70,7 +73,7 @@ export function SettingsPage() {
         setSources(sourcesJson.data || []);
       }
     } catch (err) {
-      console.error('Failed to load settings data:', err);
+      log.error('Failed to load settings data:', err);
     } finally {
       setLoading(false);
     }
@@ -119,7 +122,7 @@ export function SettingsPage() {
         setTimeout(() => setSuccess(false), 3000);
       }
     } catch (err) {
-      console.error(err);
+      log.error('Failed to save preferences:', err);
     } finally {
       setSaving(false);
     }
@@ -132,7 +135,7 @@ export function SettingsPage() {
         window.location.href = '/';
       }
     } catch (err) {
-      console.error(err);
+      log.error('Logout failed:', err);
     }
   };
 
@@ -157,7 +160,7 @@ export function SettingsPage() {
         setPushSubscribed(true);
       }
     } catch (err) {
-      console.error('Push subscribe failed:', err);
+      log.error('Push subscribe failed:', err);
     } finally {
       setPushLoading(false);
     }
@@ -171,7 +174,7 @@ export function SettingsPage() {
         setPushSubscribed(false);
       }
     } catch (err) {
-      console.error('Push unsubscribe failed:', err);
+      log.error('Push unsubscribe failed:', err);
     } finally {
       setPushLoading(false);
     }

@@ -1,6 +1,9 @@
 import { NextResponse } from 'next/server'
 import prisma from '@/lib/db'
 import { getSessionUser } from '@/lib/utils/auth'
+import { createLogger } from '@/lib/logger';
+
+const log = createLogger('ApiAdminSources')
 
 async function requireAdmin(request: Request) {
   const user = await getSessionUser(request);
@@ -20,7 +23,7 @@ export async function GET(request: Request) {
     })
     return NextResponse.json({ success: true, sources })
   } catch (error) {
-    console.error('Failed to fetch admin sources:', error)
+    log.error('Failed to fetch admin sources:', error)
     return NextResponse.json(
       { success: false, error: 'Failed to fetch sources' },
       { status: 500 }
@@ -55,7 +58,7 @@ export async function PATCH(request: Request) {
 
     return NextResponse.json({ success: true, source: updatedSource })
   } catch (error) {
-    console.error('Failed to update source config:', error)
+    log.error('Failed to update source config:', error)
     return NextResponse.json(
       { success: false, error: 'Failed to update source' },
       { status: 500 }

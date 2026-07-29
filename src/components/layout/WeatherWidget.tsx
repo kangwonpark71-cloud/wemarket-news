@@ -1,6 +1,9 @@
 'use client'
 
 import { useEffect, useState } from 'react'
+import { createLogger } from '@/lib/logger';
+
+const log = createLogger('ComponentsLayoutWeatherwidget')
 
 interface WeatherData {
   stationId: string
@@ -28,7 +31,7 @@ export default function WeatherWidget() {
           setWeatherData(data.data)
         }
       } catch (err) {
-        console.error('Failed to load weather:', err)
+        log.error('Failed to load weather:', err)
       } finally {
         setLoading(false)
       }

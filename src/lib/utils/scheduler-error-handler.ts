@@ -1,10 +1,11 @@
 /**
-import { createLogger } from '@/lib/logger'
-const log = createLogger('SchedulerErrorHandler')
-
  * Scheduler error handling utilities
  * Provides consistent error handling and logging for all schedulers
  */
+
+import { createLogger } from '@/lib/logger';
+
+const log = createLogger('SchedulerErrorHandler');
 
 export interface SchedulerError {
   timestamp: Date
@@ -98,7 +99,7 @@ export function logSchedulerSuccess(
 
   // Log success for debugging (can be disabled in production)
   if (process.env.NODE_ENV === 'development') {
-    log.log(`[Scheduler Success] ${scheduler}/${job}:`, {
+    log.info(`[Scheduler Success] ${scheduler}/${job}:`, {
       duration: `${duration}ms`,
       context,
     })

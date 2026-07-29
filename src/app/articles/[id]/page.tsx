@@ -14,6 +14,9 @@ import {
   type ReaderRelatedArticle,
   type ReaderLanguage,
 } from '@/components/reader'
+import { createLogger } from '@/lib/logger';
+
+const log = createLogger('Articles[id]Page')
 
 interface Props {
   params: Promise<{ id: string }>
@@ -81,7 +84,7 @@ export default async function ArticleDetailPage({ params }: Props) {
         article.translatedContent = translated
       }
     } catch (err) {
-      console.warn('[Article] Full translation failed:', err)
+      log.warn('[Article] Full translation failed:', err)
     }
   }
   const language: ReaderLanguage = isEnglish ? 'en' : 'ko'

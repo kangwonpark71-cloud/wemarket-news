@@ -4,6 +4,9 @@ import { useEffect, useState, useMemo } from 'react';
 import { FinancialDashboard } from '@/components/financial/FinancialDashboard';
 import { FinancialChart } from '@/components/financial/FinancialChart';
 import { formatKRWDecimal } from '@/lib/utils/format';
+import { createLogger } from '@/lib/logger';
+
+const log = createLogger('ForexForexpage')
 
 interface ForexData {
   baseCurrency: string;
@@ -67,7 +70,7 @@ export function ForexPage() {
         setRates(json.data);
       }
     } catch (err) {
-      console.error('Failed to fetch forex rates:', err);
+      log.error('Failed to fetch forex rates:', err);
     } finally {
       setLoading(false);
     }

@@ -15,7 +15,7 @@ import type {
   CrawlerOptions,
 } from './types';
 
-import { createLogger } from '@/lib/logger';
+import { createLogger } from '@/lib/logger';;
 
 const log = createLogger('RSSCrawler');
 import {
@@ -125,7 +125,7 @@ export class RSSCrawler implements Crawler {
       }
 
       const duration = Date.now() - startTime;
-      log.log(
+      log.info(
         `[RSSCrawler] Fetched ${articles.length} articles from ${source.nameEn} in ${duration}ms`,
       );
 

@@ -17,7 +17,7 @@
 import type { Browser, BrowserContext, Page } from 'playwright';
 import { AIITSourceConfig } from './sources';
 
-import { createLogger } from '@/lib/logger'
+import { createLogger } from '@/lib/logger';
 const log = createLogger('PlaywrightCrawler')
 
 // ──────────────────────────────────────────────

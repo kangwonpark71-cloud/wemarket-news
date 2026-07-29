@@ -1,6 +1,6 @@
 import Parser from 'rss-parser';
 
-import { createLogger } from '@/lib/logger'
+import { createLogger } from '@/lib/logger';
 const log = createLogger('RSSHelper')
 
 export function extractThumbnail(item: Record<string, unknown>): string | undefined {

@@ -2,6 +2,9 @@ import { NextResponse } from 'next/server'
 import { getArticles, getArticleStats } from '@/lib/rss/db-service'
 import { prisma } from '@/lib/db'
 import { cacheService, CacheKeys, CacheTTL } from '@/lib/services/cache/cache-service'
+import { createLogger } from '@/lib/logger';
+
+const log = createLogger('ApiArticles')
 
 export async function GET(request: Request) {
   const { searchParams } = new URL(request.url)
@@ -95,7 +98,7 @@ export async function GET(request: Request) {
       stats,
     })
   } catch (error) {
-    console.error('Failed to fetch articles:', error)
+    log.error('Failed to fetch articles:', error)
     return NextResponse.json(
       { success: false, error: 'Failed to fetch articles' },
       { status: 500 }

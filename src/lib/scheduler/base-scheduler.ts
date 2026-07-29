@@ -1,10 +1,11 @@
 /**
-import { createLogger } from '@/lib/logger'
-const log = createLogger('BaseScheduler')
-
  * Base Scheduler Interface
  * Provides common interface and utilities for all schedulers
  */
+
+import { createLogger } from '@/lib/logger';
+
+const log = createLogger('BaseScheduler');
 
 export interface SchedulerJob {
   name: string
@@ -143,7 +144,7 @@ export abstract class BaseScheduler {
           this.recordSuccess(duration)
 
           if (this.config.metricsEnabled) {
-            log.log(`[${this.config.name}] ${jobName} completed in ${duration}ms`)
+            log.info(`[${this.config.name}] ${jobName} completed in ${duration}ms`)
           }
 
           return result

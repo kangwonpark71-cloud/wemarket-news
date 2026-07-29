@@ -1,6 +1,9 @@
 'use client';
 
 import { useState, useEffect, useCallback } from 'react';
+import { createLogger } from '@/lib/logger';
+
+const log = createLogger('AdminArticlesPage')
 
 interface ArticleEntry {
   id: string;
@@ -59,7 +62,7 @@ export default function AdminArticlesPage() {
       const json = await res.json();
       if (json.success) setData(json.data);
     } catch (err) {
-      console.error('Failed to load articles:', err);
+      log.error('Failed to load articles:', err);
     } finally {
       setLoading(false);
     }

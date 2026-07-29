@@ -1,5 +1,8 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { getActiveAIITSources, getAIITSourceByNameEn, upsertAIITSource } from '@/lib/ai-it/db-service';
+import { createLogger } from '@/lib/logger';
+
+const log = createLogger('ApiAiitSources')
 
 export async function GET(request: NextRequest) {
   try {
@@ -18,7 +21,7 @@ export async function GET(request: NextRequest) {
     const sources = await getActiveAIITSources(category || undefined);
     return NextResponse.json({ success: true, sources });
   } catch (error) {
-    console.error('[API] AI/IT Sources error:', error);
+    log.error('[API] AI/IT Sources error:', error);
     return NextResponse.json(
       { success: false, error: 'Failed to fetch sources' },
       { status: 500 }
@@ -51,7 +54,7 @@ export async function POST(request: NextRequest) {
 
     return NextResponse.json({ success: true, id });
   } catch (error) {
-    console.error('[API] AI/IT Sources create error:', error);
+    log.error('[API] AI/IT Sources create error:', error);
     return NextResponse.json(
       { success: false, error: 'Failed to create source' },
       { status: 500 }

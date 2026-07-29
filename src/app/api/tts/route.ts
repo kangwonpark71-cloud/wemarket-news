@@ -1,6 +1,9 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { synthesizeText, type PremiumVoice } from '@/lib/tts/tts-service'
 import { getSessionUser } from '@/lib/utils/auth'
+import { createLogger } from '@/lib/logger';
+
+const log = createLogger('ApiTts')
 
 const MAX_TTS_CHARS = 4000
 
@@ -49,7 +52,7 @@ export async function POST(request: NextRequest) {
       },
     })
   } catch (error) {
-    console.error('[TTS API] Failed to synthesize speech:', error)
+    log.error('[TTS API] Failed to synthesize speech:', error)
     const message = error instanceof Error ? error.message : 'Internal server error'
     return NextResponse.json({ error: message }, { status: 500 })
   }

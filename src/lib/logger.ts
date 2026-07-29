@@ -4,7 +4,7 @@
  * Replaces raw console.log/warn/error for consistent, filterable output.
  *
  * Usage:
- *   import { createLogger } from '@/lib/logger'
+ *   import { createLogger } from '@/lib/logger';
  *   const log = createLogger('SchedulerManager')
  *   log.info('Starting schedulers...')
  *   log.error('Failed to start', error)

@@ -1,5 +1,8 @@
 import { NextResponse } from 'next/server';
 import { prisma } from '@/lib/db';
+import { createLogger } from '@/lib/logger';
+
+const log = createLogger('ApiArticlesView')
 
 export async function POST(request: Request) {
   try {
@@ -19,7 +22,7 @@ export async function POST(request: Request) {
 
     return NextResponse.json({ success: true });
   } catch (error) {
-    console.error('Failed to track view:', error);
+    log.error('Failed to track view:', error);
     return NextResponse.json(
       { success: false, error: 'Failed to track view' },
       { status: 500 }

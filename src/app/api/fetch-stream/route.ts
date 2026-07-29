@@ -1,4 +1,7 @@
 import { fetchProgressPubSub } from '@/lib/sse/pubsub'
+import { createLogger } from '@/lib/logger';
+
+const log = createLogger('ApiFetchstream')
 
 export const dynamic = 'force-dynamic'
 
@@ -27,7 +30,7 @@ export async function GET() {
           try {
             safeEnqueue(controller, `event: progress\ndata: ${JSON.stringify(data)}\n\n`)
           } catch (e) {
-            console.error('[SSE] Failed to enqueue progress:', e)
+            log.error('[SSE] Failed to enqueue progress:', e)
           }
         })
 
@@ -43,7 +46,7 @@ export async function GET() {
           try {
             safeEnqueue(controller, `event: complete\ndata: ${JSON.stringify(data)}\n\n`)
           } catch (e) {
-            console.error('[SSE] Failed to enqueue complete:', e)
+            log.error('[SSE] Failed to enqueue complete:', e)
           }
         })
 
@@ -54,7 +57,7 @@ export async function GET() {
           isClosed = true
         }
       } catch (error) {
-        console.error('[SSE] Stream setup failed:', error)
+        log.error('[SSE] Stream setup failed:', error)
         controller.error(error)
       }
     },

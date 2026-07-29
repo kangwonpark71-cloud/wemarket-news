@@ -2,7 +2,7 @@
 
 import { prisma } from '@/lib/db';
 
-import { createLogger } from '@/lib/logger'
+import { createLogger } from '@/lib/logger';
 const log = createLogger('SMS')
 
 export interface SMSConfig {
@@ -31,7 +31,7 @@ export async function sendSMS(phone: string, message: string): Promise<boolean> 
   };
 
   if (config.provider === 'mock' || !config.accountSid || !config.authToken || !config.fromNumber) {
-    log.log(`[SMS Mock] ${phone}로 메시지 발송 시뮬레이션: ${message}`);
+log.info(`[SMS Mock] ${phone}로 메시지 발송 시뮬레이션: ${message}`);
     return true;
   }
 
@@ -46,7 +46,7 @@ export async function sendSMS(phone: string, message: string): Promise<boolean> 
         to: phone,
       });
       
-      log.log(`[SMS Twilio] ${phone}로 SMS 발송 성공`);
+      log.info(`[SMS Twilio] ${phone}로 SMS 발송 성공`);
       return true;
     } catch (error) {
       log.error(`[SMS Twilio] ${phone}로 SMS 발송 실패:`, error);
@@ -54,7 +54,7 @@ export async function sendSMS(phone: string, message: string): Promise<boolean> 
     }
   }
 
-  log.log(`[SMS Mock] ${phone}로 메시지 발송 시뮬레이션: ${message}`);
+  log.info(`[SMS Mock] ${phone}로 메시지 발송 시뮬레이션: ${message}`);
   return true;
 }
 

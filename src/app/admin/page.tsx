@@ -1,6 +1,9 @@
 'use client'
 
 import { useState, useEffect, useMemo } from 'react'
+import { createLogger } from '@/lib/logger';
+
+const log = createLogger('AdminPage')
 
 interface Source {
   id: string
@@ -86,7 +89,7 @@ export default function AdminPage() {
         setStats(statsData.data)
       }
     } catch (err) {
-      console.error('Failed to load sources:', err)
+      log.error('Failed to load sources:', err)
     } finally {
       setLoading(false)
     }
@@ -104,7 +107,7 @@ export default function AdminPage() {
         setSources(prev => prev.map(s => (s.id === id ? data.source : s)))
       }
     } catch (err) {
-      console.error('Failed to update source:', err)
+      log.error('Failed to update source:', err)
     }
   }
 

@@ -1,5 +1,8 @@
 import { NextResponse } from 'next/server';
 import { translateUntranslatedOverseas } from '@/lib/ai/translation-service';
+import { createLogger } from '@/lib/logger';
+
+const log = createLogger('ApiArticlesTranslatebatch')
 
 export async function POST(request: Request) {
   try {
@@ -13,7 +16,7 @@ export async function POST(request: Request) {
       message: `Translated ${result.translated} of ${result.total} articles (${result.failed} failed)`,
     });
   } catch (error) {
-    console.error('[POST /api/articles/translate-batch]', error);
+    log.error('[POST /api/articles/translate-batch]', error);
     return NextResponse.json(
       { success: false, error: 'Batch translation failed' },
       { status: 500 },

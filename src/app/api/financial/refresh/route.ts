@@ -2,6 +2,9 @@ import { NextResponse } from 'next/server'
 import { koreaInvestmentService } from '@/lib/services/financial/financial-service'
 import { upbitService } from '@/lib/services/crypto/crypto-service'
 import { marketService } from '@/lib/services/market/market-service'
+import { createLogger } from '@/lib/logger';
+
+const log = createLogger('ApiFinancialRefresh')
 
 async function updateStockPrices(): Promise<void> {
   await koreaInvestmentService.syncStockMasterToDb()
@@ -33,16 +36,16 @@ export async function POST() {
 
     await Promise.all([
       updateStockPrices().catch(err => {
-        console.warn('[Admin] Stock price update failed during manual refresh:', err.message || err)
+        log.warn('[Admin] Stock price update failed during manual refresh:', err.message || err)
       }),
       updateCryptoTickers().catch(err => {
-        console.warn('[Admin] Crypto ticker update failed during manual refresh:', err.message || err)
+        log.warn('[Admin] Crypto ticker update failed during manual refresh:', err.message || err)
       }),
       updateForexRates().catch(err => {
-        console.warn('[Admin] Forex rates update failed during manual refresh:', err.message || err)
+        log.warn('[Admin] Forex rates update failed during manual refresh:', err.message || err)
       }),
       updateGlobalIndices().catch(err => {
-        console.warn('[Admin] Global indices update failed during manual refresh:', err.message || err)
+        log.warn('[Admin] Global indices update failed during manual refresh:', err.message || err)
       }),
     ])
 
@@ -54,7 +57,7 @@ export async function POST() {
       message: '시장 데이터가 성공적으로 갱신되었습니다.',
     })
   } catch (error) {
-    console.error('[Admin] Manual financial data refresh failed:', error)
+    log.error('[Admin] Manual financial data refresh failed:', error)
     return NextResponse.json(
       { success: false, error: '시장 데이터 갱신에 실패했습니다.' },
       { status: 500 }

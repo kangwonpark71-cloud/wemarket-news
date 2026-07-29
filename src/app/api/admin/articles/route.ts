@@ -1,6 +1,9 @@
 import { NextResponse } from 'next/server';
 import { prisma } from '@/lib/db';
 import { getSessionUser } from '@/lib/utils/auth';
+import { createLogger } from '@/lib/logger';
+
+const log = createLogger('ApiAdminArticles')
 
 async function requireAdmin(request: Request) {
   const user = await getSessionUser(request);
@@ -82,7 +85,7 @@ export async function GET(request: Request) {
       },
     });
   } catch (error) {
-    console.error('Admin articles error:', error);
+    log.error('Admin articles error:', error);
     return NextResponse.json(
       { success: false, error: 'Failed to fetch articles' },
       { status: 500 }
@@ -110,7 +113,7 @@ export async function DELETE(request: Request) {
 
     return NextResponse.json({ success: true });
   } catch (error) {
-    console.error('Admin articles delete error:', error);
+    log.error('Admin articles delete error:', error);
     return NextResponse.json(
       { success: false, error: 'Failed to delete article' },
       { status: 500 }

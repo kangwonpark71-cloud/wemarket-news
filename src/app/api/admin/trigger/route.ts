@@ -3,6 +3,9 @@ import prisma from '@/lib/db'
 import { runRssFetch } from '@/lib/rss/scheduler'
 import { fetchAndProcessSource } from '@/lib/ai-it/scheduler-service'
 import { getSessionUser } from '@/lib/utils/auth'
+import { createLogger } from '@/lib/logger';
+
+const log = createLogger('ApiAdminTrigger')
 
 async function requireAdmin(request: Request) {
   const user = await getSessionUser(request);
@@ -60,7 +63,7 @@ export async function POST(request: Request) {
 
     return NextResponse.json({ success: true, result })
   } catch (error) {
-    console.error('Failed to trigger manual fetch:', error)
+    log.error('Failed to trigger manual fetch:', error)
     return NextResponse.json(
       { success: false, error: 'Failed to execute manual fetch trigger' },
       { status: 500 }

@@ -1,6 +1,9 @@
 import { NextResponse } from 'next/server';
 import { prisma } from '@/lib/db';
 import { cacheService, CacheKeys, CacheTTL } from '@/lib/services/cache/cache-service';
+import { createLogger } from '@/lib/logger';
+
+const log = createLogger('ApiArticlesPopular')
 
 export async function GET(request: Request) {
   const { searchParams } = new URL(request.url);
@@ -31,7 +34,7 @@ export async function GET(request: Request) {
 
     return NextResponse.json({ success: true, data: articles });
   } catch (error) {
-    console.error('Failed to fetch popular articles:', error);
+    log.error('Failed to fetch popular articles:', error);
     return NextResponse.json(
       { success: false, error: 'Failed to fetch popular articles' },
       { status: 500 }

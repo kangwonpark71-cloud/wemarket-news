@@ -1,6 +1,9 @@
 import { NextResponse } from 'next/server';
 import { koreaInvestmentService } from '@/lib/services/financial/financial-service';
 import { prisma } from '@/lib/db';
+import { createLogger } from '@/lib/logger';
+
+const log = createLogger('ApiFinancialStocks')
 
 export async function GET(request: Request) {
   const { searchParams } = new URL(request.url);
@@ -125,7 +128,7 @@ export async function GET(request: Request) {
 
     return NextResponse.json({ success: true, data: result });
   } catch (error) {
-    console.error('[API] Stock error:', error);
+    log.error('[API] Stock error:', error);
     return NextResponse.json(
       { success: false, error: 'Failed to fetch stock data' },
       { status: 500 }

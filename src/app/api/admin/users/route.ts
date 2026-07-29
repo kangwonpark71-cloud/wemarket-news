@@ -1,6 +1,9 @@
 import { NextResponse } from 'next/server';
 import { prisma } from '@/lib/db';
 import { getSessionUser } from '@/lib/utils/auth';
+import { createLogger } from '@/lib/logger';
+
+const log = createLogger('ApiAdminUsers')
 
 async function requireAdmin(request: Request) {
   const user = await getSessionUser(request);
@@ -30,7 +33,7 @@ export async function GET(request: Request) {
 
     return NextResponse.json({ success: true, users });
   } catch (error) {
-    console.error('Admin users list error:', error);
+    log.error('Admin users list error:', error);
     return NextResponse.json(
       { success: false, error: 'Failed to load users' },
       { status: 500 }
@@ -62,7 +65,7 @@ export async function PATCH(request: Request) {
 
     return NextResponse.json({ success: true, user: updated });
   } catch (error) {
-    console.error('Admin users update error:', error);
+    log.error('Admin users update error:', error);
     return NextResponse.json(
       { success: false, error: 'Failed to update user' },
       { status: 500 }
@@ -97,7 +100,7 @@ export async function DELETE(request: Request) {
 
     return NextResponse.json({ success: true });
   } catch (error) {
-    console.error('Admin users delete error:', error);
+    log.error('Admin users delete error:', error);
     return NextResponse.json(
       { success: false, error: 'Failed to delete user' },
       { status: 500 }

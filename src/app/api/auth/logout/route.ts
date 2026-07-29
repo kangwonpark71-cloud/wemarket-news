@@ -1,5 +1,8 @@
 import { NextResponse } from 'next/server';
 import { destroySession, getSessionFromCookie } from '@/lib/utils/auth';
+import { createLogger } from '@/lib/logger';
+
+const log = createLogger('ApiAuthLogout')
 
 export async function POST(request: Request) {
   try {
@@ -12,7 +15,7 @@ export async function POST(request: Request) {
     response.cookies.delete('session');
     return response;
   } catch (error) {
-    console.error('Logout error:', error);
+    log.error('Logout error:', error);
     return NextResponse.json(
       { success: false, error: 'Failed to logout' },
       { status: 500 }

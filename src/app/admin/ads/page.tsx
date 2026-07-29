@@ -2,6 +2,9 @@
 
 import { useState, useEffect, useCallback } from 'react';
 import { AD_TYPES, AD_POSITIONS, type AdType, type AdPosition } from '@/lib/constants/ads';
+import { createLogger } from '@/lib/logger';
+
+const log = createLogger('AdminAdsPage')
 
 interface Ad {
   id: string;
@@ -51,7 +54,7 @@ export default function AdminAdsPage() {
         setTotalClicks(json.totalClicks);
       }
     } catch (err) {
-      console.error('Failed to load ads:', err);
+      log.error('Failed to load ads:', err);
     } finally {
       setLoading(false);
     }
@@ -158,7 +161,7 @@ export default function AdminAdsPage() {
         setAds((prev) => prev.map((a) => (a.id === ad.id ? json.ad : a)));
       }
     } catch (err) {
-      console.error('Toggle error:', err);
+      log.error('Toggle error:', err);
     }
   };
 

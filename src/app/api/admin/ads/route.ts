@@ -2,6 +2,10 @@ import { NextResponse } from 'next/server';
 import { prisma } from '@/lib/db';
 import { getSessionUser } from '@/lib/utils/auth';
 import { isAdType, isAdPosition } from '@/lib/constants/ads';
+import { sanitizeAdHtml } from '@/lib/utils/sanitize';
+import { createLogger } from '@/lib/logger';
+
+const log = createLogger('ApiAdminAds')
 
 async function requireAdmin(request: Request) {
   const user = await getSessionUser(request);
@@ -32,7 +36,7 @@ export async function GET(request: Request) {
 
     return NextResponse.json({ success: true, ads, totalImpressions, totalClicks });
   } catch (error) {
-    console.error('Ads list error:', error);
+    log.error('Ads list error:', error);
     return NextResponse.json({ success: false, error: 'Failed to load ads' }, { status: 500 });
   }
 }
@@ -60,11 +64,14 @@ export async function POST(request: Request) {
       );
     }
 
+    // Sanitize HTML content for defense-in-depth (also sanitized on read)
+    const sanitizedContent = sanitizeAdHtml(content);
+
     const ad = await prisma.advertisement.create({
       data: {
         title,
         adType: isAdType(adType) ? adType : 'image',
-        content,
+        content: sanitizedContent,
         linkUrl: linkUrl || null,
         position: isAdPosition(position) ? position : 'sidebar',
         isActive: isActive ?? true,
@@ -75,7 +82,7 @@ export async function POST(request: Request) {
 
     return NextResponse.json({ success: true, ad }, { status: 201 });
   } catch (error) {
-    console.error('Ad create error:', error);
+    log.error('Ad create error:', error);
     return NextResponse.json({ success: false, error: 'Failed to create ad' }, { status: 500 });
   }
 }
@@ -93,23 +100,28 @@ export async function PATCH(request: Request) {
       return NextResponse.json({ success: false, error: 'Ad ID is required' }, { status: 400 });
     }
 
+    const data: Record<string, unknown> = {
+      ...(title !== undefined && { title }),
+      ...(adType !== undefined && { adType: isAdType(adType) ? adType : 'image' }),
+      ...(linkUrl !== undefined && { linkUrl: linkUrl || null }),
+      ...(position !== undefined && { position: isAdPosition(position) ? position : 'sidebar' }),
+      ...(isActive !== undefined && { isActive }),
+      ...(startDate !== undefined && { startDate: startDate ? new Date(startDate) : null }),
+      ...(endDate !== undefined && { endDate: endDate ? new Date(endDate) : null }),
+    };
+
+    if (content !== undefined) {
+      data.content = sanitizeAdHtml(content);
+    }
+
     const ad = await prisma.advertisement.update({
       where: { id },
-      data: {
-        ...(title !== undefined && { title }),
-        ...(adType !== undefined && { adType: isAdType(adType) ? adType : 'image' }),
-        ...(content !== undefined && { content }),
-        ...(linkUrl !== undefined && { linkUrl: linkUrl || null }),
-        ...(position !== undefined && { position: isAdPosition(position) ? position : 'sidebar' }),
-        ...(isActive !== undefined && { isActive }),
-        ...(startDate !== undefined && { startDate: startDate ? new Date(startDate) : null }),
-        ...(endDate !== undefined && { endDate: endDate ? new Date(endDate) : null }),
-      },
+      data,
     });
 
     return NextResponse.json({ success: true, ad });
   } catch (error) {
-    console.error('Ad update error:', error);
+    log.error('Ad update error:', error);
     return NextResponse.json({ success: false, error: 'Failed to update ad' }, { status: 500 });
   }
 }
@@ -131,7 +143,7 @@ export async function DELETE(request: Request) {
 
     return NextResponse.json({ success: true });
   } catch (error) {
-    console.error('Ad delete error:', error);
+    log.error('Ad delete error:', error);
     return NextResponse.json({ success: false, error: 'Failed to delete ad' }, { status: 500 });
   }
 }

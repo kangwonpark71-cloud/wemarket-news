@@ -1,5 +1,8 @@
 import { NextResponse } from 'next/server'
 import prisma from '@/lib/db'
+import { createLogger } from '@/lib/logger';
+
+const log = createLogger('ApiArticlesRecommendations')
 
 export async function GET() {
   try {
@@ -62,7 +65,7 @@ export async function GET() {
       },
     })
   } catch (error) {
-    console.error('Failed to generate article recommendations:', error)
+    log.error('Failed to generate article recommendations:', error)
     return NextResponse.json(
       { success: false, error: 'Failed to generate recommendations' },
       { status: 500 }

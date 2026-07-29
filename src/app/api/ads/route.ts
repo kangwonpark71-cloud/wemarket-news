@@ -1,6 +1,9 @@
 import { NextResponse } from 'next/server'
 import { prisma } from '@/lib/db'
 import { sanitizeAdHtml } from '@/lib/utils/sanitize'
+import { createLogger } from '@/lib/logger';
+
+const log = createLogger('ApiAds')
 
 export async function GET() {
   try {
@@ -33,7 +36,7 @@ export async function GET() {
 
     return NextResponse.json({ success: true, ads: safeAds })
   } catch (error) {
-    console.error('Failed to fetch ads:', error)
+    log.error('Failed to fetch ads:', error)
     return NextResponse.json(
       { success: false, error: 'Failed to fetch ads' },
       { status: 500 }

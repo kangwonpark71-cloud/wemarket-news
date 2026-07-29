@@ -3,6 +3,9 @@
 import { useEffect, useState, useMemo } from 'react';
 import { FinancialDashboard } from '@/components/financial/FinancialDashboard';
 import { FinancialChart } from '@/components/financial/FinancialChart';
+import { createLogger } from '@/lib/logger';
+
+const log = createLogger('CryptoCryptopage')
 
 interface CryptoTickerData {
   symbol: string;
@@ -53,7 +56,7 @@ export function CryptoPage() {
         if (mkJson.success) setMarkets(mkJson.data);
         if (tkJson.success) setTickers(tkJson.data);
       } catch (err) {
-        console.error('Failed to load crypto data:', err);
+        log.error('Failed to load crypto data:', err);
       } finally {
         setLoading(false);
       }
@@ -68,7 +71,7 @@ export function CryptoPage() {
           setTickers(json.data);
         }
       } catch (err) {
-        console.error('Error polling tickers:', err);
+        log.error('Error polling tickers:', err);
       }
     }, 15000);
 

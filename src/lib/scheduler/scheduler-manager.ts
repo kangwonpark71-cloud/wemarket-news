@@ -7,7 +7,7 @@ import { BaseScheduler, SchedulerMetrics } from './base-scheduler'
 import { RSSScheduler } from './rss-scheduler'
 import { AIITScheduler } from './ai-it-scheduler'
 import { FinancialScheduler } from './financial-scheduler'
-import { createLogger } from '@/lib/logger'
+import { createLogger } from '@/lib/logger';
 
 const log = createLogger('SchedulerManager')
 

@@ -10,7 +10,7 @@ import { upbitService } from '@/lib/services/crypto/crypto-service'
 import { marketService } from '@/lib/services/market/market-service'
 import { runJobWithLock } from '@/lib/utils/lock'
 import { prisma } from '@/lib/db'
-import { createLogger } from '@/lib/logger'
+import { createLogger } from '@/lib/logger';
 
 const log = createLogger('FinancialScheduler')
 

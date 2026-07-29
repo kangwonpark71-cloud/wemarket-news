@@ -1,5 +1,8 @@
 import { NextResponse } from 'next/server';
 import { upbitService } from '@/lib/services/crypto/crypto-service';
+import { createLogger } from '@/lib/logger';
+
+const log = createLogger('ApiFinancialCrypto')
 
 export async function GET(request: Request) {
   const { searchParams } = new URL(request.url);
@@ -62,7 +65,7 @@ export async function GET(request: Request) {
 
     return NextResponse.json({ success: true, data: result });
   } catch (error) {
-    console.error('[API] Crypto error:', error);
+    log.error('[API] Crypto error:', error);
     return NextResponse.json(
       { success: false, error: 'Failed to fetch crypto data' },
       { status: 500 }

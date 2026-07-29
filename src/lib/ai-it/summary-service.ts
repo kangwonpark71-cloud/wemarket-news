@@ -1,6 +1,6 @@
 import { cacheService } from '@/lib/services/cache/cache-service';
 
-import { createLogger } from '@/lib/logger'
+import { createLogger } from '@/lib/logger';
 const log = createLogger('AISummary')
 
 export interface AISummaryResult {

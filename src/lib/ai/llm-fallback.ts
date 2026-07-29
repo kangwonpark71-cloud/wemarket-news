@@ -6,7 +6,7 @@
 import { AISummaryResult } from '../ai-it/summary-service'
 import { cacheService } from '@/lib/services/cache/cache-service'
 
-import { createLogger } from '@/lib/logger'
+import { createLogger } from '@/lib/logger';
 const log = createLogger('LLMFallback')
 
 export interface LLMFallbackConfig {
@@ -90,7 +90,7 @@ function isCircuitBreakerOpen(service: string, config: LLMFallbackConfig): boole
     if (timeSinceLastFailure > config.circuitBreakerResetTime) {
       state.isOpen = false
       state.failures = 0
-      log.log(`[LLM Circuit Breaker] ${service}: Circuit breaker reset after ${config.circuitBreakerResetTime}ms`)
+      log.info(`[LLM Circuit Breaker] ${service}: Circuit breaker reset after ${config.circuitBreakerResetTime}ms`)
       return false
     }
   }
@@ -254,5 +254,5 @@ export function resetCircuitBreaker(service: string): void {
   state.failures = 0
   state.isOpen = false
   state.lastFailureTime = null
-  log.log(`[LLM Circuit Breaker] ${service}: Circuit breaker manually reset`)
+  log.info(`[LLM Circuit Breaker] ${service}: Circuit breaker manually reset`)
 }

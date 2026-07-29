@@ -1,6 +1,9 @@
 import { NextResponse } from 'next/server';
 import { prisma } from '@/lib/db';
 import { getSessionUser } from '@/lib/utils/auth';
+import { createLogger } from '@/lib/logger';
+
+const log = createLogger('ApiAuthPreferences')
 
 export async function POST(request: Request) {
   try {
@@ -45,7 +48,7 @@ export async function POST(request: Request) {
 
     return NextResponse.json({ success: true, data: updated });
   } catch (error) {
-    console.error('Preferences update error:', error);
+    log.error('Preferences update error:', error);
     return NextResponse.json(
       { success: false, error: 'Failed to update preferences' },
       { status: 500 }

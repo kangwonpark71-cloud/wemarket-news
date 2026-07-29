@@ -1,6 +1,9 @@
 import { NextResponse } from 'next/server'
 import { seedAIITSources } from '@/lib/ai-it/db-service'
 import { fetchAllAIITNews } from '@/lib/ai-it/scheduler-service'
+import { createLogger } from '@/lib/logger';
+
+const log = createLogger('ApiAiitTrigger')
 
 export async function POST(request: Request) {
   const authHeader = request.headers.get('authorization')
@@ -28,7 +31,7 @@ export async function POST(request: Request) {
 
     return NextResponse.json({ success: true, ...results })
   } catch (error) {
-    console.error('AI/IT trigger failed:', error)
+    log.error('AI/IT trigger failed:', error)
     return NextResponse.json(
       { success: false, error: 'AI/IT trigger failed' },
       { status: 500 }
