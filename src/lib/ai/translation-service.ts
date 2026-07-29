@@ -1,8 +1,8 @@
 import prisma from '@/lib/db';
 import { summarizeWithLLMFallback } from './llm-service';
 import type { AISummaryResult } from '../ai-it/summary-service';
-import { parseList, stringifyList } from '@/lib/utils/list-fields';
-import { createLogger } from '@/lib/logger';;
+import { parseList } from '@/lib/utils/list-fields';
+import { createLogger } from '@/lib/logger';
 
 const log = createLogger('Translation')
 
@@ -34,12 +34,13 @@ export async function translateArticle(articleId: string): Promise<TranslationRe
     article.content || undefined,
   );
 
+  // List fields stored as comma-separated strings (String schema type)
   const summaryData = {
     translatedTitle: result.translatedTitle,
     summary3Line: result.summary3Line,
-    keywords: stringifyList(result.keywords),
-    relatedCompanies: stringifyList(result.relatedCompanies),
-    relatedModels: stringifyList(result.relatedModels),
+    keywords: result.keywords,
+    relatedCompanies: result.relatedCompanies,
+    relatedModels: result.relatedModels,
     difficulty: result.difficulty,
     aiGenerated: true,
     modelUsed: 'gpt-4o-mini',
@@ -150,9 +151,9 @@ export async function translateArticleTitleOnly(articleId: string): Promise<Tran
     update: {
       translatedTitle,
       summary3Line: summary3Line || '요약 준비 중',
-      keywords: stringifyList(keywords),
-      relatedCompanies: stringifyList([]),
-      relatedModels: stringifyList([]),
+      keywords,
+      relatedCompanies: [],
+      relatedModels: [],
       difficulty: 'intermediate',
       aiGenerated: true,
       modelUsed: 'gpt-4o-mini',
@@ -161,9 +162,9 @@ export async function translateArticleTitleOnly(articleId: string): Promise<Tran
       articleId: article.id,
       translatedTitle,
       summary3Line: summary3Line || '요약 준비 중',
-      keywords: stringifyList(keywords),
-      relatedCompanies: stringifyList([]),
-      relatedModels: stringifyList([]),
+      keywords,
+      relatedCompanies: [],
+      relatedModels: [],
       difficulty: 'intermediate',
       aiGenerated: true,
       modelUsed: 'gpt-4o-mini',

@@ -2,7 +2,7 @@ import prisma from '@/lib/db';
 import { AIITParsedArticle } from './fetcher';
 import { Prisma, Article, Source, NewsSummary } from '@prisma/client';
 import { scheduleTranslation } from '@/lib/rss/db-service';
-import { stringifyList } from '@/lib/utils/list-fields';
+
 import { createLogger } from '@/lib/logger';;
 
 const log = createLogger('AIITDB');
@@ -329,18 +329,18 @@ export async function upsertSummary(
     update: {
       translatedTitle: summaryData.translatedTitle,
       summary3Line: summaryData.summary3Line,
-      keywords: stringifyList(summaryData.keywords),
-      relatedCompanies: stringifyList(summaryData.relatedCompanies),
-      relatedModels: stringifyList(summaryData.relatedModels),
+      keywords: summaryData.keywords,
+      relatedCompanies: summaryData.relatedCompanies,
+      relatedModels: summaryData.relatedModels,
       difficulty: summaryData.difficulty,
     },
     create: {
       articleId: newsId,
       translatedTitle: summaryData.translatedTitle,
       summary3Line: summaryData.summary3Line,
-      keywords: stringifyList(summaryData.keywords),
-      relatedCompanies: stringifyList(summaryData.relatedCompanies),
-      relatedModels: stringifyList(summaryData.relatedModels),
+      keywords: summaryData.keywords,
+      relatedCompanies: summaryData.relatedCompanies,
+      relatedModels: summaryData.relatedModels,
       difficulty: summaryData.difficulty,
     },
   });

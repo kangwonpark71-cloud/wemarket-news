@@ -26,3 +26,5 @@ export class PubSub {
 }
 
 export const fetchProgressPubSub = new PubSub()
+
+export const watchlistAlertPubSub = new PubSub()
