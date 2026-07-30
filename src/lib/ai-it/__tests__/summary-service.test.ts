@@ -6,6 +6,17 @@ jest.mock('@/lib/services/cache/cache-service', () => ({
     get: jest.fn().mockResolvedValue(null),
     set: jest.fn().mockResolvedValue(undefined),
   },
+  CacheTTL: {
+    REALTIME: 10,
+    MINUTE: 60,
+    MINUTE_5: 300,
+    MINUTE_15: 900,
+    MINUTE_30: 1800,
+    HOUR: 3600,
+    HOUR_12: 43200,
+    DAY: 86400,
+    AI_SUMMARY: 3600,
+  },
 }))
 
 describe('summary-service', () => {

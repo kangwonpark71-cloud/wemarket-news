@@ -16,6 +16,17 @@ jest.mock('@/lib/services/cache/cache-service', () => {
       get: mockGet,
       set: mockSet,
     },
+    CacheTTL: {
+      REALTIME: 10,
+      MINUTE: 60,
+      MINUTE_5: 300,
+      MINUTE_15: 900,
+      MINUTE_30: 1800,
+      HOUR: 3600,
+      HOUR_12: 43200,
+      DAY: 86400,
+      AI_SUMMARY: 3600,
+    },
     __mockGet: mockGet,
     __mockSet: mockSet,
   }
@@ -69,11 +80,11 @@ describe('summary-service', () => {
       // Should detect GPT-4, GPT models
       expect(result.relatedModels.some((m: string) => m.includes('GPT'))).toBe(true)
 
-      // Should cache the result
+      // Should cache the result (with _generatedAt timestamp added by the service)
       expect(cacheService.set).toHaveBeenCalledWith(
         expect.stringContaining('ai_summary:'),
-        result,
-        expect.objectContaining({ ttl: 86400 }),
+        expect.objectContaining(result),
+        expect.objectContaining({ ttl: 3600 }),
       )
     })
 

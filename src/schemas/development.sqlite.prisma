@@ -140,6 +140,7 @@ model UserPreference {
   theme           String   @default("light") 
   language        String   @default("all") 
   interests       String   @default("") @map("interests") // 쉼표 구분 관심분야 IDs (예: "economy,tech,world")
+  alertKeywords   String   @default("") @map("alert_keywords") // 쉼표 구분 키워드 알림 (예: "금리,AI,반도체")
   createdAt       DateTime @default(now()) @map("created_at")
   updatedAt       DateTime @updatedAt @map("updated_at")
 

@@ -119,6 +119,6 @@ describe('CacheTTL', () => {
     const keys = Object.keys(CacheTTL);
     expect(keys).toContain('REALTIME');
     expect(keys).toContain('DAY');
-    expect(keys).toHaveLength(8);
+    expect(keys).toHaveLength(9);
   });
 });

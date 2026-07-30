@@ -60,6 +60,102 @@ export default function AdminPage() {
   const [loading, setLoading] = useState(true)
   const [triggeringId, setTriggeringId] = useState<string | null>(null)
   const [triggerResults, setTriggerResults] = useState<Record<string, string>>({})
+  const [cacheClearing, setCacheClearing] = useState(false)
+  const [cacheMessage, setCacheMessage] = useState<string | null>(null)
+  const [dedupRunning, setDedupRunning] = useState(false)
+  const [dedupMessage, setDedupMessage] = useState<string | null>(null)
+  const [dedupPreview, setDedupPreview] = useState<{ totalGroups: number; totalDuplicates: number } | null>(null)
+
+  const CACHE_PATTERNS = [
+    { key: 'financial', label: '💹 금융 대시보드' },
+    { key: 'stock', label: '📈 주식' },
+    { key: 'crypto', label: '₿ 암호화폐' },
+    { key: 'forex', label: '💱 환율' },
+    { key: 'global', label: '🌍 글로벌 지수' },
+    { key: 'articles', label: '📰 기사 목록' },
+    { key: 'ai-it', label: '🤖 AI/IT' },
+  ]
+
+  const clearCache = async (pattern: string) => {
+    setCacheClearing(true)
+    setCacheMessage(null)
+    try {
+      const res = await fetch('/api/admin/cache/invalidate', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ pattern }),
+      })
+      const data = await res.json()
+      if (data.success) {
+        if (pattern === 'all') {
+          setCacheMessage('✅ 전체 캐시가 초기화되었습니다.')
+        } else {
+          const label = CACHE_PATTERNS.find((cp) => cp.key === pattern)?.label || pattern
+          setCacheMessage(`✅ ${label} 캐시가 초기화되었습니다.`)
+        }
+      } else {
+        setCacheMessage(`❌ 초기화 실패: ${data.error || '알 수 없는 오류'}`)
+      }
+    } catch (err) {
+      setCacheMessage(`❌ 통신 오류: ${err instanceof Error ? err.message : String(err)}`)
+    } finally {
+      setCacheClearing(false)
+      setTimeout(() => setCacheMessage(null), 5000)
+    }
+  }
+
+  const handleClearAllCache = () => clearCache('all')
+  const handleClearCache = (pattern: string) => clearCache(pattern)
+
+  // Duplicate merge
+  const handleDedupPreview = async () => {
+    setDedupRunning(true)
+    setDedupMessage(null)
+    try {
+      const res = await fetch('/api/admin/duplicates', { method: 'GET' })
+      const data = await res.json()
+      if (data.success) {
+        setDedupPreview(data.data)
+        if (data.data.potentialDuplicates === 0) {
+          setDedupMessage('✅ 중복 기사가 없습니다.')
+        } else {
+          setDedupMessage(`🔍 ${data.data.potentialDuplicates}개의 잠재적 중복 기사 발견 (${data.data.groupsCount}개 그룹)`)
+        }
+      }
+    } catch (err) {
+      setDedupMessage(`❌ 중복 확인 실패: ${err instanceof Error ? err.message : String(err)}`)
+    } finally {
+      setDedupRunning(false)
+      setTimeout(() => { if (!dedupRunning) setDedupMessage(old => old?.includes('✅') || old?.includes('🔍') ? old : null) }, 8000)
+    }
+  }
+
+  const handleDedupMerge = async (dryRun: boolean) => {
+    setDedupRunning(true)
+    setDedupMessage(null)
+    try {
+      const res = await fetch('/api/admin/duplicates', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ dryRun }),
+      })
+      const data = await res.json()
+      if (data.success) {
+        setDedupMessage(data.data.message)
+        if (!dryRun) {
+          setDedupPreview(null)
+          fetchSources()
+        }
+      } else {
+        setDedupMessage(`❌ ${data.error || '병합 실패'}`)
+      }
+    } catch (err) {
+      setDedupMessage(`❌ 통신 오류: ${err instanceof Error ? err.message : String(err)}`)
+    } finally {
+      setDedupRunning(false)
+      setTimeout(() => setDedupMessage(null), 8000)
+    }
+  }
 
   const successRate = useMemo(() => {
     if (!stats?.recentFetchLogs || stats.recentFetchLogs.length === 0) return 100;
@@ -204,6 +300,82 @@ export default function AdminPage() {
               ) : '대기 중'}
             </span>
           </div>
+        </div>
+
+        {/* Cache Management */}
+        <div className="bg-white rounded-none shadow-sm border border-slate-200 p-6 mb-8">
+          <div className="flex items-center justify-between mb-4">
+            <div>
+              <h2 className="text-base font-bold text-slate-900">⚡ 캐시 관리</h2>
+              <p className="text-xs text-slate-500 mt-0.5">Redis/메모리 캐시 초기화 (금융 데이터, 기사 목록 등)</p>
+            </div>
+            <button
+              onClick={handleClearAllCache}
+              disabled={cacheClearing}
+              className="bg-rose-600 hover:bg-rose-700 text-white font-semibold px-4 py-2 rounded-sm text-xs transition-colors cursor-pointer disabled:bg-slate-300 disabled:cursor-not-allowed"
+            >
+              {cacheClearing ? '🔄 초기화 중...' : '🗑️ 전체 캐시 초기화'}
+            </button>
+          </div>
+          <div className="flex flex-wrap gap-2">
+            {CACHE_PATTERNS.map((cp) => (
+              <button
+                key={cp.key}
+                onClick={() => handleClearCache(cp.key)}
+                disabled={cacheClearing}
+                className="px-3 py-1.5 border border-slate-300 hover:bg-slate-100 text-xs font-semibold rounded-sm transition-colors cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
+              >
+                {cp.label}
+              </button>
+            ))}
+          </div>
+          {cacheMessage && (
+            <div className={`mt-3 text-xs font-semibold ${cacheMessage.includes('✅') ? 'text-emerald-600' : 'text-rose-600'}`}>
+              {cacheMessage}
+            </div>
+          )}
+        </div>
+
+        {/* Duplicate Article Merge Engine */}
+        <div className="bg-white rounded-none shadow-sm border border-slate-200 p-6 mb-8">
+          <div className="flex items-center justify-between mb-4">
+            <div>
+              <h2 className="text-base font-bold text-slate-900">🔀 중복 기사 병합</h2>
+              <p className="text-xs text-slate-500 mt-0.5">
+                동일한 제목의 중복 기사를 감지하고 병합합니다 (가장 오래된 기사를 유지)
+              </p>
+            </div>
+            <div className="flex gap-2">
+              {dedupPreview && dedupPreview.totalDuplicates > 0 && (
+                <button
+                  onClick={() => handleDedupMerge(false)}
+                  disabled={dedupRunning}
+                  className="bg-emerald-600 hover:bg-emerald-700 text-white font-semibold px-4 py-2 rounded-sm text-xs transition-colors cursor-pointer disabled:bg-slate-300 disabled:cursor-not-allowed"
+                >
+                  {dedupRunning ? '🔄 병합 중...' : '🔀 병합 실행'}
+                </button>
+              )}
+              <button
+                onClick={handleDedupPreview}
+                disabled={dedupRunning}
+                className="bg-indigo-600 hover:bg-indigo-700 text-white font-semibold px-4 py-2 rounded-sm text-xs transition-colors cursor-pointer disabled:bg-slate-300 disabled:cursor-not-allowed"
+              >
+                {dedupRunning ? '🔄 확인 중...' : '🔍 중복 확인'}
+              </button>
+              <button
+                onClick={() => handleDedupMerge(true)}
+                disabled={dedupRunning}
+                className="px-4 py-1.5 border border-slate-300 hover:bg-slate-100 text-xs font-semibold rounded-sm transition-colors cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
+              >
+                🥼 사전 시험 (Dry-Run)
+              </button>
+            </div>
+          </div>
+          {dedupMessage && (
+            <div className={`text-xs font-semibold ${dedupMessage.includes('✅') ? 'text-emerald-600' : dedupMessage.includes('🔍') ? 'text-indigo-600' : dedupMessage.includes('❌') ? 'text-rose-600' : 'text-slate-600'}`}>
+              {dedupMessage}
+            </div>
+          )}
         </div>
 
         {stats?.sourceHealth && stats.sourceHealth.length > 0 && (
