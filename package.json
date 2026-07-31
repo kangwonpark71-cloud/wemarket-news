@@ -25,6 +25,7 @@
     "db:check:drift": "node scripts/check-schema-drift.mjs",
     "db:studio": "prisma studio",
     "cleanup:sports": "tsx scripts/cleanup-sports-pollution.ts",
+    "seed:ooh": "tsx scripts/seed-ooh.ts",
     "worker": "tsx worker/index.ts",
     "cron-worker": "tsx worker/cron-worker.ts",
     "dev:fetch": "tsx scripts/dev-fetch.ts",

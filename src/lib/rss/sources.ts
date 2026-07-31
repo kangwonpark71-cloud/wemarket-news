@@ -360,6 +360,57 @@ export const SMALLBIZ_SOURCES: RSSSourceConfig[] = [
   },
 ]
 
+// =============================================
+// 옥외광고(OOH) 뉴스 소스 (Google News RSS 검색 기반)
+// - 매체사: 신규 전광판, LED, 미디어폴, 버스쉘터, 지하철광고, 옥상전광판, 디지털사이니지
+// - 대행사: 수주, 캠페인, 신규 계약, MOU, 인수합병
+// - 기획사: 광고 캠페인, 크리에이티브, 브랜드 사례
+// - 광고주: 신제품 출시, 마케팅, 광고집행, 프로모션
+// =============================================
+
+export const OOH_SOURCES: RSSSourceConfig[] = [
+  {
+    name: 'OOH 매체사',
+    nameEn: 'google_news_ooh_media',
+    url: 'https://news.google.com/rss/search?q=%EC%98%A5%EC%99%B8%EA%B4%91%EA%B3%A0%20OR%20%EC%A0%84%EA%B4%91%ED%8C%90%20OR%20%EB%94%94%EC%A7%80%ED%84%B8%EC%82%AC%EC%9D%B4%EB%8B%88%EC%A7%80%20OR%20%EB%AF%B8%EB%94%94%EC%96%B4%ED%8F%B4%20OR%20%EB%B2%84%EC%8A%A4%EC%89%98%ED%84%B0%20OR%20%EC%98%A5%EC%83%81%EC%A0%84%EA%B4%91%ED%8C%90&hl=ko&gl=KR&ceid=KR:ko',
+    category: 'domestic',
+    subcategory: 'ooh_media',
+    language: 'ko',
+    icon: '🪧',
+    fetchInterval: 3,
+  },
+  {
+    name: 'OOH 대행사',
+    nameEn: 'google_news_ooh_agency',
+    url: 'https://news.google.com/rss/search?q=%EA%B4%91%EA%B3%A0%EB%8C%80%ED%96%89%EC%82%AC%20OR%20%EA%B4%91%EA%B3%A0%EC%88%98%EC%A3%BC%20OR%20%22%EA%B4%91%EA%B3%A0%20%EC%BA%A0%ED%8E%98%EC%9D%B8%22%20OR%20%22%EA%B4%91%EA%B3%A0%20%EA%B3%84%EC%95%BD%22%20OR%20%22%EC%98%A5%EC%99%B8%EA%B4%91%EA%B3%A0%20%EC%88%98%EC%A3%BC%22&hl=ko&gl=KR&ceid=KR:ko',
+    category: 'domestic',
+    subcategory: 'ooh_agency',
+    language: 'ko',
+    icon: '🤝',
+    fetchInterval: 3,
+  },
+  {
+    name: 'OOH 기획사',
+    nameEn: 'google_news_ooh_planner',
+    url: 'https://news.google.com/rss/search?q=%EA%B4%91%EA%B3%A0%EA%B8%B0%ED%9A%8D%20OR%20%ED%81%AC%EB%A6%AC%EC%97%90%EC%9D%B4%ED%8B%B0%EB%B8%8C%20OR%20%22%EB%B8%8C%EB%9E%9C%EB%93%9C%20%EC%BA%A0%ED%8E%98%EC%9D%B8%22%20OR%20%22%EA%B4%91%EA%B3%A0%20%EC%BA%A0%ED%8E%98%EC%9D%B8%22&hl=ko&gl=KR&ceid=KR:ko',
+    category: 'domestic',
+    subcategory: 'ooh_planner',
+    language: 'ko',
+    icon: '🎨',
+    fetchInterval: 3,
+  },
+  {
+    name: 'OOH 광고주',
+    nameEn: 'google_news_ooh_advertiser',
+    url: 'https://news.google.com/rss/search?q=%22%EC%8B%A0%EC%A0%9C%ED%92%88%20%EC%B6%9C%EC%8B%9C%22%20OR%20%22%EA%B4%91%EA%B3%A0%20%EC%A7%91%ED%96%89%22%20OR%20%ED%94%84%EB%A1%9C%EB%AA%A8%EC%85%98%20OR%20%22%EB%A7%88%EC%BC%80%ED%8C%85%20%EC%BA%A0%ED%8E%98%EC%9D%B8%22&hl=ko&gl=KR&ceid=KR:ko',
+    category: 'domestic',
+    subcategory: 'ooh_advertiser',
+    language: 'ko',
+    icon: '📣',
+    fetchInterval: 3,
+  },
+]
+
 // 모든 소스 통합
 export const ALL_SOURCES: RSSSourceConfig[] = [
   ...DOMESTIC_SOURCES,
@@ -368,6 +419,7 @@ export const ALL_SOURCES: RSSSourceConfig[] = [
   ...OVERSEAS_CATEGORY_SOURCES,
   ...MEDICAL_SOURCES,
   ...SMALLBIZ_SOURCES,
+  ...OOH_SOURCES,
 ]
 
 // 카테고리별 소스 가져오기
@@ -405,6 +457,10 @@ export const SUBCATEGORY_LABELS: Record<string, string> = {
   medical_research: '해외 의학 연구',
   sbiz_general: '일반 소상공인',
   sbiz_food: '외식·카페',
+  ooh_media: '매체사',
+  ooh_agency: '대행사',
+  ooh_planner: '기획사',
+  ooh_advertiser: '광고주',
 }
 
 // 카테고리 한글 매핑

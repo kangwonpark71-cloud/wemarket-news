@@ -34,6 +34,7 @@ export const NAV_ITEMS: NavItem[] = [
       { href: '/culture', label: '문화', icon: '🎨' },
       { href: '/entertainment', label: '연예', icon: '⭐' },
       { href: '/sports', label: '스포츠', icon: '🏆' },
+      { href: '/ooh', label: '옥외광고', icon: '🪧' },
     ],
   },
   {
