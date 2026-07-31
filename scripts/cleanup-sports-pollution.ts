@@ -1,17 +1,23 @@
 import { PrismaClient } from '@prisma/client'
+import { getSourceByName } from '../src/lib/rss/sources'
 
 const prisma = new PrismaClient()
 
-const EXCLUDE_KEYWORDS = [
-  '코스피', '코스닥', '비트코인', '가상자산', 'ETF', '증시', '주가',
-  '시세', '환율', '금리', '사이드카', '미수거래', '레버리지', '예탁금',
-  '반대매매', '폭등', '급락', '삼성전자', 'SK하이닉스', '퇴근길머니',
-]
+// 키워드 단일 소스: sources.ts의 excludeKeywords 설정과 동기화
+function getExcludeKeywords(): string[] {
+  const keywords = new Set<string>()
+  for (const nameEn of SPORTS_SOURCES) {
+    const source = getSourceByName(nameEn)
+    for (const kw of source?.excludeKeywords ?? []) keywords.add(kw)
+  }
+  return [...keywords]
+}
 
 const SPORTS_SOURCES = ['yonhapnewstv_sports', 'ytn_sports']
 
 async function main() {
   const dryRun = process.argv.includes('--dry-run')
+  const EXCLUDE_KEYWORDS = getExcludeKeywords()
 
   const sources = await prisma.source.findMany({
     where: { nameEn: { in: SPORTS_SOURCES } },

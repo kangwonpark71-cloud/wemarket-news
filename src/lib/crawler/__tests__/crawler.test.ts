@@ -7,6 +7,7 @@ import {
   expectValidArticle,
   expectValidFetchResult,
 } from '@/lib/test-utils';
+import { isExcludedByKeywords } from '@/lib/crawler/rss-crawler';
 
 describe('Crawler Test Infrastructure', () => {
   describe('Test Utilities', () => {
@@ -184,8 +185,6 @@ describe('Crawler Test Infrastructure', () => {
 });
 
 describe('isExcludedByKeywords', () => {
-  const { isExcludedByKeywords } = require('@/lib/crawler/rss-crawler');
-
   it('returns false when no keywords configured', () => {
     expect(isExcludedByKeywords('코스피 폭등', undefined)).toBe(false);
     expect(isExcludedByKeywords('코스피 폭등', [])).toBe(false);
