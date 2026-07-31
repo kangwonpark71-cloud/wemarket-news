@@ -6,6 +6,7 @@ import { ServiceWorkerRegister } from "@/components/layout/ServiceWorkerRegister
 import { InstallPrompt } from "@/components/layout/InstallPrompt";
 import { MobileBottomNav } from "@/components/layout/MobileBottomNav";
 import ChatWidget from "@/components/chat/ChatWidget";
+import { I18nProvider } from "@/lib/i18n/I18nProvider";
 import "./globals.css";
 
 const geistSans = Geist({
@@ -49,19 +50,29 @@ export default function RootLayout({
                     // localStorage access may throw in sandboxed iframes/privacy modes.
                     // FOUC prevention must never break page rendering, so fail silently.
                   }
-                })();
+                try {
+                  var locale = localStorage.getItem('economy-news:locale');
+                  if (locale === 'en' || locale === 'ko') {
+                    document.documentElement.lang = locale;
+                  }
+                } catch(e) {
+                  // ignore storage failures
+                }
+              })();
             `,
           }}
         />
       </head>
       <body className="min-h-full flex flex-col bg-background">
-        <HeaderWrapper />
-        <main className="flex-1 pb-16 md:pb-0">{children}</main>
-        <FetchStatusBar />
-        <ServiceWorkerRegister />
-        <InstallPrompt />
-        <MobileBottomNav />
-        <ChatWidget />
+        <I18nProvider>
+          <HeaderWrapper />
+          <main className="flex-1 pb-16 md:pb-0">{children}</main>
+          <FetchStatusBar />
+          <ServiceWorkerRegister />
+          <InstallPrompt />
+          <MobileBottomNav />
+          <ChatWidget />
+        </I18nProvider>
       </body>
     </html>
   );

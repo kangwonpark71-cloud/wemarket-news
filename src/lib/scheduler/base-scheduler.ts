@@ -4,6 +4,7 @@
  */
 
 import { createLogger } from '@/lib/logger';
+import { captureError } from '@/lib/services/monitoring/error-log-service';
 
 const log = createLogger('BaseScheduler');
 
@@ -99,11 +100,20 @@ export abstract class BaseScheduler {
   /**
    * Record job failure
    */
-  protected recordFailure(duration: number): void {
+  protected recordFailure(duration: number, jobName?: string, error?: unknown): void {
     this.metrics.totalJobs++
     this.metrics.failedJobs++
     this.metrics.lastFailure = new Date()
     this.metrics.lastDuration = duration
+
+    if (error) {
+      void captureError({
+        source: `scheduler:${this.config.name}${jobName ? `:${jobName}` : ''}`,
+        message: error instanceof Error ? error.message : String(error),
+        stack: error instanceof Error ? error.stack : null,
+        context: { duration },
+      })
+    }
   }
 
   /**
@@ -162,7 +172,7 @@ export abstract class BaseScheduler {
 
       // All attempts failed
       const duration = Date.now() - startTime
-      this.recordFailure(duration)
+      this.recordFailure(duration, jobName, lastError)
 
       if (lastError) {
         log.error(`[${this.config.name}] ${jobName} failed after ${(options?.retryCount || 0) + 1} attempts:`, lastError.message)

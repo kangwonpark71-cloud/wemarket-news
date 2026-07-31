@@ -18,6 +18,7 @@ const NAV_ITEMS: NavItem[] = [
   { label: '배너 관리', href: '/admin/banners', icon: '🖼️' },
   { label: '광고 관리', href: '/admin/ads', icon: '📢' },
   { label: '활동 로그', href: '/admin/logs', icon: '📋' },
+  { label: '에러 모니터링', href: '/admin/error-logs', icon: '🛰️' },
   { label: '키워드 알림', href: '/admin/alerts', icon: '🔔' },
   { label: '추천 통계', href: '/admin/recommendations', icon: '🎯' },
   { label: '푸시 알림', href: '/admin/push', icon: '📬' },

@@ -87,6 +87,7 @@ model Article {
   @@index([category, publishedAt(sort: Desc)])
   @@index([language, publishedAt(sort: Desc)])
   @@index([publishedAt(sort: Desc)])
+  @@index([viewCount(sort: Desc), publishedAt(sort: Desc)])
   @@map("articles")
 }
 
@@ -104,6 +105,8 @@ model FetchLog {
   source      Source   @relation(fields: [sourceId], references: [id], onDelete: Cascade)
 
   @@index([sourceId, fetchedAt(sort: Desc)])
+  @@index([status, fetchedAt(sort: Desc)])
+  @@index([fetchedAt(sort: Desc)])
   @@map("fetch_logs")
 }
 
@@ -244,6 +247,7 @@ model NewsTagRelation {
   @@unique([articleId, tagId])
   @@index([articleId])
   @@index([tagId])
+  @@index([tagId, articleId])
   @@map("news_tag_relations")
 }
 
@@ -542,6 +546,7 @@ model FinancialFetchLog {
   fetchedAt   DateTime @default(now()) @map("fetched_at")
 
   @@index([service, fetchedAt(sort: Desc)])
+  @@index([status, fetchedAt(sort: Desc)])
   @@map("financial_fetch_logs")
 }
 
@@ -610,4 +615,19 @@ model ChatMessage {
 
   @@index([sessionId, createdAt])
   @@map("chat_messages")
+}
+
+// 에러 모니터링 로그
+model ErrorLog {
+  id        String   @id @default(uuid())
+  level     String   @default("error") // "error" | "warn" | "info"
+  source    String   // 모듈/서비스 이름 (e.g. "scheduler:financial", "api:chat")
+  message   String   @db.Text
+  stack     String?  @db.Text
+  context   Json?
+  createdAt DateTime @default(now()) @map("created_at")
+
+  @@index([level, createdAt])
+  @@index([source, createdAt])
+  @@map("error_logs")
 }

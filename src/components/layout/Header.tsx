@@ -7,6 +7,7 @@ import { cn } from '@/lib/utils'
 import { ThemeToggle } from '@/components/ui/ThemeToggle'
 import { NAV_ITEMS, type NavItem } from '@/lib/constants/nav'
 import { MobileNav } from '@/components/layout/MobileNav'
+import { useI18n } from '@/lib/i18n/I18nProvider'
 
 interface CurrentUser {
   name?: string
@@ -15,6 +16,7 @@ interface CurrentUser {
 export default function Header() {
   const pathname = usePathname()
   const searchParams = useSearchParams()
+  const { t, locale, toggleLocale } = useI18n()
   const [isSearchOpen, setIsSearchOpen] = useState(false)
   const [isMobileNavOpen, setIsMobileNavOpen] = useState(false)
   const [searchQuery, setSearchQuery] = useState(searchParams.get('q') || searchParams.get('search') || '')
@@ -49,22 +51,22 @@ export default function Header() {
   useEffect(() => {
     const updateTime = () => {
       const now = new Date()
-      const dateStr = now.toLocaleDateString('ko-KR', {
+      const dateStr = now.toLocaleDateString(locale === 'ko' ? 'ko-KR' : 'en-US', {
         year: 'numeric',
         month: 'long',
         day: 'numeric',
         weekday: 'short',
       })
-      const timeStr = now.toLocaleTimeString('ko-KR', {
+      const timeStr = now.toLocaleTimeString(locale === 'ko' ? 'ko-KR' : 'en-US', {
         hour: '2-digit',
         minute: '2-digit',
       })
-      setLastCrawled(`${dateStr} · 반영: ${timeStr}`)
+      setLastCrawled(`${dateStr} · ${t('common.updated')}: ${timeStr}`)
     }
     updateTime()
     const interval = setInterval(updateTime, 60000)
     return () => clearInterval(interval)
-  }, [])
+  }, [locale, t])
 
   // Close dropdown on outside click
   useEffect(() => {
@@ -105,7 +107,7 @@ export default function Header() {
             type="button"
             onClick={() => setIsMobileNavOpen(true)}
             className="rounded-sm p-2 text-muted-foreground hover:bg-muted hover:text-foreground md:hidden focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary"
-            aria-label="메뉴 열기"
+            aria-label={t('common.openMenu')}
             aria-expanded={isMobileNavOpen}
             aria-controls="mobile-nav"
           >
@@ -113,9 +115,9 @@ export default function Header() {
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 12h16M4 18h16" />
             </svg>
           </button>
-          <Link href="/" className="flex items-center gap-2 whitespace-nowrap shrink-0" aria-label="위마켓_뉴스 홈">
+          <Link href="/" className="flex items-center gap-2 whitespace-nowrap shrink-0" aria-label={t('brand.aria')}>
             <span className="text-2xl" aria-hidden="true">📰</span>
-            <span className="text-xl font-bold text-foreground">위마켓_뉴스</span>
+            <span className="text-xl font-bold text-foreground">{t('brand.name')}</span>
           </Link>
           {lastCrawled && (
             <span className="text-xs text-muted-foreground hidden lg:inline whitespace-nowrap border-l border-border pl-4">
@@ -127,13 +129,13 @@ export default function Header() {
         <div className="flex items-center gap-4 shrink-0">
           <form onSubmit={handleSearchSubmit} className="flex items-center gap-2" role="search">
             <label htmlFor="header-search" className="sr-only">
-              뉴스 검색
+              {t('search.label')}
             </label>
             <button
               type="button"
               onClick={() => setIsSearchOpen(!isSearchOpen)}
               className="hidden p-2 rounded-sm text-muted-foreground hover:bg-muted md:flex"
-              aria-label={isSearchOpen ? '검색 닫기' : '검색 열기'}
+              aria-label={isSearchOpen ? t('search.close') : t('search.open')}
               aria-expanded={isSearchOpen}
             >
               <svg className="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
@@ -152,16 +154,16 @@ export default function Header() {
                 type="search"
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
-                placeholder="기사 제목, 내용 검색..."
+                placeholder={t('search.placeholder')}
                 className="h-10 w-48 lg:w-64 rounded-sm border border-border bg-background px-4 py-2 text-sm text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent transition-all"
-                aria-label="뉴스 검색"
+                aria-label={t('search.label')}
               />
               {searchQuery && (
                 <button
                   type="button"
                   onClick={() => setSearchQuery('')}
                   className="absolute right-3 top-1/2 -translate-y-1/2 p-1 text-muted-foreground hover:text-foreground"
-                  aria-label="검색어 지우기"
+                  aria-label={t('search.clear')}
                 >
                   <svg className="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
@@ -175,10 +177,20 @@ export default function Header() {
                 type="submit"
                 className="hidden md:flex h-10 px-4 items-center justify-center gap-2 rounded-sm bg-primary text-primary-foreground text-sm font-medium hover:bg-primary-hover transition-colors"
               >
-                검색
+                {t('search.button')}
               </button>
             )}
           </form>
+
+          <button
+            type="button"
+            onClick={toggleLocale}
+            className="flex h-10 w-10 items-center justify-center rounded-sm border border-border bg-muted/20 text-xs font-bold text-muted-foreground transition-colors hover:bg-muted hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary"
+            aria-label={t('language.toggle')}
+            title={t('language.toggle')}
+          >
+            {locale === 'ko' ? 'EN' : 'KO'}
+          </button>
 
           <ThemeToggle />
 
@@ -188,7 +200,7 @@ export default function Header() {
               className="flex items-center gap-1.5 px-3 py-1.5 border border-border bg-muted/20 hover:bg-muted text-xs font-semibold text-foreground rounded-sm transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary"
             >
               <span>⚙️</span>
-              <span className="hidden sm:inline">{user.name || '설정'}</span>
+              <span className="hidden sm:inline">{user.name || t('common.settings')}</span>
             </Link>
           ) : (
             <Link
@@ -196,7 +208,7 @@ export default function Header() {
               className="flex items-center gap-1.5 px-3 py-1.5 border border-border bg-muted/20 hover:bg-muted text-xs font-semibold text-foreground rounded-sm transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary"
             >
               <span>👤</span>
-              <span>로그인</span>
+              <span>{t('common.login')}</span>
             </Link>
           )}
 
@@ -223,10 +235,10 @@ export default function Header() {
                     )}
                     aria-current={active ? 'page' : undefined}
                   >
-                    {item.label}
+                    {t(`nav.${item.href}`, item.label)}
                     {item.href === '/' && (
                       <span className="ml-1.5 inline-flex items-center rounded-sm bg-primary/10 px-1.5 py-0.5 text-[10px] font-bold uppercase tracking-wider text-primary">
-                        광고없는 뉴스
+                        {t('common.adfree')}
                       </span>
                     )}
                   </Link>
@@ -247,7 +259,7 @@ export default function Header() {
                     aria-expanded={openDropdown === item.href}
                     aria-haspopup="true"
                   >
-                    {item.label}
+                    {t(`nav.${item.href}`, item.label)}
                     <svg className="h-3 w-3" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
                     </svg>
@@ -273,7 +285,7 @@ export default function Header() {
                             aria-current={childActive ? 'page' : undefined}
                           >
                             {child.icon && <span aria-hidden="true">{child.icon}</span>}
-                            {child.label}
+                            {t(`nav.${child.href}`, child.label)}
                           </Link>
                         )
                       })}
@@ -290,14 +302,14 @@ export default function Header() {
         <div className="border-t border-border px-4 py-3 md:hidden">
           <form onSubmit={handleSearchSubmit} className="flex gap-2">
             <label htmlFor="mobile-search" className="sr-only">
-              뉴스 검색
+              {t('search.label')}
             </label>
             <input
               id="mobile-search"
               type="search"
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
-              placeholder="기사 제목, 내용 검색..."
+              placeholder={t('search.placeholder')}
               className="flex-1 h-10 rounded-sm border border-border bg-background px-4 text-sm text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent"
               autoFocus
             />
@@ -305,7 +317,7 @@ export default function Header() {
               type="submit"
               className="h-10 px-4 rounded-sm bg-primary text-primary-foreground text-sm font-medium hover:bg-primary-hover transition-colors"
             >
-              검색
+              {t('search.button')}
             </button>
           </form>
         </div>

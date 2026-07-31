@@ -5,6 +5,7 @@ import Link from 'next/link'
 import { usePathname } from 'next/navigation'
 import { NAV_ITEMS } from '@/lib/constants/nav'
 import { cn } from '@/lib/utils'
+import { useI18n } from '@/lib/i18n/I18nProvider'
 
 interface MobileNavProps {
   open: boolean
@@ -19,6 +20,7 @@ function isActive(href: string, pathname: string): boolean {
 
 export function MobileNav({ open, onClose }: MobileNavProps) {
   const pathname = usePathname()
+  const { t } = useI18n()
   const panelRef = useRef<HTMLDivElement>(null)
   const closeRef = useRef<HTMLButtonElement>(null)
   const [expanded, setExpanded] = useState<string | null>(null)
@@ -59,10 +61,10 @@ export function MobileNav({ open, onClose }: MobileNavProps) {
   if (!open) return null
 
   return (
-    <div className="fixed inset-0 z-[100] md:hidden" role="dialog" aria-modal="true" aria-label="메뉴">
+    <div className="fixed inset-0 z-[100] md:hidden" role="dialog" aria-modal="true" aria-label={t('mobilenav.menu')}>
       <button
         type="button"
-        aria-label="메뉴 닫기"
+        aria-label={t('common.closeMenu')}
         onClick={onClose}
         className="absolute inset-0 bg-black/50 backdrop-blur-sm"
         tabIndex={-1}
@@ -73,12 +75,12 @@ export function MobileNav({ open, onClose }: MobileNavProps) {
         className="absolute left-0 top-0 flex h-full w-[80%] max-w-xs flex-col bg-background shadow-xl"
       >
         <div className="flex h-16 items-center justify-between border-b border-border px-4">
-          <span className="text-lg font-bold text-foreground">메뉴</span>
+          <span className="text-lg font-bold text-foreground">{t('mobilenav.menu')}</span>
           <button
             ref={closeRef}
             type="button"
             onClick={onClose}
-            aria-label="닫기"
+            aria-label={t('common.close')}
             className="rounded-sm p-2 text-muted-foreground hover:bg-muted hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary"
           >
             <svg className="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
@@ -87,7 +89,7 @@ export function MobileNav({ open, onClose }: MobileNavProps) {
           </button>
         </div>
 
-        <nav className="flex-1 overflow-y-auto px-3 py-4" aria-label="모바일 내비게이션">
+        <nav className="flex-1 overflow-y-auto px-3 py-4" aria-label={t('mobilenav.aria')}>
           <ul className="space-y-1">
             {NAV_ITEMS.map((item) => {
               const hasChildren = !!item.children && item.children.length > 0
@@ -112,7 +114,7 @@ export function MobileNav({ open, onClose }: MobileNavProps) {
                         aria-expanded={isExpanded}
                       >
                         {item.icon && <span aria-hidden="true">{item.icon}</span>}
-                        <span className="flex-1 text-left">{item.label}</span>
+                        <span className="flex-1 text-left">{t(`nav.${item.href}`, item.label)}</span>
                         <svg
                           className={cn('h-4 w-4 transition-transform', isExpanded && 'rotate-180')}
                           fill="none"
@@ -142,7 +144,7 @@ export function MobileNav({ open, onClose }: MobileNavProps) {
                                   )}
                                 >
                                   {child.icon && <span aria-hidden="true">{child.icon}</span>}
-                                  <span>{child.label}</span>
+                                  <span>{t(`nav.${child.href}`, child.label)}</span>
                                 </Link>
                               </li>
                             )
@@ -163,10 +165,10 @@ export function MobileNav({ open, onClose }: MobileNavProps) {
                       )}
                     >
                       {item.icon && <span aria-hidden="true">{item.icon}</span>}
-                      <span>{item.label}</span>
+                      <span>{t(`nav.${item.href}`, item.label)}</span>
                       {item.href === '/' && (
                         <span className="ml-auto inline-flex items-center rounded-sm bg-primary/10 px-1.5 py-0.5 text-[10px] font-bold uppercase tracking-wider text-primary">
-                          광고없는 뉴스
+                          {t('common.adfree')}
                         </span>
                       )}
                     </Link>

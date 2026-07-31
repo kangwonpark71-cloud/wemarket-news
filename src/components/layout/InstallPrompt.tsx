@@ -1,10 +1,12 @@
 'use client';
 
 import { useEffect, useState } from 'react';
+import { useI18n } from '@/lib/i18n/I18nProvider';
 
 const STORAGE_KEY = 'economy-news:install-prompt-dismissed';
 
 export function InstallPrompt() {
+  const { t } = useI18n();
   const [deferredPrompt, setDeferredPrompt] = useState<Event | null>(null);
   const [showBanner, setShowBanner] = useState(false);
 
@@ -53,21 +55,21 @@ export function InstallPrompt() {
     <div className="fixed bottom-0 left-0 right-0 z-50 border-t border-border bg-card px-4 py-3 shadow-lg md:bottom-4 md:left-auto md:right-4 md:w-80 md:rounded-sm md:border">
       <div className="flex items-center justify-between gap-3">
         <p className="text-xs font-medium text-foreground">
-          앱으로 설치하여 더 빠르게 이용하세요
+          {t('install.title')}
         </p>
         <div className="flex shrink-0 gap-2">
           <button
             onClick={handleInstall}
             className="rounded-sm bg-primary px-3 py-1.5 text-xs font-semibold text-primary-foreground transition-colors hover:bg-primary-hover cursor-pointer"
           >
-            설치
+            {t('install.button')}
           </button>
           <button
             onClick={handleDismiss}
             className="rounded-sm px-2 py-1.5 text-xs text-muted-foreground transition-colors hover:bg-muted cursor-pointer"
-            aria-label="닫기"
+            aria-label={t('common.close')}
           >
-            닫기
+            {t('common.close')}
           </button>
         </div>
       </div>

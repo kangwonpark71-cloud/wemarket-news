@@ -35,6 +35,9 @@ function transformToSqlite(input) {
       if (line.includes('BigInt')) {
         line = line.replace(/\bBigInt\b/g, 'Int');
       }
+      if (line.includes('Json')) {
+        line = line.replace(/\bJson\b/g, 'String');
+      }
       if (line.includes('String[]')) {
         line = line.replace(/String\[\]/g, 'String');
       }

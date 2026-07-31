@@ -2,17 +2,19 @@
 
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
+import { useI18n } from '@/lib/i18n/I18nProvider';
 
 const NAV_ITEMS = [
-  { label: '홈', href: '/', icon: '\u{1F3E0}' },
-  { label: '국내', href: '/domestic', icon: '\u{1F1F0}\u{1F1F7}' },
-  { label: '해외', href: '/overseas', icon: '\u{1F30D}' },
-  { label: 'AI/IT', href: '/ai-it', icon: '\u{1F916}' },
-  { label: '설정', href: '/settings', icon: '\u{2699}\u{FE0F}' },
+  { label: 'bottomnav.home', href: '/', icon: '\u{1F3E0}' },
+  { label: 'bottomnav.domestic', href: '/domestic', icon: '\u{1F1F0}\u{1F1F7}' },
+  { label: 'bottomnav.overseas', href: '/overseas', icon: '\u{1F30D}' },
+  { label: 'bottomnav.aiit', href: '/ai-it', icon: '\u{1F916}' },
+  { label: 'bottomnav.settings', href: '/settings', icon: '\u{2699}\u{FE0F}' },
 ];
 
 export function MobileBottomNav() {
   const pathname = usePathname();
+  const { t } = useI18n();
 
   // Hide on admin pages
   if (pathname.startsWith('/admin') || pathname.startsWith('/login')) return null;
@@ -34,7 +36,7 @@ export function MobileBottomNav() {
               aria-current={isActive ? 'page' : undefined}
             >
               <span className="text-lg" aria-hidden="true">{item.icon}</span>
-              <span>{item.label}</span>
+              <span>{t(item.label)}</span>
             </Link>
           );
         })}

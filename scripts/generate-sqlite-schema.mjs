@@ -30,6 +30,11 @@ const output = lines
       line = line.replace(/\bBigInt\b/g, 'Int');
     }
 
+    // Json → String for SQLite (no native JSON type)
+    if (line.includes('Json')) {
+      line = line.replace(/\bJson\b/g, 'String');
+    }
+
     // String[] → String for SQLite (no native array support)
     if (line.includes('String[]')) {
       line = line.replace(/String\[\]/g, 'String');
