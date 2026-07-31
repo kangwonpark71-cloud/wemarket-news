@@ -21,6 +21,7 @@ export interface BaseSourceConfig {
   language: 'ko' | 'en';
   icon?: string;
   fetchInterval?: number;
+  excludeKeywords?: string[];
   type: SourceType;
   crawlerConfig?: CrawlerConfig;
 }

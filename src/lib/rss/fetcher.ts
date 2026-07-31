@@ -1,6 +1,7 @@
 import Parser from 'rss-parser'
 import { RSSSourceConfig } from './sources'
 import { extractThumbnail, extractCategory, fetchWithRetry } from '../utils/rss-helper'
+import { isExcludedByKeywords } from '@/lib/crawler/rss-crawler'
 import { createLogger } from '@/lib/logger';
 export { extractThumbnail, extractCategory } from '../utils/rss-helper'
 
@@ -22,6 +23,7 @@ export async function fetchFeedStandardized(
     language: source.language,
     icon: source.icon,
     fetchInterval: source.fetchInterval,
+    excludeKeywords: source.excludeKeywords,
     type: 'rss',
   };
 
@@ -86,6 +88,8 @@ export async function fetchFeed(
       const link = item.link?.trim()
 
       if (!title || !link) continue
+
+      if (isExcludedByKeywords(title, source.excludeKeywords)) continue
 
       const itemData = item as unknown as Record<string, unknown>
 

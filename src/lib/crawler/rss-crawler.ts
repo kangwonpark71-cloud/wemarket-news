@@ -33,6 +33,12 @@ import {
 const DEFAULT_USER_AGENT =
   'EconomyNews/1.0 (RSS Aggregator; +https://economy-news.example.com)';
 
+export function isExcludedByKeywords(title: string, keywords?: string[]): boolean {
+  if (!keywords || keywords.length === 0) return false;
+  const normalized = title.toLowerCase();
+  return keywords.some((keyword) => keyword && normalized.includes(keyword.toLowerCase()));
+}
+
 export class RSSCrawler implements Crawler {
   readonly name = 'RSSCrawler';
   private parser: Parser;
@@ -81,6 +87,11 @@ export class RSSCrawler implements Crawler {
         const link = item.link?.trim();
 
         if (!title || !link) continue;
+
+        // 피드 오분류 방지: 제목에 제외 키워드가 포함되면 건너뜀
+        if (isExcludedByKeywords(title, source.excludeKeywords)) {
+          continue;
+        }
 
         const itemData = item as unknown as Record<string, unknown>;
 

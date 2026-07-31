@@ -10,6 +10,7 @@ export interface RSSSourceConfig {
   language: 'ko' | 'en'
   icon?: string
   fetchInterval?: number // 시간 단위 (기본 3)
+  excludeKeywords?: string[] // 제목에 포함되면 제외할 키워드 (피드 오분류 방지)
 }
 
 // 국내 경제 소스
@@ -142,6 +143,11 @@ export const DOMESTIC_CATEGORY_SOURCES: RSSSourceConfig[] = [
     subcategory: 'sports',
     language: 'ko',
     icon: '⚽',
+    excludeKeywords: [
+      '코스피', '코스닥', '비트코인', '가상자산', 'ETF', '증시', '주가',
+      '시세', '환율', '금리', '사이드카', '미수거래', '레버리지', '예탁금',
+      '반대매매', '폭등', '급락', '삼성전자', 'SK하이닉스', '퇴근길머니',
+    ],
   },
   {
     name: 'YTN 스포츠',

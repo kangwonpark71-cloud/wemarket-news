@@ -182,3 +182,28 @@ describe('Crawler Test Infrastructure', () => {
     });
   });
 });
+
+describe('isExcludedByKeywords', () => {
+  const { isExcludedByKeywords } = require('@/lib/crawler/rss-crawler');
+
+  it('returns false when no keywords configured', () => {
+    expect(isExcludedByKeywords('코스피 폭등', undefined)).toBe(false);
+    expect(isExcludedByKeywords('코스피 폭등', [])).toBe(false);
+  });
+
+  it('returns true when title contains a keyword', () => {
+    expect(isExcludedByKeywords('코스피, 단숨에 6,400선 회복', ['코스피'])).toBe(true);
+  });
+
+  it('returns false when title does not match', () => {
+    expect(isExcludedByKeywords('EPL 토트넘, 리버풀 꺾고 4강 진출', ['코스피', '비트코인'])).toBe(false);
+  });
+
+  it('matches case-insensitively', () => {
+    expect(isExcludedByKeywords('Bitcoin surges to new high', ['bitcoin'])).toBe(true);
+  });
+
+  it('skips empty keyword strings', () => {
+    expect(isExcludedByKeywords('일반 스포츠 뉴스', ['', '  '])).toBe(false);
+  });
+});
