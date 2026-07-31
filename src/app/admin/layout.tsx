@@ -20,6 +20,8 @@ const NAV_ITEMS: NavItem[] = [
   { label: '활동 로그', href: '/admin/logs', icon: '📋' },
   { label: '키워드 알림', href: '/admin/alerts', icon: '🔔' },
   { label: '추천 통계', href: '/admin/recommendations', icon: '🎯' },
+  { label: '푸시 알림', href: '/admin/push', icon: '📬' },
+  { label: '뉴스레터', href: '/admin/newsletter', icon: '📧' },
   { label: '계정 관리', href: '/admin/users', icon: '👥' },
 ];
 

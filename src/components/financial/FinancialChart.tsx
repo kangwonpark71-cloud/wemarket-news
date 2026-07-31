@@ -103,7 +103,7 @@ export function FinancialChart({
           />
           <Tooltip
             formatter={(value) => [typeof value === 'number' ? value.toLocaleString() : String(value ?? ''), '가격']}
-            labelFormatter={(value) => new Date(value).toLocaleString()}
+            labelFormatter={(value) => new Date(String(value)).toLocaleString()}
             contentStyle={{ backgroundColor: '#fff', border: '1px solid #e5e7eb', borderRadius: '8px' }}
           />
           <Line

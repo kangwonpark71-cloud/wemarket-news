@@ -7,6 +7,8 @@ import { BaseScheduler, SchedulerMetrics } from './base-scheduler'
 import { RSSScheduler } from './rss-scheduler'
 import { AIITScheduler } from './ai-it-scheduler'
 import { FinancialScheduler } from './financial-scheduler'
+import { DuplicateMergeScheduler } from './duplicate-merge-scheduler'
+import { NewsletterScheduler } from './newsletter-scheduler'
 import { createLogger } from '@/lib/logger';
 
 const log = createLogger('SchedulerManager')
@@ -275,6 +277,20 @@ export function createDefaultSchedulers(): SchedulerManager {
     lockTimeout: 600,
   })
   manager.register('financial', financialScheduler)
+
+  const duplicateMergeScheduler = new DuplicateMergeScheduler({
+    enabled: process.env.DISABLE_SCHEDULERS !== '1',
+    initialDelay: 60000,
+    lockTimeout: 600,
+  })
+  manager.register('duplicate-merge', duplicateMergeScheduler)
+
+  const newsletterScheduler = new NewsletterScheduler({
+    enabled: process.env.DISABLE_SCHEDULERS !== '1' && !!process.env.SMTP_HOST,
+    initialDelay: 120000,
+    lockTimeout: 600,
+  })
+  manager.register('newsletter', newsletterScheduler)
 
   return manager
 }

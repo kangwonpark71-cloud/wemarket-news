@@ -6,6 +6,7 @@
 
 import prisma from '@/lib/db'
 import { createLogger } from '@/lib/logger'
+import { sendKeywordAlert } from '@/lib/services/push/push-service'
 
 const log = createLogger('KeywordAlertService')
 
@@ -122,24 +123,42 @@ export async function checkAlerts(
 }
 
 /**
- * Log a keyword alert match to the application log.
- * Future: can extend to push notification dispatch.
+ * Dispatch keyword alert matches — logs each match and sends a push notification.
  */
 export async function dispatchAlerts(
   hoursBack: number = 24,
-): Promise<{ dispatched: number }> {
+): Promise<{ dispatched: number; pushOk: number; pushFail: number }> {
   const result = await checkAlerts(hoursBack)
+  let pushOk = 0
+  let pushFail = 0
 
   if (result.matches.length > 0) {
     log.info(
       `Keyword alerts: ${result.matches.length} matches across ${result.usersWithAlerts} users for ${result.totalArticles} articles`,
     )
-    for (const match of result.matches) {
-      log.info(
-        `Alert [${match.matchedKeywords.join(', ')}] -> user=${match.userEmail} article="${match.articleTitle}"`,
-      )
+
+    const pushResults = await Promise.allSettled(
+      result.matches.map((match) =>
+        sendKeywordAlert(match.userId, match.articleTitle, match.matchedKeywords, match.articleUrl),
+      ),
+    )
+
+    for (let i = 0; i < pushResults.length; i++) {
+      const r = pushResults[i]
+      const match = result.matches[i]
+      if (r.status === 'fulfilled' && r.value.success) {
+        pushOk++
+      } else {
+        pushFail++
+        const err = r.status === 'rejected' ? r.reason : r.value.error
+        log.warn(
+          `Push failed for user=${match?.userEmail} article="${match?.articleTitle}": ${err}`,
+        )
+      }
     }
+
+    log.info(`Keyword alert push: ${pushOk} delivered, ${pushFail} failed`)
   }
 
-  return { dispatched: result.matches.length }
+  return { dispatched: result.matches.length, pushOk, pushFail }
 }

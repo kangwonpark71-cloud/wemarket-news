@@ -20,6 +20,7 @@ export async function GET(request: NextRequest) {
   let isClosed = false;
 
   const safeEnqueue = (_data: string): boolean => {
+    void _data;
     if (isClosed) return false;
     try {
       return true;

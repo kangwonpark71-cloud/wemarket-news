@@ -62,7 +62,12 @@ export async function POST(request: Request) {
       const result = await dispatchAlerts(hoursBack)
       return NextResponse.json({
         success: true,
-        data: { dispatched: result.dispatched, message: `${result.dispatched} alerts dispatched.` },
+        data: {
+          matches: result.dispatched,
+          pushed: result.pushOk,
+          pushFail: result.pushFail,
+          message: `${result.dispatched} matches, ${result.pushOk} push ok, ${result.pushFail} push fail.`,
+        },
       })
     }
 

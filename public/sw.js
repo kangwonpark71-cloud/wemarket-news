@@ -1,5 +1,5 @@
-const CACHE = 'economy-news-v1'
-const APP_SHELL = ['/']
+const CACHE = 'economy-news-v2'
+const APP_SHELL = ['/', '/offline']
 const STATIC_PATTERN = /\/(_next\/static|favicon|icon|file)/
 
 self.addEventListener('install', (event) => {

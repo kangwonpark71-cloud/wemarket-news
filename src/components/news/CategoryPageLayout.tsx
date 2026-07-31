@@ -36,6 +36,8 @@ interface CategoryPageLayoutProps {
   sidebarAds?: ReactNode
   /** Optional: banner display(s) rendered at bottom */
   banners?: ReactNode
+  /** Optional: popular articles widget rendered in sidebar */
+  popularArticles?: ReactNode
   /** Extra query params to preserve in pagination links (values can be undefined to omit) */
   extraSearchParams?: Record<string, string | undefined>
 }
@@ -73,6 +75,7 @@ export default function CategoryPageLayout({
   newsletterWidget,
   sidebarAds,
   banners,
+  popularArticles,
   extraSearchParams,
 }: CategoryPageLayoutProps) {
   const hasArticles = total > 0
@@ -163,11 +166,16 @@ export default function CategoryPageLayout({
         </section>
       )}
 
-      {/* Ads */}
-      {(sidebarAds || banners) && (
-        <section aria-label="광고 및 배너" className="mt-8 space-y-6">
-          {sidebarAds}
-          {banners}
+      {/* Popular Articles + Ads sidebar */}
+      {(popularArticles || sidebarAds || banners) && (
+        <section aria-label="사이드바" className="mt-8 grid grid-cols-1 lg:grid-cols-4 gap-6">
+          <div className="lg:col-span-3">
+            {popularArticles && <div className="mb-6">{popularArticles}</div>}
+          </div>
+          <div className="space-y-6">
+            {sidebarAds}
+            {banners}
+          </div>
         </section>
       )}
     </div>

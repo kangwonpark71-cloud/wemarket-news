@@ -4,6 +4,7 @@ import { FinancialDashboard } from '@/components/financial/FinancialDashboard'
 import WeatherWidget from '@/components/layout/WeatherWidget'
 import { getArticles, getBreakingArticles } from '@/lib/rss/db-service'
 import { NewsletterWidget } from '@/components/ui/NewsletterWidget'
+import PopularArticles from '@/components/news/PopularArticles'
 import { BannerDisplay } from '@/components/ui/BannerDisplay'
 import { SidebarAds } from '@/components/ui/SidebarAds'
 import CategoryPageLayout from '@/components/news/CategoryPageLayout'
@@ -62,6 +63,7 @@ export default async function HomePage({ searchParams }: HomePageProps) {
       financialDashboard={<FinancialDashboard />}
       sidebarAds={<SidebarAds />}
       banners={<><BannerDisplay position="top" /><BannerDisplay position="bottom" /></>}
+      popularArticles={<PopularArticles />}
     >
       {breakingArticles.length > 0 && (
         <section aria-label="속보" className="mb-6">

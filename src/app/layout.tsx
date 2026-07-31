@@ -3,6 +3,9 @@ import { Geist, Geist_Mono } from "next/font/google";
 import HeaderWrapper from "@/components/layout/HeaderWrapper";
 import { FetchStatusBar } from "@/components/news/FetchStatusBar";
 import { ServiceWorkerRegister } from "@/components/layout/ServiceWorkerRegister";
+import { InstallPrompt } from "@/components/layout/InstallPrompt";
+import { MobileBottomNav } from "@/components/layout/MobileBottomNav";
+import ChatWidget from "@/components/chat/ChatWidget";
 import "./globals.css";
 
 const geistSans = Geist({
@@ -53,9 +56,12 @@ export default function RootLayout({
       </head>
       <body className="min-h-full flex flex-col bg-background">
         <HeaderWrapper />
-        <main className="flex-1">{children}</main>
+        <main className="flex-1 pb-16 md:pb-0">{children}</main>
         <FetchStatusBar />
         <ServiceWorkerRegister />
+        <InstallPrompt />
+        <MobileBottomNav />
+        <ChatWidget />
       </body>
     </html>
   );
