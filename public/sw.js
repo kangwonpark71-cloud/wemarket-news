@@ -19,7 +19,7 @@ self.addEventListener('activate', (event) => {
 
 self.addEventListener('push', (event) => {
   const data = event.data?.json() ?? { title: 'Economy News', body: '새로운 글이 있습니다.' }
-  const options: NotificationOptions = {
+  const options = {
     body: data.body,
     icon: '/icon-192.png',
     badge: '/icon-192.png',
