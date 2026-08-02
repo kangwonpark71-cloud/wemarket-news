@@ -25,14 +25,11 @@ class CacheService {
     try {
       if (process.env.REDIS_URL) {
         const Redis = (await import('ioredis')).default;
-        const redis = new Redis(process.env.REDIS_URL, {
-          maxRetriesPerRequest: 3,
-          retryStrategy: (times) => {
-            if (times > 3) return null;
-            return Math.min(times * 200, 2000);
-          },
-          lazyConnect: true,
-        });
+         const redis = new Redis(process.env.REDIS_URL, {
+           maxRetriesPerRequest: 0,
+           connectTimeout: 3000,
+           lazyConnect: true,
+         });
         this.redis = redis;
 
         redis.on('connect', () => {

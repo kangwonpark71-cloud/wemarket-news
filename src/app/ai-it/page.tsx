@@ -1,5 +1,6 @@
 import { Metadata } from 'next';
 import { getAIITArticles, getAIITArticleStats, getSubcategoriesWithCount, getActiveAIITSources, toReaderSummary, type AINewsWithSource } from '@/lib/ai-it/db-service';
+import { formatDate } from '@/lib/utils';
 import NewsSidebar from '@/components/ai-it/NewsSidebar';
 import FilterBar from '@/components/ai-it/FilterBar';
 import NewsCard from '@/components/ai-it/NewsCard';
@@ -108,6 +109,7 @@ export default async function AI_IT_NewsPage({ searchParams }: AI_IT_NewsPagePro
                       article={{
                         ...article,
                         publishedAt: article.publishedAt.toISOString(),
+                        publishedDate: formatDate(article.publishedAt, 'ko'),
                         source: {
                           name: article.source.name,
                           nameEn: article.source.nameEn,

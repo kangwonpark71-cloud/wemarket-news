@@ -39,25 +39,50 @@ function safeContext(context: unknown): string | null {
   }
 }
 
-/** Capture an error to the DB. Never throws — errors here are logged only. */
+/** Capture an error to the DB and optionally to Sentry. Returns the DB log id. */
 export async function captureError(input: CaptureErrorInput): Promise<string | null> {
   try {
-    const { level = 'error', source, message, stack, context } = input;
-    const jsonContext = safeContext(context);
+    const { level = 'error', source, message, stack, context } = input
+    const jsonContext = safeContext(context)
+
+    // Bridge to Sentry first so we get an event ID.
+    let sentryEventId: string | null = null
+    if (process.env.SENTRY_DSN && typeof (globalThis as Record<string, unknown>).Sentry !== 'undefined') {
+      try {
+        const Sentry = await import('@sentry/nextjs')
+        if (Sentry.isInitialized()) {
+          const eventId = Sentry.captureException(new Error(String(message).slice(0, 4000)), {
+            level: level === 'warn' ? 'warning' : level === 'info' ? 'info' : 'error',
+            tags: { source: String(source || 'client').slice(0, 200) },
+            extra: {
+              ...(stack ? { stack: String(stack).slice(0, 8000) } : {}),
+              ...(context && typeof context === 'object' ? { context } : {}),
+            },
+          })
+          if (typeof eventId === 'string') {
+            sentryEventId = eventId
+          }
+        }
+      } catch {
+        // Sentry bridge failure is non-critical
+      }
+    }
+
     const created = await prisma.errorLog.create({
       data: {
         level,
         source,
         message: message.slice(0, 4000),
         stack: stack ? stack.slice(0, 8000) : null,
+        sentryEventId,
         ...(jsonContext ? { context: JSON.parse(jsonContext) as Prisma.InputJsonValue } : {}),
       },
       select: { id: true },
-    });
-    return created.id;
+    })
+    return created.id
   } catch (err) {
-    log.error('captureError failed:', err instanceof Error ? err.message : err);
-    return null;
+    log.error('captureError failed:', err instanceof Error ? err.message : err)
+    return null
   }
 }
 

@@ -12,6 +12,7 @@ interface NewsCardProps {
     description?: string | null;
     thumbnail?: string | null;
     publishedAt: Date | string;
+    publishedDate?: string;
     language: string;
     isBookmarked?: boolean;
     source: {
@@ -39,7 +40,7 @@ function formatDate(date: Date | string, language: string) {
 }
 
 export default function NewsCard({ article, variant = 'default' }: NewsCardProps) {
-  const publishedDate = formatDate(new Date(article.publishedAt), article.language);
+  const publishedDate = article.publishedDate ?? formatDate(new Date(article.publishedAt), article.language);
   const summary = article.summary;
   const tags = article.tags?.map(t => t.tag.name).slice(0, 5) || [];
   const keywords = summary?.keywords.slice(0, 5) || [];
@@ -66,7 +67,7 @@ export default function NewsCard({ article, variant = 'default' }: NewsCardProps
               {article.source.icon && <span>{article.source.icon}</span>}
               {article.source.name}
             </span>
-            <span suppressHydrationWarning>{publishedDate}</span>
+            <span>{publishedDate}</span>
             {article.isBookmarked && <span className="text-yellow-500">★</span>}
           </div>
         </div>
@@ -86,7 +87,7 @@ export default function NewsCard({ article, variant = 'default' }: NewsCardProps
           <div className="mb-2 flex flex-wrap gap-1">
             {article.source.icon && <span className="text-lg">{article.source.icon}</span>}
             <span className="text-xs font-medium text-muted-foreground">{article.source.name}</span>
-            <span className="text-xs text-muted-foreground" suppressHydrationWarning>{publishedDate}</span>
+            <span className="text-xs text-muted-foreground">{publishedDate}</span>
           </div>
           <Link href={`/ai-it/articles/${article.id}`}>
             <h3 className="line-clamp-2 word-break-keep-all font-semibold text-foreground hover:text-primary transition-colors" title={article.title}>
@@ -133,7 +134,7 @@ export default function NewsCard({ article, variant = 'default' }: NewsCardProps
             {article.source.icon && <span className="text-base">{article.source.icon}</span>}
             <span className="font-medium">{article.source.name}</span>
             <span className="text-muted-foreground/50">·</span>
-            <time dateTime={new Date(article.publishedAt).toISOString()} suppressHydrationWarning>{publishedDate}</time>
+            <time dateTime={new Date(article.publishedAt).toISOString()}>{publishedDate}</time>
             {article.isBookmarked && <span className="text-yellow-500" title="북마크됨">★</span>}
           </div>
           <Link href={`/ai-it/articles/${article.id}`}>

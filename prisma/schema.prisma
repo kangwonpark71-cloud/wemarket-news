@@ -621,13 +621,14 @@ model ChatMessage {
 
 // 에러 모니터링 로그
 model ErrorLog {
-  id        String   @id @default(uuid())
-  level     String   @default("error") // "error" | "warn" | "info"
-  source    String   // 모듈/서비스 이름 (e.g. "scheduler:financial", "api:chat")
-  message   String   @db.Text
-  stack     String?  @db.Text
-  context   Json?
-  createdAt DateTime @default(now()) @map("created_at")
+  id          String   @id @default(uuid())
+  level       String   @default("error") // "error" | "warn" | "info"
+  source      String   // 모듈/서비스 이름 (e.g. "scheduler:financial", "api:chat")
+  message     String   @db.Text
+  stack       String?  @db.Text
+  context     Json?
+  sentryEventId String? @map("sentry_event_id")
+  createdAt   DateTime @default(now()) @map("created_at")
 
   @@index([level, createdAt])
   @@index([source, createdAt])
