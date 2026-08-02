@@ -541,3 +541,259 @@ describe('StockService', () => {
     });
   });
 });
+
+// ============================================================================
+// KoreaInvestmentClient — extended coverage
+// ============================================================================
+
+describe('KoreaInvestmentClient (extended)', () => {
+  function liveClient(): KoreaInvestmentClient {
+    process.env.KOREA_INVEST_APP_KEY = 'key';
+    process.env.KOREA_INVEST_APP_SECRET = 'secret';
+    return new KoreaInvestmentClient();
+  }
+
+  describe('access token management', () => {
+    it('reuses in-memory token before expiry', async () => {
+      const client = liveClient();
+      (client as unknown as { accessToken: string; tokenExpiresAt: number }).accessToken = 'mem-token';
+      (client as unknown as { tokenExpiresAt: number }).tokenExpiresAt = Date.now() + 60_000;
+
+      global.fetch = mockKisFetch({ rt_cd: '0', output: {} });
+
+      const result = await client.getStockPrice('005930');
+      expect((global.fetch as jest.Mock).mock.calls).toHaveLength(1);
+      expect(result).not.toBeNull();
+    });
+
+    it('reuses cached token before expiry', async () => {
+      jest.spyOn(cacheService, 'get').mockImplementation(async (key: string) => {
+        if (key === 'korea_investment:access_token') {
+          return { token: 'cached-token', expiresAt: Date.now() + 60_000 };
+        }
+        return null;
+      });
+      const client = liveClient();
+
+      global.fetch = mockKisFetch({ rt_cd: '0', output: {} });
+
+      await client.getStockPrice('005930');
+      expect((global.fetch as jest.Mock).mock.calls).toHaveLength(1);
+    });
+
+    it('throws when token endpoint returns no access_token', async () => {
+      global.fetch = jest.fn().mockResolvedValue({
+        ok: true,
+        json: jest.fn().mockResolvedValue({ msg1: 'invalid credentials' }),
+      });
+      const client = liveClient();
+
+      await expect(client.getStockPrice('005930')).rejects.toThrow('Failed to get access token');
+    });
+  });
+
+  describe('getStockPrices (bulk)', () => {
+    it('fetches uncached codes and caches each parsed stock', async () => {
+      global.fetch = mockKisFetch({
+        rt_cd: '0',
+        output: [
+          {
+            mksc_shrn_iscd: '005930',
+            hts_kor_isnm: '삼성전자',
+            stck_prpr: '78500',
+            prdy_vrss: '500',
+            prdy_ctrt: '0.64',
+            stck_oprc: '78000',
+            stck_hgpr: '79000',
+            stck_lwpr: '77500',
+            acml_vol: '1000000',
+            acml_tr_pbmn: '78000000000',
+          },
+        ],
+      });
+      const client = liveClient();
+
+      const map = await client.getStockPrices(['005930']);
+      expect(map.size).toBe(1);
+      expect(map.get('005930')?.price).toBe(78500);
+      expect(cacheService.set).toHaveBeenCalledWith(
+        'stock:price:005930',
+        expect.anything(),
+        expect.anything(),
+      );
+    });
+
+    it('returns cached entries when nothing is uncached', async () => {
+      const cached = { code: '005930', price: 78500 } as never;
+      jest.spyOn(cacheService, 'get').mockResolvedValue(cached);
+      const client = liveClient();
+
+      const map = await client.getStockPrices(['005930', '000660']);
+      expect(map.size).toBe(2);
+      expect(global.fetch).not.toHaveBeenCalled();
+    });
+
+    it('returns empty map when rt_cd is not 0', async () => {
+      global.fetch = mockKisFetch({ rt_cd: '1', msg1: 'fail' });
+      const client = liveClient();
+
+      const map = await client.getStockPrices(['005930']);
+      expect(map.size).toBe(0);
+    });
+  });
+
+  describe('getMarketOverview (extended)', () => {
+    it('returns cached overview without fetching', async () => {
+      const cached = {
+        kospi: { value: 1, change: 0, changeRate: 0 },
+        kosdaq: { value: 2, change: 0, changeRate: 0 },
+      } as never;
+      jest.spyOn(cacheService, 'get').mockResolvedValue(cached);
+      const client = liveClient();
+
+      const overview = await client.getMarketOverview();
+      expect(overview).toBe(cached);
+      expect(global.fetch).not.toHaveBeenCalled();
+    });
+
+    it('keeps zero values when index prices are missing', async () => {
+      const client = liveClient();
+      jest.spyOn(client, 'getStockPrices').mockResolvedValue(new Map());
+
+      const overview = await client.getMarketOverview();
+      expect(overview).toEqual({
+        kospi: { value: 0, change: 0, changeRate: 0 },
+        kosdaq: { value: 0, change: 0, changeRate: 0 },
+      });
+    });
+  });
+});
+
+// ============================================================================
+// YahooFinanceClient — extended coverage
+// ============================================================================
+
+describe('YahooFinanceClient (extended)', () => {
+  it('uses KQ suffix for KOSDAQ codes', async () => {
+    (global.fetch as jest.Mock).mockResolvedValue({
+      ok: true,
+      json: jest.fn().mockResolvedValue({
+        chart: { result: [{ meta: { regularMarketPrice: 100, chartPreviousClose: 90, regularMarketVolume: 10 } }] },
+      }),
+    });
+    const client = new YahooFinanceClient();
+
+    await client.getStockPrice('247540');
+    expect((global.fetch as jest.Mock).mock.calls[0][0]).toContain('247540.KQ');
+  });
+
+  it('returns null when chart result is empty', async () => {
+    (global.fetch as jest.Mock).mockResolvedValue({
+      ok: true,
+      json: jest.fn().mockResolvedValue({ chart: { result: [] } }),
+    });
+    const client = new YahooFinanceClient();
+
+    expect(await client.getStockPrice('005930')).toBeNull();
+  });
+
+  it('sets changeRate to 0 when previous close is missing', async () => {
+    (global.fetch as jest.Mock).mockResolvedValue({
+      ok: true,
+      json: jest.fn().mockResolvedValue({
+        chart: { result: [{ meta: { regularMarketPrice: 100, regularMarketVolume: 10 } }] },
+      }),
+    });
+    const client = new YahooFinanceClient();
+
+    const result = await client.getStockPrice('005930');
+    expect(result?.changeRate).toBe(0);
+  });
+});
+
+// ============================================================================
+// StockService — extended coverage
+// ============================================================================
+
+describe('StockService (extended)', () => {
+  function liveService(): StockService {
+    process.env.KOREA_INVEST_APP_KEY = 'key';
+    process.env.KOREA_INVEST_APP_SECRET = 'secret';
+    return new StockService();
+  }
+
+  function fallbackService(): StockService {
+    delete process.env.KOREA_INVEST_APP_KEY;
+    delete process.env.KOREA_INVEST_APP_SECRET;
+    return new StockService();
+  }
+
+  it('routes getStockPrice to KIS client when configured', async () => {
+    const quote = { code: '005930', name: '삼성전자', price: 78500 } as never;
+    const kisSpy = jest
+      .spyOn(KoreaInvestmentClient.prototype, 'getStockPrice')
+      .mockResolvedValue(quote);
+    const svc = liveService();
+
+    const result = await svc.getStockPrice('005930');
+    expect(result).toBe(quote);
+    expect(kisSpy).toHaveBeenCalledWith('005930');
+  });
+
+  it('routes getStockPrices to KIS client when configured', async () => {
+    const map = new Map<string, never>([['005930', { code: '005930' } as never]]);
+    jest.spyOn(KoreaInvestmentClient.prototype, 'getStockPrices').mockResolvedValue(map);
+    const svc = liveService();
+
+    expect(await svc.getStockPrices(['005930'])).toBe(map);
+  });
+
+  it('routes getStockMaster to KIS client when configured', async () => {
+    const master = [{ code: '005930', name: '삼성전자', market: 'KOSPI' }];
+    jest.spyOn(KoreaInvestmentClient.prototype, 'getStockMaster').mockResolvedValue(master as never);
+    const svc = liveService();
+
+    expect(await svc.getStockMaster()).toBe(master);
+  });
+
+  it('builds overview from index prices when yahoo fallback is live', async () => {
+    const svc = fallbackService();
+    (svc as unknown as { isFallbackMock: boolean }).isFallbackMock = false;
+    const indices = new Map<string, never>([
+      ['001', { price: 2620.5, change: 12.45, changeRate: 0.48 } as never],
+      ['101', { price: 845.2, change: -2.15, changeRate: -0.25 } as never],
+    ]);
+    jest.spyOn(svc, 'getStockPrices').mockResolvedValue(indices);
+
+    const overview = await svc.getMarketOverview();
+    expect(overview.kospi).toEqual({ value: 2620.5, change: 12.45, changeRate: 0.48 });
+    expect(overview.kosdaq).toEqual({ value: 845.2, change: -2.15, changeRate: -0.25 });
+    expect(overview).not.toHaveProperty('simulated');
+  });
+
+  it('counts failed DB writes without throwing', async () => {
+    const svc = fallbackService();
+    (prisma.stock.upsert as jest.Mock).mockRejectedValue(new Error('db down'));
+    const errorSpy = jest.spyOn(console, 'error').mockImplementation(() => {});
+
+    await expect(
+      svc.saveStockPricesToDb([
+        {
+          code: '005930',
+          name: '삼성전자',
+          price: 78500,
+          change: 500,
+          changeRate: 0.64,
+          openPrice: 78000,
+          highPrice: 79000,
+          lowPrice: 77500,
+          volume: 1000000,
+          tradingValue: 78000000000,
+          timestamp: new Date(),
+        },
+      ]),
+    ).resolves.toBeUndefined();
+
+    errorSpy.mockRestore();
+  });
+});

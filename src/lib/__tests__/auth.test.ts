@@ -2,6 +2,7 @@
  * auth.test.ts
  * Tests for password hashing, HMAC tokens, session helpers.
  */
+import crypto from 'crypto';
 import {
   hashPassword,
   verifyPassword,
@@ -12,6 +13,7 @@ import {
   getSessionUser,
   destroySession,
   destroyAllUserSessions,
+  createSessionToken,
 } from '@/lib/utils/auth';
 import { sessionStore } from '@/lib/services/session/session-store';
 import { prisma } from '@/lib/db';
@@ -161,6 +163,37 @@ describe('destroySession / destroyAllUserSessions', () => {
   it('delegates to sessionStore.deleteAllUserSessions', async () => {
     const spy = jest.spyOn(sessionStore, 'deleteAllUserSessions').mockResolvedValue(undefined);
     await destroyAllUserSessions('user-1');
+    expect(spy).toHaveBeenCalledWith('user-1');
+  });
+});
+
+describe('getSecret / token edge cases', () => {
+  it('throws when JWT_SECRET is missing', () => {
+    delete process.env.JWT_SECRET;
+    expect(() => createHmacToken('user-1')).toThrow('JWT_SECRET');
+    expect(verifyHmacToken('any.token')).toBeNull();
+  });
+
+  it('returns false for empty salt or expected hash', () => {
+    expect(verifyPassword('x', 'scrypt$$')).toBe(false);
+    expect(verifyPassword('x', 'scrypt$00$')).toBe(false);
+  });
+
+  it('returns null when signature length mismatches', () => {
+    const token = createHmacToken('user-1');
+    const [payload] = token.split('.');
+    expect(verifyHmacToken(`${payload}.short`)).toBeNull();
+  });
+
+  it('returns null when payload is not valid JSON', () => {
+    const notJson = Buffer.from('not-json').toString('base64');
+    const sig = crypto.createHmac('sha256', process.env.JWT_SECRET as string).update(Buffer.from('not-json').toString('base64')).digest('hex');
+    expect(verifyHmacToken(`${notJson}.${sig}`)).toBeNull();
+  });
+
+  it('createSessionToken delegates to sessionStore.createSession', async () => {
+    const spy = jest.spyOn(sessionStore, 'createSession').mockResolvedValue('session-id');
+    await expect(createSessionToken('user-1')).resolves.toBe('session-id');
     expect(spy).toHaveBeenCalledWith('user-1');
   });
 });

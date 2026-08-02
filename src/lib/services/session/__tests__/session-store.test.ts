@@ -11,9 +11,53 @@ const SessionStoreClass = sessionStore.constructor as new () => {
   deleteSession(sessionId: string): Promise<void>
   deleteAllUserSessions(userId: string): Promise<void>
   extendSession(sessionId: string): Promise<boolean>
+  stopCleanupInterval(): void
 }
 
 const SESSION_TTL_MS = 7 * 24 * 60 * 60 * 1000
+
+// Redis instances created during tests (populated by the ioredis mock).
+const mockRedisInstances: Array<{
+  connect: jest.Mock
+  get: jest.Mock
+  setex: jest.Mock
+  del: jest.Mock
+  scan: jest.Mock
+  exists: jest.Mock
+  expire: jest.Mock
+  emit: (event: string, ...args: unknown[]) => void
+}> = []
+
+jest.mock('ioredis', () => {
+  class MockRedis {
+    listeners: Record<string, Array<(...args: unknown[]) => void>> = {}
+    connect = jest.fn(async () => {
+      this.emit('connect')
+    })
+    get = jest.fn()
+    setex = jest.fn()
+    del = jest.fn()
+    scan = jest.fn()
+    exists = jest.fn()
+    expire = jest.fn()
+
+    constructor(...args: unknown[]) {
+      void args
+      mockRedisInstances.push(this as never)
+    }
+
+    on(event: string, cb: (...args: unknown[]) => void) {
+      if (!this.listeners[event]) this.listeners[event] = []
+      this.listeners[event].push(cb)
+      return this
+    }
+
+    emit(event: string, ...args: unknown[]) {
+      ;(this.listeners[event] ?? []).forEach((cb) => cb(...args))
+    }
+  }
+  return { __esModule: true, default: MockRedis }
+})
 
 describe('SessionStore', () => {
   let store: InstanceType<typeof SessionStoreClass>
@@ -119,5 +163,83 @@ describe('SessionStore', () => {
     it('should not throw when the user has no sessions', async () => {
       await expect(store.deleteAllUserSessions('ghost-user')).resolves.toBeUndefined()
     })
+  })
+})
+
+describe('SessionStore (Redis mode)', () => {
+  let store: InstanceType<typeof SessionStoreClass>
+  let redis: (typeof mockRedisInstances)[number]
+
+  beforeEach(async () => {
+    process.env.REDIS_URL = 'redis://test:6379'
+    jest.clearAllMocks()
+    store = new SessionStoreClass()
+    await new Promise((resolve) => setTimeout(resolve, 0))
+    redis = mockRedisInstances[mockRedisInstances.length - 1]
+  })
+
+  afterEach(() => {
+    store.stopCleanupInterval()
+    delete process.env.REDIS_URL
+    jest.useRealTimers()
+  })
+
+  it('should create a session via SETEX', async () => {
+    redis.setex.mockResolvedValue('OK')
+    const id = await store.createSession('user-1')
+    expect(redis.setex).toHaveBeenCalledWith(
+      `economy-news:session:${id}`,
+      7 * 24 * 60 * 60,
+      expect.stringContaining('user-1')
+    )
+  })
+
+  it('should read a session from Redis', async () => {
+    redis.get.mockResolvedValue(JSON.stringify({ userId: 'user-1', createdAt: 123 }))
+    const data = await store.getSession('abc')
+    expect(redis.get).toHaveBeenCalledWith('economy-news:session:abc')
+    expect(data).toEqual({ userId: 'user-1', createdAt: 123 })
+  })
+
+  it('should return null when Redis has no session', async () => {
+    redis.get.mockResolvedValue(null)
+    await expect(store.getSession('abc')).resolves.toBeNull()
+  })
+
+  it('should delete via Redis DEL', async () => {
+    await store.deleteSession('abc')
+    expect(redis.del).toHaveBeenCalledWith('economy-news:session:abc')
+  })
+
+  it('should extend an existing session via EXISTS + EXPIRE', async () => {
+    redis.exists.mockResolvedValue(1)
+    await expect(store.extendSession('abc')).resolves.toBe(true)
+    expect(redis.expire).toHaveBeenCalledWith('economy-news:session:abc', 7 * 24 * 60 * 60)
+  })
+
+  it('should return false when the session does not exist in Redis', async () => {
+    redis.exists.mockResolvedValue(0)
+    await expect(store.extendSession('abc')).resolves.toBe(false)
+  })
+
+  it('should delete only the target users sessions via SCAN + GET + DEL', async () => {
+    redis.scan.mockResolvedValueOnce([
+      '0',
+      ['economy-news:session:one', 'economy-news:session:two'],
+    ])
+    redis.get
+      .mockResolvedValueOnce(JSON.stringify({ userId: 'user-1', createdAt: 1 }))
+      .mockResolvedValueOnce(JSON.stringify({ userId: 'user-2', createdAt: 1 }))
+    await store.deleteAllUserSessions('user-1')
+    expect(redis.del).toHaveBeenCalledWith('economy-news:session:one')
+    expect(redis.del).not.toHaveBeenCalledWith('economy-news:session:two')
+  })
+
+  it('should fall back to memory when Redis set fails', async () => {
+    redis.setex.mockRejectedValueOnce(new Error('boom'))
+    redis.get.mockRejectedValue(new Error('boom'))
+    const id = await store.createSession('user-1')
+    const data = await store.getSession(id)
+    expect(data?.userId).toBe('user-1')
   })
 })
