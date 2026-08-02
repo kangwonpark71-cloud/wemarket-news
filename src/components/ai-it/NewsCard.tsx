@@ -66,7 +66,7 @@ export default function NewsCard({ article, variant = 'default' }: NewsCardProps
               {article.source.icon && <span>{article.source.icon}</span>}
               {article.source.name}
             </span>
-            <span>{publishedDate}</span>
+            <span suppressHydrationWarning>{publishedDate}</span>
             {article.isBookmarked && <span className="text-yellow-500">★</span>}
           </div>
         </div>
@@ -86,7 +86,7 @@ export default function NewsCard({ article, variant = 'default' }: NewsCardProps
           <div className="mb-2 flex flex-wrap gap-1">
             {article.source.icon && <span className="text-lg">{article.source.icon}</span>}
             <span className="text-xs font-medium text-muted-foreground">{article.source.name}</span>
-            <span className="text-xs text-muted-foreground">{publishedDate}</span>
+            <span className="text-xs text-muted-foreground" suppressHydrationWarning>{publishedDate}</span>
           </div>
           <Link href={`/ai-it/articles/${article.id}`}>
             <h3 className="line-clamp-2 word-break-keep-all font-semibold text-foreground hover:text-primary transition-colors" title={article.title}>
@@ -133,7 +133,7 @@ export default function NewsCard({ article, variant = 'default' }: NewsCardProps
             {article.source.icon && <span className="text-base">{article.source.icon}</span>}
             <span className="font-medium">{article.source.name}</span>
             <span className="text-muted-foreground/50">·</span>
-            <time dateTime={new Date(article.publishedAt).toISOString()}>{publishedDate}</time>
+            <time dateTime={new Date(article.publishedAt).toISOString()} suppressHydrationWarning>{publishedDate}</time>
             {article.isBookmarked && <span className="text-yellow-500" title="북마크됨">★</span>}
           </div>
           <Link href={`/ai-it/articles/${article.id}`}>
