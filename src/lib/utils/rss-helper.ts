@@ -42,7 +42,10 @@ export async function fetchWithRetry(
       if (attempt < retries) {
         const delay = baseDelay * Math.pow(2, attempt) + Math.random() * 1000;
         log.warn(`[${logPrefix}] Attempt ${attempt + 1} failed for ${url}: ${lastError.message}. Retrying in ${Math.round(delay)}ms...`);
-        await new Promise(resolve => setTimeout(resolve, delay));
+        await new Promise(resolve => {
+          const timer = setTimeout(resolve, delay);
+          timer.unref?.();
+        });
       }
     }
   }

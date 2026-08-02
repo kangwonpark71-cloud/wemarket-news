@@ -16,6 +16,7 @@ class SessionStore {
   private redis: Redis | null = null;
   private memoryStore: Map<string, { data: SessionData; expiresAt: number }> = new Map();
   private useRedis = false;
+  private cleanupTimer: NodeJS.Timeout | null = null;
 
   constructor() {
     this.initRedis();
@@ -54,7 +55,7 @@ class SessionStore {
   }
 
   private startCleanupInterval() {
-    setInterval(() => {
+    this.cleanupTimer = setInterval(() => {
       const now = Date.now();
       for (const [key, entry] of this.memoryStore.entries()) {
         if (entry.expiresAt < now) {
@@ -62,6 +63,14 @@ class SessionStore {
         }
       }
     }, 5 * 60 * 1000);
+    this.cleanupTimer.unref?.();
+  }
+
+  stopCleanupInterval() {
+    if (this.cleanupTimer) {
+      clearInterval(this.cleanupTimer);
+      this.cleanupTimer = null;
+    }
   }
 
   private generateSessionId(): string {

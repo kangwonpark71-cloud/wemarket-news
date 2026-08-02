@@ -9,6 +9,7 @@ import { AIITScheduler } from './ai-it-scheduler'
 import { FinancialScheduler } from './financial-scheduler'
 import { DuplicateMergeScheduler } from './duplicate-merge-scheduler'
 import { NewsletterScheduler } from './newsletter-scheduler'
+import { NewsletterDigestScheduler } from './newsletter-digest-scheduler'
 import { createLogger } from '@/lib/logger';
 
 const log = createLogger('SchedulerManager')
@@ -291,6 +292,13 @@ export function createDefaultSchedulers(): SchedulerManager {
     lockTimeout: 600,
   })
   manager.register('newsletter', newsletterScheduler)
+
+  const newsletterDigestScheduler = new NewsletterDigestScheduler({
+    enabled: process.env.DISABLE_SCHEDULERS !== '1' && !!process.env.SMTP_HOST,
+    initialDelay: 120000,
+    lockTimeout: 600,
+  })
+  manager.register('newsletter-digest', newsletterDigestScheduler)
 
   return manager
 }

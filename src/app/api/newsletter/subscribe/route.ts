@@ -6,7 +6,7 @@ const log = createLogger('ApiNewsletterSubscribe')
 
 export async function POST(request: Request) {
   try {
-    const { email } = await request.json();
+    const { email, interests, alertKeywords } = await request.json();
 
     if (!email || !email.includes('@')) {
       return NextResponse.json(
@@ -15,10 +15,16 @@ export async function POST(request: Request) {
       );
     }
 
+    const clean = (value: unknown): string =>
+      typeof value === 'string' ? value.split(',').map((s) => s.trim()).filter(Boolean).join(',').slice(0, 200) : '';
+
+    const interestsValue = clean(interests);
+    const alertKeywordsValue = clean(alertKeywords);
+
     await prisma.newsletterSubscription.upsert({
       where: { email },
-      update: { isActive: true },
-      create: { email, isActive: true },
+      update: { isActive: true, interests: interestsValue, alertKeywords: alertKeywordsValue },
+      create: { email, isActive: true, interests: interestsValue, alertKeywords: alertKeywordsValue },
     });
 
     return NextResponse.json({ success: true });

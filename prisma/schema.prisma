@@ -563,10 +563,12 @@ model DistributedLock {
 
 // 이메일 뉴스레터 구독 테이블
 model NewsletterSubscription {
-  id        String   @id @default(uuid())
-  email     String   @unique
-  isActive  Boolean  @default(true) @map("is_active")
-  createdAt DateTime @default(now()) @map("created_at")
+  id            String   @id @default(uuid())
+  email         String   @unique
+  isActive      Boolean  @default(true) @map("is_active")
+  interests     String   @default("") // 쉼표 구분 관심 분야 (예: economy,tech,world)
+  alertKeywords String   @default("") // 쉼표 구분 관심 키워드 (예: 금리,AI,반도체)
+  createdAt     DateTime @default(now()) @map("created_at")
 
   @@map("newsletter_subscriptions")
 }

@@ -173,7 +173,10 @@ async function withRetry<T>(
       
       if (attempt < maxRetries) {
         log.warn(`[LLM Retry] Attempt ${attempt + 1} failed, retrying in ${retryDelay}ms...`)
-        await new Promise(resolve => setTimeout(resolve, retryDelay))
+        await new Promise(resolve => {
+          const timer = setTimeout(resolve, retryDelay)
+          timer.unref?.()
+        })
       }
     }
   }

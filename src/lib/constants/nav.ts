@@ -17,6 +17,11 @@ export const NAV_ITEMS: NavItem[] = [
     icon: '🚨',
   },
   {
+    href: '/briefing',
+    label: '오늘의 브리핑',
+    icon: '📋',
+  },
+  {
     href: '/domestic',
     label: '국내뉴스',
     icon: '🏠',

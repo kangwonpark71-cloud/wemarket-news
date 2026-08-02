@@ -48,7 +48,10 @@ export async function withRetry<T>(
         log.warn(
           `[${logPrefix}] Attempt ${attempt + 1} failed: ${lastError.message}. Retrying in ${Math.round(delay)}ms...`,
         );
-        await new Promise((resolve) => setTimeout(resolve, delay));
+        await new Promise((resolve) => {
+          const timer = setTimeout(resolve, delay);
+          timer.unref?.();
+        });
       }
     }
   }

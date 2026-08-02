@@ -48,3 +48,6 @@ prisma/schema.sqlite.prisma
 
 # generated screenshots (dev artifacts)
 public/screenshots/
+
+# database backups
+backups/

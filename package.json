@@ -23,6 +23,7 @@
     "db:dev:push": "node scripts/generate-sqlite-schema.mjs && prisma db push --schema=prisma/schema.sqlite.prisma",
     "db:seed": "tsx prisma/seed.ts",
     "db:check:drift": "node scripts/check-schema-drift.mjs",
+    "db:backup": "tsx scripts/backup-db.ts",
     "db:studio": "prisma studio",
     "cleanup:sports": "tsx scripts/cleanup-sports-pollution.ts",
     "seed:ooh": "tsx scripts/seed-ooh.ts",

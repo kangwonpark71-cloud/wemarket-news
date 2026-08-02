@@ -1,12 +1,19 @@
 'use client';
 
 import { useState } from 'react';
+import { INTEREST_OPTIONS } from '@/lib/services/newsletter/newsletter-options';
 
 export function NewsletterWidget() {
   const [email, setEmail] = useState('');
+  const [interests, setInterests] = useState<string[]>([]);
+  const [keywords, setKeywords] = useState('');
   const [loading, setLoading] = useState(false);
   const [success, setSuccess] = useState(false);
   const [error, setError] = useState<string | null>(null);
+
+  const toggleInterest = (id: string) => {
+    setInterests((prev) => (prev.includes(id) ? prev.filter((x) => x !== id) : [...prev, id]));
+  };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -18,12 +25,17 @@ export function NewsletterWidget() {
       const res = await fetch('/api/newsletter/subscribe', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ email }),
+        body: JSON.stringify({
+          email,
+          interests: interests.join(','),
+          alertKeywords: keywords,
+        }),
       });
       const json = await res.json();
       if (json.success) {
         setSuccess(true);
         setEmail('');
+        setKeywords('');
       } else {
         setError(json.error || '구독 신청에 실패했습니다.');
       }
@@ -58,6 +70,39 @@ export function NewsletterWidget() {
             {loading ? '신청 중...' : '구독 신청'}
           </button>
         </form>
+      </div>
+      <div className="mt-4 border-t border-border pt-4">
+        <p className="text-[10px] text-muted-foreground mb-2">관심 분야를 선택하면 맞춤형 뉴스 다이제스트를 보내드려요. (선택)</p>
+        <div className="flex flex-wrap gap-2">
+          {INTEREST_OPTIONS.map((opt) => {
+            const active = interests.includes(opt.id);
+            return (
+              <button
+                key={opt.id}
+                type="button"
+                onClick={() => toggleInterest(opt.id)}
+                aria-pressed={active}
+                className={`h-7 px-3 text-[11px] rounded-full border transition-colors cursor-pointer ${
+                  active
+                    ? 'bg-primary text-primary-foreground border-primary font-semibold'
+                    : 'bg-background text-foreground border-border hover:border-primary'
+                }`}
+              >
+                {opt.label}
+              </button>
+            );
+          })}
+        </div>
+        <div className="flex items-center gap-2 mt-3">
+          <span className="text-[10px] text-muted-foreground shrink-0">키워드</span>
+          <input
+            type="text"
+            value={keywords}
+            onChange={(e) => setKeywords(e.target.value)}
+            placeholder="금리, 반도체, 연준 (쉼표로 구분, 선택)"
+            className="h-8 w-full max-w-xs border border-border bg-background px-3 text-xs text-foreground focus:outline-none focus:ring-2 focus:ring-primary rounded-sm placeholder:text-muted-foreground"
+          />
+        </div>
       </div>
       {success && (
         <p className="text-[10px] font-semibold text-emerald-600 dark:text-emerald-400 mt-2">

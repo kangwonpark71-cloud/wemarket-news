@@ -151,11 +151,11 @@ let _shutdownRegistered = false;
  */
 export function registerBrowserShutdown(): void {
   if (_shutdownRegistered) return;
+  if (process.env.JEST_WORKER_ID || process.env.NODE_ENV === 'test') return;
   _shutdownRegistered = true;
 
   const shutdown = async () => {
     await closeBrowser();
-    process.exit(0);
   };
 
   process.on('SIGTERM', shutdown);

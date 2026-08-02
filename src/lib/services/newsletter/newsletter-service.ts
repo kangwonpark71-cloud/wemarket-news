@@ -21,7 +21,7 @@ interface NewsletterConfig {
   fromEmail: string;
 }
 
-function getConfig(): NewsletterConfig | null {
+export function getConfig(): NewsletterConfig | null {
   const host = process.env.SMTP_HOST;
   const port = process.env.SMTP_PORT ? parseInt(process.env.SMTP_PORT, 10) : 587;
   const user = process.env.SMTP_USER;
@@ -45,7 +45,7 @@ function getConfig(): NewsletterConfig | null {
 
 let transporter: Transporter | null = null;
 
-function getTransporter(): Transporter | null {
+export function getTransporter(): Transporter | null {
   if (transporter) return transporter;
 
   const config = getConfig();
@@ -128,12 +128,14 @@ export async function sendNewsletterToAll(
     await Promise.allSettled(
       batch.map(async (sub) => {
         try {
+          const personalHtml = htmlContent.split('{{email}}').join(encodeURIComponent(sub.email));
+          const personalText = textContent ? textContent.split('{{email}}').join(sub.email) : '';
           await transport.sendMail({
             from: `"${config.fromName}" <${config.fromEmail}>`,
             to: sub.email,
             subject,
-            text: textContent || '',
-            html: htmlContent,
+            text: personalText,
+            html: personalHtml,
             headers: {
               'List-Unsubscribe': `<${process.env.NEXT_PUBLIC_BASE_URL || 'https://economy-news.app'}/api/newsletter/unsubscribe>`,
             },

@@ -14,6 +14,7 @@ class CacheService {
   private memoryCache: Map<string, { value: unknown; expiresAt: number }> = new Map();
   private useRedis = false;
   private defaultTtl = 300;
+  private cleanupTimer: NodeJS.Timeout | null = null;
 
   constructor() {
     this.initRedis();
@@ -53,7 +54,7 @@ class CacheService {
   }
 
   private startCleanupInterval() {
-    setInterval(() => {
+    this.cleanupTimer = setInterval(() => {
       const now = Date.now();
       for (const [key, entry] of this.memoryCache.entries()) {
         if (entry.expiresAt < now) {
@@ -61,6 +62,14 @@ class CacheService {
         }
       }
     }, 5 * 60 * 1000);
+    this.cleanupTimer.unref?.();
+  }
+
+  stopCleanupInterval() {
+    if (this.cleanupTimer) {
+      clearInterval(this.cleanupTimer);
+      this.cleanupTimer = null;
+    }
   }
 
   async get<T>(key: string): Promise<T | null> {
