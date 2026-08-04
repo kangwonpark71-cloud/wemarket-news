@@ -1,5 +1,5 @@
 import { fetchFeed } from '../src/lib/rss/fetcher'
-import { upsertArticles } from '../src/lib/rss/db-service'
+import { upsertArticles, cleanupOldArticles } from '../src/lib/rss/db-service'
 import { getSourceIdByNameEn, logFetch } from '../src/lib/rss/service'
 import { ALL_SOURCES } from '../src/lib/rss/sources'
 import { PrismaClient } from '@prisma/client'
@@ -48,6 +48,13 @@ async function fetchAllFeeds() {
   }
 
   console.log(`[${new Date().toISOString()}] RSS fetch completed`)
+
+  try {
+    const { deletedArticles, deletedLogs } = await cleanupOldArticles()
+    console.log(`[${new Date().toISOString()}] Cleanup: ${deletedArticles} articles, ${deletedLogs} logs removed`)
+  } catch (err) {
+    console.error('Cleanup failed:', err instanceof Error ? err.message : err)
+  }
 }
 
 async function main() {

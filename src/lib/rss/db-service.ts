@@ -310,6 +310,60 @@ export async function getBreakingArticles(
   }
 }
 
+// =============================================
+// Article Retention / Cleanup
+// =============================================
+
+const RETENTION_DAYS = parseInt(process.env.ARTICLE_RETENTION_DAYS || '90', 10)
+const LOG_RETENTION_DAYS = 30
+
+/**
+ * Delete old articles to prevent DB volume overflow (Railway 500MB limit).
+ * Preserves bookmarked articles. Called after each RSS fetch cycle.
+ */
+export async function cleanupOldArticles(): Promise<{ deletedArticles: number; deletedLogs: number }> {
+  const cutoff = new Date()
+  cutoff.setDate(cutoff.getDate() - RETENTION_DAYS)
+
+  const logCutoff = new Date()
+  logCutoff.setDate(logCutoff.getDate() - LOG_RETENTION_DAYS)
+
+  let deletedArticles = 0
+  let deletedLogs = 0
+
+  try {
+    const result = await prisma.article.deleteMany({
+      where: {
+        publishedAt: { lt: cutoff },
+        isBookmarked: false,
+      },
+    })
+    deletedArticles = result.count
+
+    const fetchLogResult = await prisma.fetchLog.deleteMany({
+      where: { fetchedAt: { lt: logCutoff } },
+    })
+
+    const errorLogResult = await prisma.errorLog.deleteMany({
+      where: { createdAt: { lt: logCutoff } },
+    })
+
+    const financialLogResult = await prisma.financialFetchLog.deleteMany({
+      where: { fetchedAt: { lt: logCutoff } },
+    })
+
+    deletedLogs = fetchLogResult.count + errorLogResult.count + financialLogResult.count
+
+    if (deletedArticles > 0 || deletedLogs > 0) {
+      log.info(`Cleanup: ${deletedArticles} articles (${RETENTION_DAYS}d+), ${deletedLogs} logs (${LOG_RETENTION_DAYS}d+)`)
+    }
+  } catch (err) {
+    log.warn('Article cleanup failed:', err instanceof Error ? err.message : err)
+  }
+
+  return { deletedArticles, deletedLogs }
+}
+
 export async function getArticleStats() {
   const [totalArticles, totalSources, lastFetch] = await Promise.all([
     prisma.article.count(),
