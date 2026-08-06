@@ -50,6 +50,10 @@ describe('Article Upsert', () => {
     jest.clearAllMocks()
   })
 
+  afterEach(() => {
+    delete process.env.DATABASE_URL
+  })
+
   describe('upsertArticles', () => {
     it('should insert new articles', async () => {
       mockPrisma.article.findUnique.mockResolvedValue(null)
@@ -217,12 +221,32 @@ describe('Article Upsert', () => {
     })
 
     it('should search by title and description (lowercase)', async () => {
+      process.env.DATABASE_URL = 'postgresql://test'
       mockPrisma.article.findMany.mockResolvedValue([])
       mockPrisma.article.count.mockResolvedValue(0)
 
       await getArticles({
         search: 'Test Query',
       })
+
+      expect(mockPrisma.article.findMany).toHaveBeenCalledWith(
+        expect.objectContaining({
+          where: expect.objectContaining({
+            OR: expect.arrayContaining([
+              { title: { contains: 'test query', mode: 'insensitive' } },
+              { description: { contains: 'test query', mode: 'insensitive' } },
+            ]),
+          }),
+        })
+      )
+    })
+
+    it('should keep SQLite-compatible search filters', async () => {
+      process.env.DATABASE_URL = 'file:./dev.db'
+      mockPrisma.article.findMany.mockResolvedValue([])
+      mockPrisma.article.count.mockResolvedValue(0)
+
+      await getArticles({ search: 'Test Query' })
 
       expect(mockPrisma.article.findMany).toHaveBeenCalledWith(
         expect.objectContaining({

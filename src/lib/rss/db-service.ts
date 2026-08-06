@@ -160,9 +160,13 @@ export async function getArticles(params: {
 
   if (search) {
     const searchLower = search.toLowerCase()
+    const searchFilter: Prisma.StringFilter = { contains: searchLower }
+    if (process.env.DATABASE_URL?.startsWith('postgres')) {
+      searchFilter.mode = 'insensitive'
+    }
     where.OR = [
-      { title: { contains: searchLower } },
-      { description: { contains: searchLower } },
+      { title: searchFilter },
+      { description: searchFilter },
     ]
   }
 
