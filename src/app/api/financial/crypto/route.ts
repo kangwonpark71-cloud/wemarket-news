@@ -1,4 +1,5 @@
 import { NextResponse } from 'next/server';
+import { apiError } from '@/lib/api-response';
 import { upbitService } from '@/lib/services/crypto/crypto-service';
 import { createLogger } from '@/lib/logger';
 
@@ -22,20 +23,14 @@ export async function GET(request: Request) {
 
       case 'ticker':
         if (!symbol) {
-          return NextResponse.json(
-            { success: false, error: 'Symbol is required' },
-            { status: 400 }
-          );
+          return apiError('Symbol is required', 400);
         }
         result = await upbitService.getTicker(symbol);
         break;
 
       case 'candles':
         if (!symbol) {
-          return NextResponse.json(
-            { success: false, error: 'Symbol is required' },
-            { status: 400 }
-          );
+          return apiError('Symbol is required', 400);
         }
         result = await upbitService.getCandles(symbol, unit as Parameters<typeof upbitService.getCandles>[1], parseInt(searchParams.get('count') || '200'));
         break;
@@ -57,18 +52,12 @@ export async function GET(request: Request) {
         break;
 
       default:
-        return NextResponse.json(
-          { success: false, error: 'Invalid action' },
-          { status: 400 }
-        );
+        return apiError('Invalid action', 400);
     }
 
     return NextResponse.json({ success: true, data: result });
   } catch (error) {
     log.error('[API] Crypto error:', error);
-    return NextResponse.json(
-      { success: false, error: 'Failed to fetch crypto data' },
-      { status: 500 }
-    );
+    return apiError('Failed to fetch crypto data', 500);
   }
 }

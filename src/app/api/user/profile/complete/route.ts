@@ -1,4 +1,5 @@
 import { NextResponse } from 'next/server';
+import { apiError } from '@/lib/api-response';
 import { prisma } from '@/lib/db';
 import { getSessionUser } from '@/lib/utils/auth';
 import { z } from 'zod';
@@ -26,20 +27,14 @@ export async function POST(request: Request) {
     const body = await request.json();
     const validationResult = profileCompletionSchema.safeParse(body);
     if (!validationResult.success) {
-      return NextResponse.json(
-        { success: false, error: validationResult.error.issues.map(err => err.message).join(', ') },
-        { status: 400 }
-      );
+      return apiError(validationResult.error.issues.map(err => err.message).join(', '), 400);
     }
 
     const { name, email, gender, birthDate, interests } = validationResult.data;
 
     const sessionUser = await getSessionUser(request);
     if (!sessionUser) {
-      return NextResponse.json(
-        { success: false, error: '인증이 필요합니다.' },
-        { status: 401 }
-      );
+      return apiError('인증이 필요합니다.', 401);
     }
 
     const updateData: Record<string, unknown> = {
@@ -54,10 +49,7 @@ export async function POST(request: Request) {
           where: { email },
         });
         if (existingEmail && existingEmail.id !== sessionUser.id) {
-          return NextResponse.json(
-            { success: false, error: '이미 사용 중인 이메일입니다.' },
-            { status: 409 }
-          );
+          return apiError('이미 사용 중인 이메일입니다.', 409);
         }
       }
       updateData.email = email;
@@ -104,9 +96,6 @@ export async function POST(request: Request) {
     });
   } catch (error) {
     log.error('Profile completion error:', error);
-    return NextResponse.json(
-      { success: false, error: '프로필 저장 중 서버 오류가 발생했습니다.' },
-      { status: 500 }
-    );
+    return apiError('프로필 저장 중 서버 오류가 발생했습니다.', 500);
   }
 }

@@ -1,4 +1,5 @@
 import { NextResponse } from 'next/server';
+import { apiError } from '@/lib/api-response';
 import { getGoogleAuthUrl, getKakaoAuthUrl } from '@/lib/services/auth/oauth-service';
 import { createLogger } from '@/lib/logger';
 
@@ -26,9 +27,6 @@ export async function GET(request: Request) {
   } catch (error) {
     const msg = error instanceof Error ? error.message : String(error);
     log.error('OAuth login error:', msg);
-    return NextResponse.json(
-      { success: false, error: msg },
-      { status: 500 },
-    );
+    return apiError(msg, 500);
   }
 }

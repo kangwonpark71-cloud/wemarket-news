@@ -1,4 +1,5 @@
 import { NextResponse } from 'next/server';
+import { apiError } from '@/lib/api-response';
 import { prisma } from '@/lib/db';
 import { createLogger } from '@/lib/logger';
 
@@ -9,10 +10,7 @@ export async function POST(request: Request) {
     const { email, interests, alertKeywords } = await request.json();
 
     if (!email || !email.includes('@')) {
-      return NextResponse.json(
-        { success: false, error: '올바른 이메일 주소를 입력해 주셔요.' },
-        { status: 400 }
-      );
+      return apiError('올바른 이메일 주소를 입력해 주셔요.', 400);
     }
 
     const clean = (value: unknown): string =>
@@ -30,9 +28,6 @@ export async function POST(request: Request) {
     return NextResponse.json({ success: true });
   } catch (error) {
     log.error('Newsletter subscribe error:', error);
-    return NextResponse.json(
-      { success: false, error: '구독 신청에 실패했습니다.' },
-      { status: 500 }
-    );
+    return apiError('구독 신청에 실패했습니다.', 500);
   }
 }

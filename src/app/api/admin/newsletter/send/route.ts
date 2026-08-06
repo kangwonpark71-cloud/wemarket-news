@@ -1,4 +1,5 @@
 import { NextResponse } from 'next/server';
+import { apiError } from '@/lib/api-response';
 import { getSessionUser } from '@/lib/utils/auth';
 import { prisma } from '@/lib/db';
 import {
@@ -15,7 +16,7 @@ const log = createLogger('ApiAdminNewsletterSend');
 export async function GET(request: Request) {
   const user = await getSessionUser(request);
   if (!user || user.role !== 'ADMIN') {
-    return NextResponse.json({ success: false, error: 'Unauthorized' }, { status: 401 });
+    return apiError('Unauthorized', 401);
   }
 
   try {
@@ -49,17 +50,14 @@ export async function GET(request: Request) {
     });
   } catch (error) {
     log.error('Failed to get newsletter status:', error);
-    return NextResponse.json(
-      { success: false, error: 'Failed to get newsletter status' },
-      { status: 500 },
-    );
+    return apiError('Failed to get newsletter status', 500);
   }
 }
 
 export async function POST(request: Request) {
   const user = await getSessionUser(request);
   if (!user || user.role !== 'ADMIN') {
-    return NextResponse.json({ success: false, error: 'Unauthorized' }, { status: 401 });
+    return apiError('Unauthorized', 401);
   }
 
   try {
@@ -106,7 +104,10 @@ export async function POST(request: Request) {
         text,
       );
 
-      return NextResponse.json({ success: result.success, error: result.error });
+      if (!result.success) {
+        return apiError(result.error ?? '테스트 뉴스레터 발송에 실패했습니다.', 500);
+      }
+      return NextResponse.json({ success: true });
     }
 
     if (action === 'send-all') {
@@ -127,10 +128,7 @@ export async function POST(request: Request) {
       });
 
       if (articles.length === 0) {
-        return NextResponse.json(
-          { success: false, error: '최근 24시간 내 발행된 기사가 없습니다.' },
-          { status: 400 },
-        );
+        return apiError('최근 24시간 내 발행된 기사가 없습니다.', 400);
       }
 
       const newsletterArticles = articles.map((a) => ({
@@ -158,15 +156,9 @@ export async function POST(request: Request) {
       return NextResponse.json({ success: true, data: result });
     }
 
-    return NextResponse.json(
-      { success: false, error: 'Invalid action. Use "test" or "send-all".' },
-      { status: 400 },
-    );
+    return apiError('Invalid action. Use "test" or "send-all".', 400);
   } catch (error) {
     log.error('Newsletter send error:', error);
-    return NextResponse.json(
-      { success: false, error: '뉴스레터 발송에 실패했습니다.' },
-      { status: 500 },
-    );
+    return apiError('뉴스레터 발송에 실패했습니다.', 500);
   }
 }

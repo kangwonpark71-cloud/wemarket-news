@@ -1,4 +1,5 @@
 import { NextResponse } from 'next/server'
+import { apiError } from '@/lib/api-response'
 import { summarizeWithLLM } from '@/lib/ai/llm-service'
 import { createLogger } from '@/lib/logger';
 
@@ -9,10 +10,7 @@ export async function POST(request: Request) {
     const { title, description, content } = await request.json()
 
     if (!title || typeof title !== 'string') {
-      return NextResponse.json(
-        { success: false, error: 'title is required (string)' },
-        { status: 400 }
-      )
+      return apiError('title is required (string)', 400)
     }
 
     const result = await summarizeWithLLM(title, description, content)
@@ -21,9 +19,6 @@ export async function POST(request: Request) {
   } catch (err) {
     const message = err instanceof Error ? err.message : 'Unknown error'
     log.error('[POST /api/ai/summarize]', message)
-    return NextResponse.json(
-      { success: false, error: message },
-      { status: 500 }
-    )
+    return apiError(message, 500)
   }
 }

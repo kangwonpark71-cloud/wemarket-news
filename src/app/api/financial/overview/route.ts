@@ -1,4 +1,5 @@
 import { NextResponse } from 'next/server';
+import { apiError } from '@/lib/api-response';
 import { koreaInvestmentService } from '@/lib/services/financial/financial-service';
 import { upbitService } from '@/lib/services/crypto/crypto-service';
 import { marketService } from '@/lib/services/market/market-service';
@@ -70,9 +71,6 @@ export async function GET() {
     return NextResponse.json({ success: true, data: overview });
   } catch (error) {
     log.error('[API] Overview error:', error);
-    return NextResponse.json(
-      { success: false, error: 'Failed to fetch overview' },
-      { status: 500 }
-    );
+    return apiError('Failed to fetch overview', 500);
   }
 }

@@ -1,4 +1,5 @@
 import { NextResponse } from 'next/server'
+import { apiError } from '@/lib/api-response'
 import { getSessionUser } from '@/lib/utils/auth'
 import {
   getAlertUsers,
@@ -16,7 +17,7 @@ const log = createLogger('ApiAdminAlerts')
 export async function GET(request: Request) {
   const user = await getSessionUser(request)
   if (!user || user.role !== 'ADMIN') {
-    return NextResponse.json({ success: false, error: 'Unauthorized' }, { status: 401 })
+    return apiError('Unauthorized', 401)
   }
 
   try {
@@ -30,10 +31,7 @@ export async function GET(request: Request) {
     })
   } catch (error) {
     log.error('Failed to fetch alert config:', error)
-    return NextResponse.json(
-      { success: false, error: 'Failed to fetch alert configuration' },
-      { status: 500 },
-    )
+    return apiError('Failed to fetch alert configuration', 500)
   }
 }
 
@@ -45,7 +43,7 @@ export async function GET(request: Request) {
 export async function POST(request: Request) {
   const admin = await getSessionUser(request)
   if (!admin || admin.role !== 'ADMIN') {
-    return NextResponse.json({ success: false, error: 'Unauthorized' }, { status: 401 })
+    return apiError('Unauthorized', 401)
   }
 
   try {
@@ -71,12 +69,9 @@ export async function POST(request: Request) {
       })
     }
 
-    return NextResponse.json({ success: false, error: `Unknown action: ${action}` }, { status: 400 })
+    return apiError(`Unknown action: ${action}`, 400)
   } catch (error) {
     log.error('Alert action failed:', error)
-    return NextResponse.json(
-      { success: false, error: 'Failed to process alert action' },
-      { status: 500 },
-    )
+    return apiError('Failed to process alert action', 500)
   }
 }

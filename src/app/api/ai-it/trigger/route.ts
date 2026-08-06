@@ -1,4 +1,5 @@
 import { NextResponse } from 'next/server'
+import { apiError } from '@/lib/api-response'
 import { seedAIITSources } from '@/lib/ai-it/db-service'
 import { fetchAllAIITNews } from '@/lib/ai-it/scheduler-service'
 import { createLogger } from '@/lib/logger';
@@ -10,11 +11,11 @@ export async function POST(request: Request) {
   const cronSecret = process.env.CRON_SECRET
 
   if (process.env.NODE_ENV === 'production' && !cronSecret) {
-    return NextResponse.json({ success: false, error: 'Server misconfigured' }, { status: 500 })
+    return apiError('Server misconfigured', 500)
   }
 
   if (cronSecret && authHeader !== `Bearer ${cronSecret}`) {
-    return NextResponse.json({ success: false, error: 'Unauthorized' }, { status: 401 })
+    return apiError('Unauthorized', 401)
   }
 
   try {
@@ -32,10 +33,7 @@ export async function POST(request: Request) {
     return NextResponse.json({ success: true, ...results })
   } catch (error) {
     log.error('AI/IT trigger failed:', error)
-    return NextResponse.json(
-      { success: false, error: 'AI/IT trigger failed' },
-      { status: 500 }
-    )
+    return apiError('AI/IT trigger failed', 500)
   }
 }
 

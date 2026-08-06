@@ -1,4 +1,5 @@
 import { NextResponse } from 'next/server'
+import { apiError } from '@/lib/api-response'
 import prisma from '@/lib/db'
 import { createLogger } from '@/lib/logger';
 
@@ -17,10 +18,7 @@ export async function POST(
     })
 
     if (!article) {
-      return NextResponse.json(
-        { success: false, error: 'Article not found' },
-        { status: 404 }
-      )
+      return apiError('Article not found', 404)
     }
 
     const updated = await prisma.article.update({
@@ -35,9 +33,6 @@ export async function POST(
     })
   } catch (error) {
     log.error('Failed to toggle bookmark:', error)
-    return NextResponse.json(
-      { success: false, error: 'Failed to toggle bookmark' },
-      { status: 500 }
-    )
+    return apiError('Failed to toggle bookmark', 500)
   }
 }

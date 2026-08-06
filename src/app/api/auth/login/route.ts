@@ -1,4 +1,5 @@
 import { NextResponse } from 'next/server';
+import { apiError } from '@/lib/api-response';
 import { prisma } from '@/lib/db';
 import { verifyPassword, createSessionToken } from '@/lib/utils/auth';
 import { validatePhoneNumber } from '@/lib/utils/sms';
@@ -12,10 +13,7 @@ export async function POST(request: Request) {
 
     // Support both email and phone login
     if (!password) {
-      return NextResponse.json(
-        { success: false, error: '비밀번호를 입력해주세요.' },
-        { status: 400 }
-      );
+      return apiError('비밀번호를 입력해주세요.', 400);
     }
 
     let user = null;
@@ -24,10 +22,7 @@ export async function POST(request: Request) {
     if (phone) {
       const phoneValidation = validatePhoneNumber(phone);
       if (!phoneValidation.isValid) {
-        return NextResponse.json(
-          { success: false, error: phoneValidation.message },
-          { status: 400 }
-        );
+        return apiError(phoneValidation.message, 400);
       }
 
       user = await prisma.user.findFirst({
@@ -41,17 +36,11 @@ export async function POST(request: Request) {
 
     if (!user) {
       // Provide generic error message for security (don't reveal whether email/phone exists)
-      return NextResponse.json(
-        { success: false, error: '이메일 또는 비밀번호가 일치하지 않습니다.' },
-        { status: 400 }
-      );
+      return apiError('이메일 또는 비밀번호가 일치하지 않습니다.', 400);
     }
 
     if (!verifyPassword(password, user.password)) {
-      return NextResponse.json(
-        { success: false, error: '이메일 또는 비밀번호가 일치하지 않습니다.' },
-        { status: 400 }
-      );
+      return apiError('이메일 또는 비밀번호가 일치하지 않습니다.', 400);
     }
 
     const token = await createSessionToken(user.id);
@@ -79,9 +68,6 @@ export async function POST(request: Request) {
     return response;
   } catch (error) {
     log.error('Login error:', error);
-    return NextResponse.json(
-      { success: false, error: '로그인에 실패했습니다.' },
-      { status: 500 }
-    );
+    return apiError('로그인에 실패했습니다.', 500);
   }
 }

@@ -1,4 +1,5 @@
 import { NextResponse } from 'next/server'
+import { apiError } from '@/lib/api-response'
 import prisma from '@/lib/db'
 import { runRssFetch } from '@/lib/rss/scheduler'
 import { fetchAndProcessSource } from '@/lib/ai-it/scheduler-service'
@@ -16,7 +17,7 @@ async function requireAdmin(request: Request) {
 export async function POST(request: Request) {
   const admin = await requireAdmin(request);
   if (!admin) {
-    return NextResponse.json({ success: false, error: 'Unauthorized' }, { status: 401 });
+    return apiError('Unauthorized', 401);
   }
 
   try {
@@ -24,10 +25,7 @@ export async function POST(request: Request) {
     const { sourceId } = body
 
     if (!sourceId) {
-      return NextResponse.json(
-        { success: false, error: 'Source ID is required' },
-        { status: 400 }
-      )
+      return apiError('Source ID is required', 400)
     }
 
     const source = await prisma.source.findUnique({
@@ -35,10 +33,7 @@ export async function POST(request: Request) {
     })
 
     if (!source) {
-      return NextResponse.json(
-        { success: false, error: 'Source not found in DB' },
-        { status: 404 }
-      )
+      return apiError('Source not found in DB', 404)
     }
 
     let result = null
@@ -55,18 +50,12 @@ export async function POST(request: Request) {
         error: res.error,
       }
     } else {
-      return NextResponse.json(
-        { success: false, error: 'Unsupported source type for manual trigger' },
-        { status: 400 }
-      )
+      return apiError('Unsupported source type for manual trigger', 400)
     }
 
     return NextResponse.json({ success: true, result })
   } catch (error) {
     log.error('Failed to trigger manual fetch:', error)
-    return NextResponse.json(
-      { success: false, error: 'Failed to execute manual fetch trigger' },
-      { status: 500 }
-    )
+    return apiError('Failed to execute manual fetch trigger', 500)
   }
 }

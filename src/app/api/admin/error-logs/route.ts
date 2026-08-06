@@ -1,11 +1,12 @@
 import { NextResponse } from 'next/server';
+import { apiError } from '@/lib/api-response';
 import { getSessionUser } from '@/lib/utils/auth';
 import { getErrorLogs, getErrorSummary, clearErrorLogs } from '@/lib/services/monitoring/error-log-service';
 
 export async function GET(request: Request) {
   const user = await getSessionUser(request);
   if (!user || user.role !== 'ADMIN') {
-    return NextResponse.json({ success: false, error: '권한이 없습니다.' }, { status: 403 });
+    return apiError('권한이 없습니다.', 403);
   }
 
   try {
@@ -23,17 +24,14 @@ export async function GET(request: Request) {
 
     return NextResponse.json({ success: true, data: logs, summary });
   } catch {
-    return NextResponse.json(
-      { success: false, error: '로그 조회 실패' },
-      { status: 500 }
-    );
+    return apiError('로그 조회 실패', 500);
   }
 }
 
 export async function DELETE(request: Request) {
   const user = await getSessionUser(request);
   if (!user || user.role !== 'ADMIN') {
-    return NextResponse.json({ success: false, error: '권한이 없습니다.' }, { status: 403 });
+    return apiError('권한이 없습니다.', 403);
   }
 
   try {
@@ -43,9 +41,6 @@ export async function DELETE(request: Request) {
     const count = await clearErrorLogs(level, source);
     return NextResponse.json({ success: true, data: { deleted: count } });
   } catch {
-    return NextResponse.json(
-      { success: false, error: '로그 삭제 실패' },
-      { status: 500 }
-    );
+    return apiError('로그 삭제 실패', 500);
   }
 }

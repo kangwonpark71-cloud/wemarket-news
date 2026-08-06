@@ -1,4 +1,5 @@
 import { NextResponse } from 'next/server'
+import { apiError } from '@/lib/api-response'
 import { getSessionUser } from '@/lib/utils/auth'
 import { cacheService } from '@/lib/services/cache/cache-service'
 import { createLogger } from '@/lib/logger'
@@ -19,7 +20,7 @@ const CLEARABLE_PATTERNS: Record<string, string> = {
 export async function POST(request: Request) {
   const user = await getSessionUser(request)
   if (!user || user.role !== 'ADMIN') {
-    return NextResponse.json({ success: false, error: 'Unauthorized' }, { status: 401 })
+    return apiError('Unauthorized', 401)
   }
 
   try {
@@ -28,10 +29,7 @@ export async function POST(request: Request) {
 
     const pattern = CLEARABLE_PATTERNS[patternKey]
     if (!pattern) {
-      return NextResponse.json(
-        { success: false, error: `Unknown pattern key: ${patternKey}. Available: ${Object.keys(CLEARABLE_PATTERNS).join(', ')}` },
-        { status: 400 },
-      )
+      return apiError(`Unknown pattern key: ${patternKey}. Available: ${Object.keys(CLEARABLE_PATTERNS).join(', ')}`, 400)
     }
 
     await cacheService.deleteByPattern(pattern)
@@ -47,9 +45,6 @@ export async function POST(request: Request) {
     })
   } catch (error) {
     log.error('Cache invalidation failed:', error)
-    return NextResponse.json(
-      { success: false, error: 'Failed to invalidate cache' },
-      { status: 500 },
-    )
+    return apiError('Failed to invalidate cache', 500)
   }
 }

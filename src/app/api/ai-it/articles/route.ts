@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
+import { apiError } from '@/lib/api-response';
 import { getAIITArticles, getAIITArticleById, getAIITArticleByUrl, getAIITArticleStats, getSubcategoriesWithCount } from '@/lib/ai-it/db-service';
 import { cacheService, CacheKeys, CacheTTL } from '@/lib/services/cache/cache-service';
 import { createLogger } from '@/lib/logger';
@@ -24,7 +25,7 @@ export async function GET(request: NextRequest) {
     if (action === 'subcategories') {
       const category = searchParams.get('category') as 'ai' | 'it' | null;
       if (!category) {
-        return NextResponse.json({ success: false, error: 'Category required' }, { status: 400 });
+        return apiError('Category required', 400);
       }
       const subcategories = await getSubcategoriesWithCount(category);
       return NextResponse.json({ success: true, subcategories });
@@ -33,7 +34,7 @@ export async function GET(request: NextRequest) {
     if (id) {
       const article = await getAIITArticleById(id);
       if (!article) {
-        return NextResponse.json({ success: false, error: 'Article not found' }, { status: 404 });
+        return apiError('Article not found', 404);
       }
       return NextResponse.json({ success: true, article });
     }
@@ -41,7 +42,7 @@ export async function GET(request: NextRequest) {
     if (url) {
       const article = await getAIITArticleByUrl(url);
       if (!article) {
-        return NextResponse.json({ success: false, error: 'Article not found' }, { status: 404 });
+        return apiError('Article not found', 404);
       }
       return NextResponse.json({ success: true, article });
     }
@@ -120,9 +121,6 @@ export async function GET(request: NextRequest) {
     return NextResponse.json({ success: true, ...result });
   } catch (error) {
     log.error('[API] AI/IT Articles error:', error);
-    return NextResponse.json(
-      { success: false, error: 'Failed to fetch articles' },
-      { status: 500 }
-    );
+    return apiError('Failed to fetch articles', 500);
   }
 }

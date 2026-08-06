@@ -1,4 +1,5 @@
 import { NextResponse } from 'next/server'
+import { apiError } from '@/lib/api-response'
 import { getSessionUser } from '@/lib/utils/auth'
 import { sendToAll, sendToUser, sendKeywordAlert } from '@/lib/services/push/push-service'
 import { createLogger } from '@/lib/logger'
@@ -15,7 +16,7 @@ const log = createLogger('ApiPushSend')
 export async function POST(request: Request) {
   const user = await getSessionUser(request)
   if (!user || user.role !== 'ADMIN') {
-    return NextResponse.json({ success: false, error: 'Unauthorized' }, { status: 401 })
+    return apiError('Unauthorized', 401)
   }
 
   try {
@@ -28,10 +29,7 @@ export async function POST(request: Request) {
       case 'all': {
         const { title, body: msgBody, url, tag } = body
         if (!title || !msgBody) {
-          return NextResponse.json(
-            { success: false, error: 'title and body are required' },
-            { status: 400 },
-          )
+          return apiError('title and body are required', 400)
         }
         result = await sendToAll({ title, body: msgBody, url, tag })
         break
@@ -40,10 +38,7 @@ export async function POST(request: Request) {
       case 'user': {
         const { userId, title, body: msgBody, url } = body
         if (!userId || !title || !msgBody) {
-          return NextResponse.json(
-            { success: false, error: 'userId, title and body are required' },
-            { status: 400 },
-          )
+          return apiError('userId, title and body are required', 400)
         }
         result = await sendToUser(userId, { title, body: msgBody, url })
         break
@@ -52,28 +47,19 @@ export async function POST(request: Request) {
       case 'keyword-alert': {
         const { userId, articleTitle, matchedKeywords, articleUrl } = body
         if (!userId || !articleTitle || !matchedKeywords) {
-          return NextResponse.json(
-            { success: false, error: 'userId, articleTitle and matchedKeywords are required' },
-            { status: 400 },
-          )
+          return apiError('userId, articleTitle and matchedKeywords are required', 400)
         }
         result = await sendKeywordAlert(userId, articleTitle, matchedKeywords, articleUrl)
         break
       }
 
       default:
-        return NextResponse.json(
-          { success: false, error: 'Invalid mode. Use "all", "user", or "keyword-alert"' },
-          { status: 400 },
-        )
+        return apiError('Invalid mode. Use "all", "user", or "keyword-alert"', 400)
     }
 
     return NextResponse.json({ success: true, result })
   } catch (error) {
     log.error('Push send error:', error)
-    return NextResponse.json(
-      { success: false, error: 'Failed to send push notification' },
-      { status: 500 },
-    )
+    return apiError('Failed to send push notification', 500)
   }
 }

@@ -1,4 +1,5 @@
 import { NextResponse } from 'next/server';
+import { apiError } from '@/lib/api-response';
 import { prisma } from '@/lib/db';
 import { getSessionUser } from '@/lib/utils/auth';
 import { createLogger } from '@/lib/logger';
@@ -10,10 +11,7 @@ export async function GET(request: Request) {
     const sessionUser = await getSessionUser(request);
 
     if (!sessionUser) {
-      return NextResponse.json(
-        { success: false, error: 'Unauthorized or expired session' },
-        { status: 401 }
-      );
+      return apiError('Unauthorized or expired session', 401);
     }
 
     const user = await prisma.user.findUnique({
@@ -35,18 +33,12 @@ export async function GET(request: Request) {
     });
 
     if (!user) {
-      return NextResponse.json(
-        { success: false, error: 'User not found' },
-        { status: 404 }
-      );
+      return apiError('User not found', 404);
     }
 
     return NextResponse.json({ success: true, data: user });
   } catch (error) {
     log.error('Me endpoint error:', error);
-    return NextResponse.json(
-      { success: false, error: 'Server error' },
-      { status: 500 }
-    );
+    return apiError('Server error', 500);
   }
 }

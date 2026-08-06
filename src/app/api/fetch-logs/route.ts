@@ -1,4 +1,5 @@
 import { NextResponse } from 'next/server'
+import { apiError } from '@/lib/api-response'
 import prisma from '@/lib/db'
 import { createLogger } from '@/lib/logger';
 
@@ -39,9 +40,6 @@ export async function GET(request: Request) {
     })
   } catch (error) {
     log.error('Failed to fetch logs:', error)
-    return NextResponse.json(
-      { success: false, error: 'Failed to fetch logs' },
-      { status: 500 }
-    )
+    return apiError('Failed to fetch logs', 500)
   }
 }

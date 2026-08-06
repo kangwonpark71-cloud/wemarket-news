@@ -1,4 +1,5 @@
 import { NextResponse } from 'next/server';
+import { apiError } from '@/lib/api-response';
 import { prisma } from '@/lib/db';
 import { getSessionUser } from '@/lib/utils/auth';
 import { isAdType, isAdPosition } from '@/lib/constants/ads';
@@ -16,7 +17,7 @@ async function requireAdmin(request: Request) {
 export async function GET(request: Request) {
   const admin = await requireAdmin(request);
   if (!admin) {
-    return NextResponse.json({ success: false, error: 'Unauthorized' }, { status: 401 });
+    return apiError('Unauthorized', 401);
   }
 
   const { searchParams } = new URL(request.url);
@@ -37,31 +38,25 @@ export async function GET(request: Request) {
     return NextResponse.json({ success: true, ads, totalImpressions, totalClicks });
   } catch (error) {
     log.error('Ads list error:', error);
-    return NextResponse.json({ success: false, error: 'Failed to load ads' }, { status: 500 });
+    return apiError('Failed to load ads', 500);
   }
 }
 
 export async function POST(request: Request) {
   const admin = await requireAdmin(request);
   if (!admin) {
-    return NextResponse.json({ success: false, error: 'Unauthorized' }, { status: 401 });
+    return apiError('Unauthorized', 401);
   }
 
   try {
     const { title, adType, content, linkUrl, position, isActive, startDate, endDate } = await request.json();
 
     if (!title || !content) {
-      return NextResponse.json(
-        { success: false, error: 'Title and content are required' },
-        { status: 400 }
-      );
+      return apiError('Title and content are required', 400);
     }
 
     if (adType === 'image' && !content.startsWith('http')) {
-      return NextResponse.json(
-        { success: false, error: 'Image ads require a valid URL for content' },
-        { status: 400 }
-      );
+      return apiError('Image ads require a valid URL for content', 400);
     }
 
     // Sanitize HTML content for defense-in-depth (also sanitized on read)
@@ -83,21 +78,21 @@ export async function POST(request: Request) {
     return NextResponse.json({ success: true, ad }, { status: 201 });
   } catch (error) {
     log.error('Ad create error:', error);
-    return NextResponse.json({ success: false, error: 'Failed to create ad' }, { status: 500 });
+    return apiError('Failed to create ad', 500);
   }
 }
 
 export async function PATCH(request: Request) {
   const admin = await requireAdmin(request);
   if (!admin) {
-    return NextResponse.json({ success: false, error: 'Unauthorized' }, { status: 401 });
+    return apiError('Unauthorized', 401);
   }
 
   try {
     const { id, title, adType, content, linkUrl, position, isActive, startDate, endDate } = await request.json();
 
     if (!id) {
-      return NextResponse.json({ success: false, error: 'Ad ID is required' }, { status: 400 });
+      return apiError('Ad ID is required', 400);
     }
 
     const data: Record<string, unknown> = {
@@ -122,21 +117,21 @@ export async function PATCH(request: Request) {
     return NextResponse.json({ success: true, ad });
   } catch (error) {
     log.error('Ad update error:', error);
-    return NextResponse.json({ success: false, error: 'Failed to update ad' }, { status: 500 });
+    return apiError('Failed to update ad', 500);
   }
 }
 
 export async function DELETE(request: Request) {
   const admin = await requireAdmin(request);
   if (!admin) {
-    return NextResponse.json({ success: false, error: 'Unauthorized' }, { status: 401 });
+    return apiError('Unauthorized', 401);
   }
 
   try {
     const { id } = await request.json();
 
     if (!id) {
-      return NextResponse.json({ success: false, error: 'Ad ID is required' }, { status: 400 });
+      return apiError('Ad ID is required', 400);
     }
 
     await prisma.advertisement.delete({ where: { id } });
@@ -144,6 +139,6 @@ export async function DELETE(request: Request) {
     return NextResponse.json({ success: true });
   } catch (error) {
     log.error('Ad delete error:', error);
-    return NextResponse.json({ success: false, error: 'Failed to delete ad' }, { status: 500 });
+    return apiError('Failed to delete ad', 500);
   }
 }

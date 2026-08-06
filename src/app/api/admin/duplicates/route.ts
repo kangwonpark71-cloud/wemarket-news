@@ -1,4 +1,5 @@
 import { NextResponse } from 'next/server'
+import { apiError } from '@/lib/api-response'
 import { getSessionUser } from '@/lib/utils/auth'
 import { mergeDuplicates, getDuplicateStats } from '@/lib/services/duplicate/duplicate-service'
 import { createLogger } from '@/lib/logger'
@@ -13,7 +14,7 @@ const log = createLogger('ApiAdminDuplicates')
 export async function POST(request: Request) {
   const user = await getSessionUser(request)
   if (!user || user.role !== 'ADMIN') {
-    return NextResponse.json({ success: false, error: 'Unauthorized' }, { status: 401 })
+    return apiError('Unauthorized', 401)
   }
 
   try {
@@ -38,10 +39,7 @@ export async function POST(request: Request) {
     })
   } catch (error) {
     log.error('Failed to merge duplicates:', error)
-    return NextResponse.json(
-      { success: false, error: 'Failed to merge duplicates' },
-      { status: 500 },
-    )
+    return apiError('Failed to merge duplicates', 500)
   }
 }
 
@@ -52,7 +50,7 @@ export async function POST(request: Request) {
 export async function GET(request: Request) {
   const user = await getSessionUser(request)
   if (!user || user.role !== 'ADMIN') {
-    return NextResponse.json({ success: false, error: 'Unauthorized' }, { status: 401 })
+    return apiError('Unauthorized', 401)
   }
 
   try {
@@ -63,9 +61,6 @@ export async function GET(request: Request) {
     })
   } catch (error) {
     log.error('Failed to get duplicate stats:', error)
-    return NextResponse.json(
-      { success: false, error: 'Failed to get duplicate stats' },
-      { status: 500 },
-    )
+    return apiError('Failed to get duplicate stats', 500)
   }
 }

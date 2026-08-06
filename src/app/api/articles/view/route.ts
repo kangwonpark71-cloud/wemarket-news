@@ -1,4 +1,5 @@
 import { NextResponse } from 'next/server';
+import { apiError } from '@/lib/api-response';
 import { prisma } from '@/lib/db';
 import { createLogger } from '@/lib/logger';
 
@@ -8,10 +9,7 @@ export async function POST(request: Request) {
   try {
     const { id } = await request.json();
     if (!id || typeof id !== 'string') {
-      return NextResponse.json(
-        { success: false, error: 'Article ID is required' },
-        { status: 400 }
-      );
+      return apiError('Article ID is required', 400);
     }
 
     await prisma.article.update({
@@ -23,9 +21,6 @@ export async function POST(request: Request) {
     return NextResponse.json({ success: true });
   } catch (error) {
     log.error('Failed to track view:', error);
-    return NextResponse.json(
-      { success: false, error: 'Failed to track view' },
-      { status: 500 }
-    );
+    return apiError('Failed to track view', 500);
   }
 }

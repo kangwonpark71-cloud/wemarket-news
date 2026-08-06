@@ -1,4 +1,5 @@
 import { NextResponse } from 'next/server'
+import { apiError } from '@/lib/api-response'
 import { runRssFetch } from '@/lib/rss/scheduler'
 import { createLogger } from '@/lib/logger';
 
@@ -10,11 +11,11 @@ export async function POST(request: Request) {
 
   // In production, CRON_SECRET must be set and must match
   if (process.env.NODE_ENV === 'production' && !cronSecret) {
-    return NextResponse.json({ success: false, error: 'Server misconfigured' }, { status: 500 })
+    return apiError('Server misconfigured', 500)
   }
 
   if (cronSecret && authHeader !== `Bearer ${cronSecret}`) {
-    return NextResponse.json({ success: false, error: 'Unauthorized' }, { status: 401 })
+    return apiError('Unauthorized', 401)
   }
 
   try {
@@ -44,10 +45,7 @@ export async function POST(request: Request) {
     })
   } catch (error) {
     log.error('Cron RSS fetch failed:', error)
-    return NextResponse.json(
-      { success: false, error: 'RSS fetch failed' },
-      { status: 500 }
-    )
+    return apiError('RSS fetch failed', 500)
   }
 }
 

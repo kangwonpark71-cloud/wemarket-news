@@ -1,4 +1,5 @@
 import { NextResponse } from 'next/server';
+import { apiError } from '@/lib/api-response';
 import { getTodayBriefing } from '@/lib/services/briefing/briefing-service';
 import { createLogger } from '@/lib/logger';
 
@@ -10,9 +11,6 @@ export async function GET() {
     return NextResponse.json({ success: true, data: briefing });
   } catch (error) {
     log.error('Failed to get today briefing:', error);
-    return NextResponse.json(
-      { success: false, error: '오늘의 브리핑을 불러오는 데 실패했습니다.' },
-      { status: 500 },
-    );
+    return apiError('오늘의 브리핑을 불러오는 데 실패했습니다.', 500);
   }
 }

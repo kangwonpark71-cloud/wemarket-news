@@ -1,4 +1,5 @@
 import { NextResponse } from 'next/server'
+import { apiError } from '@/lib/api-response'
 import { getSessionUser } from '@/lib/utils/auth'
 import prisma from '@/lib/db'
 import { createLogger } from '@/lib/logger';
@@ -9,17 +10,14 @@ export async function POST(request: Request) {
   try {
     const user = await getSessionUser(request)
     if (!user) {
-      return NextResponse.json({ success: false, error: 'Unauthorized' }, { status: 401 })
+      return apiError('Unauthorized', 401)
     }
 
     const body = await request.json()
     const { subscription } = body
 
     if (!subscription || !subscription.endpoint) {
-      return NextResponse.json(
-        { success: false, error: 'Invalid subscription data' },
-        { status: 400 },
-      )
+      return apiError('Invalid subscription data', 400)
     }
 
     const { endpoint, keys } = subscription
@@ -43,10 +41,7 @@ export async function POST(request: Request) {
     return NextResponse.json({ success: true })
   } catch (error) {
     log.error('Push subscribe error:', error)
-    return NextResponse.json(
-      { success: false, error: 'Failed to subscribe' },
-      { status: 500 },
-    )
+    return apiError('Failed to subscribe', 500)
   }
 }
 
@@ -54,7 +49,7 @@ export async function GET(request: Request) {
   try {
     const user = await getSessionUser(request)
     if (!user) {
-      return NextResponse.json({ success: false, error: 'Unauthorized' }, { status: 401 })
+      return apiError('Unauthorized', 401)
     }
 
     const sub = await prisma.pushSubscription.findUnique({
@@ -65,10 +60,7 @@ export async function GET(request: Request) {
     return NextResponse.json({ success: true, subscribed: !!sub })
   } catch (error) {
     log.error('Push status error:', error)
-    return NextResponse.json(
-      { success: false, error: 'Failed to check subscription' },
-      { status: 500 },
-    )
+    return apiError('Failed to check subscription', 500)
   }
 }
 
@@ -76,7 +68,7 @@ export async function DELETE(request: Request) {
   try {
     const user = await getSessionUser(request)
     if (!user) {
-      return NextResponse.json({ success: false, error: 'Unauthorized' }, { status: 401 })
+      return apiError('Unauthorized', 401)
     }
 
     await prisma.pushSubscription.deleteMany({
@@ -86,9 +78,6 @@ export async function DELETE(request: Request) {
     return NextResponse.json({ success: true })
   } catch (error) {
     log.error('Push unsubscribe error:', error)
-    return NextResponse.json(
-      { success: false, error: 'Failed to unsubscribe' },
-      { status: 500 },
-    )
+    return apiError('Failed to unsubscribe', 500)
   }
 }

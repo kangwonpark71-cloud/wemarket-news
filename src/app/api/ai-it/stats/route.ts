@@ -1,4 +1,5 @@
 import { NextResponse } from 'next/server';
+import { apiError } from '@/lib/api-response';
 import { getAIITArticleStats, getActiveAIITSources, getSubcategoriesWithCount } from '@/lib/ai-it/db-service';
 import { createLogger } from '@/lib/logger';
 
@@ -26,9 +27,6 @@ export async function GET() {
     });
   } catch (error) {
     log.error('[API] AI/IT Stats error:', error);
-    return NextResponse.json(
-      { success: false, error: 'Failed to fetch stats' },
-      { status: 500 }
-    );
+    return apiError('Failed to fetch stats', 500);
   }
 }

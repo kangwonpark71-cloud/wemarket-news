@@ -1,4 +1,5 @@
 import { NextResponse } from 'next/server';
+import { apiError } from '@/lib/api-response';
 import { searchNaverNews, searchNaverNewsByDate } from '@/lib/services/search/naver-news-service';
 import { createLogger } from '@/lib/logger';
 
@@ -9,10 +10,7 @@ export async function GET(request: Request) {
   const query = searchParams.get('q') || searchParams.get('query') || '';
 
   if (!query.trim()) {
-    return NextResponse.json(
-      { success: false, error: 'Query parameter "q" is required' },
-      { status: 400 },
-    );
+    return apiError('Query parameter "q" is required', 400);
   }
 
   const display = parseInt(searchParams.get('display') || '10');
@@ -36,9 +34,6 @@ export async function GET(request: Request) {
   } catch (error) {
     const message = error instanceof Error ? error.message : 'Internal server error';
     log.error(`[NaverSearch API] ${message}`);
-    return NextResponse.json(
-      { success: false, error: message },
-      { status: 500 },
-    );
+    return apiError(message, 500);
   }
 }

@@ -1,4 +1,5 @@
 import { NextResponse } from 'next/server'
+import { apiError } from '@/lib/api-response'
 import prisma from '@/lib/db'
 import { createLogger } from '@/lib/logger';
 
@@ -12,10 +13,7 @@ export async function POST(request: Request) {
     const stockName = body.stockName || body.name
 
     if (!stockCode || !stockName) {
-      return NextResponse.json(
-        { success: false, error: 'stockCode and stockName are required' },
-        { status: 400 }
-      )
+      return apiError('stockCode and stockName are required', 400)
     }
 
     const existing = await prisma.stockWatchlist.findFirst({
@@ -33,9 +31,6 @@ export async function POST(request: Request) {
     }
   } catch (error) {
     log.error('Failed to toggle watchlist:', error)
-    return NextResponse.json(
-      { success: false, error: 'Failed to toggle watchlist' },
-      { status: 500 }
-    )
+    return apiError('Failed to toggle watchlist', 500)
   }
 }

@@ -1,4 +1,5 @@
 import { NextResponse } from 'next/server';
+import { apiError } from '@/lib/api-response';
 import { prisma } from '@/lib/db';
 import { cacheService, CacheKeys } from '@/lib/services/cache/cache-service';
 import { createLogger } from '@/lib/logger';
@@ -13,10 +14,7 @@ export async function GET(request: Request) {
   const limit = parseInt(searchParams.get('limit') || '200');
 
   if (!symbol) {
-    return NextResponse.json(
-      { success: false, error: 'Symbol is required' },
-      { status: 400 }
-    );
+    return apiError('Symbol is required', 400);
   }
 
   try {
@@ -38,10 +36,7 @@ export async function GET(request: Request) {
         });
 
         if (!stock) {
-          return NextResponse.json(
-            { success: false, error: 'Stock not found' },
-            { status: 404 }
-          );
+          return apiError('Stock not found', 404);
         }
 
         const prices = await prisma.stockPrice.findMany({
@@ -68,10 +63,7 @@ export async function GET(request: Request) {
         });
 
         if (!crypto) {
-          return NextResponse.json(
-            { success: false, error: 'Cryptocurrency not found' },
-            { status: 400 }
-          );
+          return apiError('Cryptocurrency not found', 400);
         }
 
         const candles = await prisma.cryptoCandle.findMany({
@@ -101,10 +93,7 @@ export async function GET(request: Request) {
         });
 
         if (!index) {
-          return NextResponse.json(
-            { success: false, error: 'Index not found' },
-            { status: 404 }
-          );
+          return apiError('Index not found', 404);
         }
 
         const quotes = await prisma.globalIndexQuote.findMany({
@@ -142,10 +131,7 @@ export async function GET(request: Request) {
       }
 
       default:
-        return NextResponse.json(
-          { success: false, error: 'Invalid type' },
-          { status: 400 }
-        );
+        return apiError('Invalid type', 400);
     }
 
     await cacheService.set(`chart:${type}:${symbol}:${timeframe}`, result, {
@@ -155,9 +141,6 @@ export async function GET(request: Request) {
     return NextResponse.json({ success: true, data: result });
   } catch (error) {
     log.error('[API] Chart error:', error);
-    return NextResponse.json(
-      { success: false, error: 'Failed to fetch chart data' },
-      { status: 500 }
-    );
+    return apiError('Failed to fetch chart data', 500);
   }
 }

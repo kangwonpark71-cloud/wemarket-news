@@ -1,4 +1,5 @@
 import { NextResponse } from 'next/server';
+import { apiError } from '@/lib/api-response';
 import { prisma } from '@/lib/db';
 import { verifyCode, validatePhoneNumber } from '@/lib/utils/sms';
 import { z } from 'zod';
@@ -23,10 +24,7 @@ export async function POST(request: Request) {
     // Server-side validation
     const validationResult = verifyPhoneSchema.safeParse(body);
     if (!validationResult.success) {
-      return NextResponse.json(
-        { success: false, error: validationResult.error.issues.map(err => err.message).join(', ') },
-        { status: 400 }
-      );
+      return apiError(validationResult.error.issues.map(err => err.message).join(', '), 400);
     }
 
     const { phone, code } = validationResult.data;
@@ -36,10 +34,7 @@ export async function POST(request: Request) {
     // Verify the code
     const isValid = await verifyCode(normalizedPhone, code);
     if (!isValid) {
-      return NextResponse.json(
-        { success: false, error: '인증 코드가 올바르지 않거나 만료되었습니다.' },
-        { status: 400 }
-      );
+      return apiError('인증 코드가 올바르지 않거나 만료되었습니다.', 400);
     }
 
     const user = await prisma.user.findFirst({
@@ -47,10 +42,7 @@ export async function POST(request: Request) {
     });
 
     if (!user) {
-      return NextResponse.json(
-        { success: false, error: '사용자 정보를 찾을 수 없습니다.' },
-        { status: 404 }
-      );
+      return apiError('사용자 정보를 찾을 수 없습니다.', 404);
     }
 
     // Update user phone verification status
@@ -91,9 +83,6 @@ export async function POST(request: Request) {
     return response;
   } catch (error) {
     log.error('Phone verification error:', error);
-    return NextResponse.json(
-      { success: false, error: '인증 중 서버 오류가 발생했습니다.' },
-      { status: 500 }
-    );
+    return apiError('인증 중 서버 오류가 발생했습니다.', 500);
   }
 }

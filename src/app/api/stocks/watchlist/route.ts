@@ -1,4 +1,5 @@
 import { NextResponse } from 'next/server'
+import { apiError } from '@/lib/api-response'
 import prisma from '@/lib/db'
 import { createLogger } from '@/lib/logger';
 
@@ -14,10 +15,7 @@ export async function GET() {
     return NextResponse.json({ success: true, data: watchlist })
   } catch (error) {
     log.error('Failed to fetch watchlist:', error)
-    return NextResponse.json(
-      { success: false, error: 'Failed to fetch watchlist' },
-      { status: 500 }
-    )
+    return apiError('Failed to fetch watchlist', 500)
   }
 }
 
@@ -29,10 +27,7 @@ export async function POST(request: Request) {
     const stockName = body.stockName || body.name
 
     if (!stockCode || !stockName) {
-      return NextResponse.json(
-        { success: false, error: 'stockCode and stockName are required' },
-        { status: 400 }
-      )
+      return apiError('stockCode and stockName are required', 400)
     }
 
     const existing = await prisma.stockWatchlist.findFirst({
@@ -40,10 +35,7 @@ export async function POST(request: Request) {
     })
 
     if (existing) {
-      return NextResponse.json(
-        { success: false, error: 'Already in watchlist' },
-        { status: 409 }
-      )
+      return apiError('Already in watchlist', 409)
     }
 
     const item = await prisma.stockWatchlist.create({
@@ -53,10 +45,7 @@ export async function POST(request: Request) {
     return NextResponse.json({ success: true, data: item })
   } catch (error) {
     log.error('Failed to add to watchlist:', error)
-    return NextResponse.json(
-      { success: false, error: 'Failed to add to watchlist' },
-      { status: 500 }
-    )
+    return apiError('Failed to add to watchlist', 500)
   }
 }
 
@@ -67,10 +56,7 @@ export async function DELETE(request: Request) {
     const stockCode = body.stockCode || body.code
 
     if (!stockCode) {
-      return NextResponse.json(
-        { success: false, error: 'stockCode is required' },
-        { status: 400 }
-      )
+      return apiError('stockCode is required', 400)
     }
 
     await prisma.stockWatchlist.deleteMany({
@@ -80,9 +66,6 @@ export async function DELETE(request: Request) {
     return NextResponse.json({ success: true })
   } catch (error) {
     log.error('Failed to remove from watchlist:', error)
-    return NextResponse.json(
-      { success: false, error: 'Failed to remove from watchlist' },
-      { status: 500 }
-    )
+    return apiError('Failed to remove from watchlist', 500)
   }
 }

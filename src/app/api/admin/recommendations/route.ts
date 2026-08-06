@@ -1,4 +1,5 @@
 import { NextResponse } from 'next/server'
+import { apiError } from '@/lib/api-response'
 import { getSessionUser } from '@/lib/utils/auth'
 import {
   getRecommendations,
@@ -17,7 +18,7 @@ const log = createLogger('ApiAdminRecommendations')
 export async function GET(request: Request) {
   const user = await getSessionUser(request)
   if (!user || user.role !== 'ADMIN') {
-    return NextResponse.json({ success: false, error: 'Unauthorized' }, { status: 401 })
+    return apiError('Unauthorized', 401)
   }
 
   try {
@@ -39,31 +40,19 @@ export async function GET(request: Request) {
     if (mode === 'recommend') {
       const articleId = searchParams.get('articleId')
       if (!articleId) {
-        return NextResponse.json(
-          { success: false, error: 'articleId query parameter is required' },
-          { status: 400 },
-        )
+        return apiError('articleId query parameter is required', 400)
       }
       const limit = Math.min(Number(searchParams.get('limit')) || 6, 20)
       const result = await getRecommendations(articleId, limit)
       if (!result) {
-        return NextResponse.json(
-          { success: false, error: 'Article not found' },
-          { status: 404 },
-        )
+        return apiError('Article not found', 404)
       }
       return NextResponse.json({ success: true, data: result })
     }
 
-    return NextResponse.json(
-      { success: false, error: `Unknown mode: ${mode}. Available: keyword-stats, trending, recommend` },
-      { status: 400 },
-    )
+    return apiError(`Unknown mode: ${mode}. Available: keyword-stats, trending, recommend`, 400)
   } catch (error) {
     log.error('Recommendation API error:', error)
-    return NextResponse.json(
-      { success: false, error: 'Failed to process recommendation request' },
-      { status: 500 },
-    )
+    return apiError('Failed to process recommendation request', 500)
   }
 }

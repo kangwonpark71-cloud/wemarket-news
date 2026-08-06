@@ -1,4 +1,5 @@
 import { NextResponse } from 'next/server';
+import { apiError } from '@/lib/api-response';
 import { prisma } from '@/lib/db';
 import { getSessionUser } from '@/lib/utils/auth';
 import { createLogger } from '@/lib/logger';
@@ -10,10 +11,7 @@ export async function POST(request: Request) {
     const sessionUser = await getSessionUser(request);
 
     if (!sessionUser) {
-      return NextResponse.json(
-        { success: false, error: 'Unauthorized' },
-        { status: 401 }
-      );
+      return apiError('Unauthorized', 401);
     }
 
     const body = await request.json();
@@ -49,9 +47,6 @@ export async function POST(request: Request) {
     return NextResponse.json({ success: true, data: updated });
   } catch (error) {
     log.error('Preferences update error:', error);
-    return NextResponse.json(
-      { success: false, error: 'Failed to update preferences' },
-      { status: 500 }
-    );
+    return apiError('Failed to update preferences', 500);
   }
 }

@@ -1,4 +1,5 @@
 import { NextResponse } from 'next/server';
+import { apiError } from '@/lib/api-response';
 import { destroySession, getSessionFromCookie } from '@/lib/utils/auth';
 import { createLogger } from '@/lib/logger';
 
@@ -16,9 +17,6 @@ export async function POST(request: Request) {
     return response;
   } catch (error) {
     log.error('Logout error:', error);
-    return NextResponse.json(
-      { success: false, error: 'Failed to logout' },
-      { status: 500 }
-    );
+    return apiError('Failed to logout', 500);
   }
 }

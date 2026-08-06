@@ -1,4 +1,5 @@
 import { NextResponse } from 'next/server'
+import { apiError } from '@/lib/api-response'
 import prisma from '@/lib/db'
 import { createLogger } from '@/lib/logger';
 
@@ -23,9 +24,6 @@ export async function POST(
     })
   } catch (error) {
     log.error('Failed to mark as read:', error)
-    return NextResponse.json(
-      { success: false, error: 'Failed to mark as read' },
-      { status: 500 }
-    )
+    return apiError('Failed to mark as read', 500)
   }
 }

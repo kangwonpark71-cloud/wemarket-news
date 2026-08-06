@@ -1,4 +1,5 @@
 import { NextResponse } from 'next/server';
+import { apiError } from '@/lib/api-response';
 import { prisma } from '@/lib/db';
 import { getSessionUser } from '@/lib/utils/auth';
 import { createLogger } from '@/lib/logger';
@@ -14,7 +15,7 @@ async function requireAdmin(request: Request) {
 export async function GET(request: Request) {
   const admin = await requireAdmin(request);
   if (!admin) {
-    return NextResponse.json({ success: false, error: 'Unauthorized' }, { status: 401 });
+    return apiError('Unauthorized', 401);
   }
 
   const { searchParams } = new URL(request.url);
@@ -86,27 +87,21 @@ export async function GET(request: Request) {
     });
   } catch (error) {
     log.error('Admin articles error:', error);
-    return NextResponse.json(
-      { success: false, error: 'Failed to fetch articles' },
-      { status: 500 }
-    );
+    return apiError('Failed to fetch articles', 500);
   }
 }
 
 export async function DELETE(request: Request) {
   const admin = await requireAdmin(request);
   if (!admin) {
-    return NextResponse.json({ success: false, error: 'Unauthorized' }, { status: 401 });
+    return apiError('Unauthorized', 401);
   }
 
   try {
     const { articleId } = await request.json();
 
     if (!articleId) {
-      return NextResponse.json(
-        { success: false, error: 'articleId is required' },
-        { status: 400 }
-      );
+      return apiError('articleId is required', 400);
     }
 
     await prisma.article.delete({ where: { id: articleId } });
@@ -114,9 +109,6 @@ export async function DELETE(request: Request) {
     return NextResponse.json({ success: true });
   } catch (error) {
     log.error('Admin articles delete error:', error);
-    return NextResponse.json(
-      { success: false, error: 'Failed to delete article' },
-      { status: 500 }
-    );
+    return apiError('Failed to delete article', 500);
   }
 }

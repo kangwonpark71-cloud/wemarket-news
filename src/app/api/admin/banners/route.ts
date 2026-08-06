@@ -1,4 +1,5 @@
 import { NextResponse } from 'next/server';
+import { apiError } from '@/lib/api-response';
 import { prisma } from '@/lib/db';
 import { getSessionUser } from '@/lib/utils/auth';
 import { isBannerPosition } from '@/lib/constants/banner';
@@ -15,7 +16,7 @@ async function requireAdmin(request: Request) {
 export async function GET(request: Request) {
   const admin = await requireAdmin(request);
   if (!admin) {
-    return NextResponse.json({ success: false, error: 'Unauthorized' }, { status: 401 });
+    return apiError('Unauthorized', 401);
   }
 
   const { searchParams } = new URL(request.url);
@@ -33,24 +34,21 @@ export async function GET(request: Request) {
     return NextResponse.json({ success: true, banners });
   } catch (error) {
     log.error('Banners list error:', error);
-    return NextResponse.json({ success: false, error: 'Failed to load banners' }, { status: 500 });
+    return apiError('Failed to load banners', 500);
   }
 }
 
 export async function POST(request: Request) {
   const admin = await requireAdmin(request);
   if (!admin) {
-    return NextResponse.json({ success: false, error: 'Unauthorized' }, { status: 401 });
+    return apiError('Unauthorized', 401);
   }
 
   try {
     const { title, imageUrl, linkUrl, position, sortOrder, isActive, startDate, endDate } = await request.json();
 
     if (!title || !imageUrl) {
-      return NextResponse.json(
-        { success: false, error: 'Title and imageUrl are required' },
-        { status: 400 }
-      );
+      return apiError('Title and imageUrl are required', 400);
     }
 
     const resolvedPosition = isBannerPosition(position) ? position : 'top';
@@ -71,21 +69,21 @@ export async function POST(request: Request) {
     return NextResponse.json({ success: true, banner }, { status: 201 });
   } catch (error) {
     log.error('Banner create error:', error);
-    return NextResponse.json({ success: false, error: 'Failed to create banner' }, { status: 500 });
+    return apiError('Failed to create banner', 500);
   }
 }
 
 export async function PATCH(request: Request) {
   const admin = await requireAdmin(request);
   if (!admin) {
-    return NextResponse.json({ success: false, error: 'Unauthorized' }, { status: 401 });
+    return apiError('Unauthorized', 401);
   }
 
   try {
     const { id, title, imageUrl, linkUrl, position, sortOrder, isActive, startDate, endDate } = await request.json();
 
     if (!id) {
-      return NextResponse.json({ success: false, error: 'Banner ID is required' }, { status: 400 });
+      return apiError('Banner ID is required', 400);
     }
 
     const banner = await prisma.banner.update({
@@ -107,21 +105,21 @@ export async function PATCH(request: Request) {
     return NextResponse.json({ success: true, banner });
   } catch (error) {
     log.error('Banner update error:', error);
-    return NextResponse.json({ success: false, error: 'Failed to update banner' }, { status: 500 });
+    return apiError('Failed to update banner', 500);
   }
 }
 
 export async function DELETE(request: Request) {
   const admin = await requireAdmin(request);
   if (!admin) {
-    return NextResponse.json({ success: false, error: 'Unauthorized' }, { status: 401 });
+    return apiError('Unauthorized', 401);
   }
 
   try {
     const { id } = await request.json();
 
     if (!id) {
-      return NextResponse.json({ success: false, error: 'Banner ID is required' }, { status: 400 });
+      return apiError('Banner ID is required', 400);
     }
 
     await prisma.banner.delete({ where: { id } });
@@ -129,6 +127,6 @@ export async function DELETE(request: Request) {
     return NextResponse.json({ success: true });
   } catch (error) {
     log.error('Banner delete error:', error);
-    return NextResponse.json({ success: false, error: 'Failed to delete banner' }, { status: 500 });
+    return apiError('Failed to delete banner', 500);
   }
 }

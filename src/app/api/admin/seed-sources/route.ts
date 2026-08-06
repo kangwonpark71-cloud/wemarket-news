@@ -1,4 +1,5 @@
 import { NextResponse } from 'next/server'
+import { apiError } from '@/lib/api-response'
 import { seedSources } from '@/lib/rss/service'
 import { getSessionUser } from '@/lib/utils/auth'
 import { createLogger } from '@/lib/logger';
@@ -8,7 +9,7 @@ const log = createLogger('ApiAdminSeedsources')
 export async function POST(request: Request) {
   const user = await getSessionUser(request)
   if (!user || user.role !== 'ADMIN') {
-    return NextResponse.json({ success: false, error: 'Unauthorized' }, { status: 401 })
+    return apiError('Unauthorized', 401)
   }
 
   try {
@@ -16,6 +17,6 @@ export async function POST(request: Request) {
     return NextResponse.json({ success: true, message: 'All sources seeded successfully' })
   } catch (error) {
     log.error('Seed sources failed:', error)
-    return NextResponse.json({ success: false, error: 'Seed failed' }, { status: 500 })
+    return apiError('Seed failed', 500)
   }
 }

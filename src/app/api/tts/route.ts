@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { synthesizeText, type PremiumVoice } from '@/lib/tts/tts-service'
 import { getSessionUser } from '@/lib/utils/auth'
+import { apiError } from '@/lib/api-response'
 import { createLogger } from '@/lib/logger';
 
 const log = createLogger('ApiTts')
@@ -11,10 +12,7 @@ export async function POST(request: NextRequest) {
   try {
     const user = await getSessionUser(request)
     if (!user) {
-      return NextResponse.json(
-        { error: 'Unauthorized' },
-        { status: 401 }
-      )
+      return apiError('Unauthorized', 401)
     }
 
     const { text, voice } = (await request.json()) as {
@@ -23,18 +21,12 @@ export async function POST(request: NextRequest) {
     }
 
     if (!text || typeof text !== 'string' || text.trim().length === 0) {
-      return NextResponse.json(
-        { error: 'text field is required and must be a non-empty string' },
-        { status: 400 }
-      )
+      return apiError('text field is required and must be a non-empty string', 400)
     }
 
     const trimmed = text.trim()
     if (trimmed.length > MAX_TTS_CHARS) {
-      return NextResponse.json(
-        { error: `Text exceeds maximum length of ${MAX_TTS_CHARS} characters` },
-        { status: 400 }
-      )
+      return apiError(`Text exceeds maximum length of ${MAX_TTS_CHARS} characters`, 400)
     }
 
     const normalizedVoice: PremiumVoice =
@@ -54,6 +46,6 @@ export async function POST(request: NextRequest) {
   } catch (error) {
     log.error('[TTS API] Failed to synthesize speech:', error)
     const message = error instanceof Error ? error.message : 'Internal server error'
-    return NextResponse.json({ error: message }, { status: 500 })
+    return apiError(message, 500)
   }
 }

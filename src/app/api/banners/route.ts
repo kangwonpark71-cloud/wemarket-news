@@ -1,4 +1,5 @@
 import { NextResponse } from 'next/server'
+import { apiError } from '@/lib/api-response'
 import { prisma } from '@/lib/db'
 import { createLogger } from '@/lib/logger';
 
@@ -31,9 +32,6 @@ export async function GET() {
     return NextResponse.json({ success: true, banners })
   } catch (error) {
     log.error('Failed to fetch banners:', error)
-    return NextResponse.json(
-      { success: false, error: 'Failed to fetch banners' },
-      { status: 500 }
-    )
+    return apiError('Failed to fetch banners', 500)
   }
 }

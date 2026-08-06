@@ -1,4 +1,5 @@
 import { NextResponse } from 'next/server'
+import { apiError } from '@/lib/api-response'
 import { koreaInvestmentService } from '@/lib/services/financial/financial-service'
 import { upbitService } from '@/lib/services/crypto/crypto-service'
 import { marketService } from '@/lib/services/market/market-service'
@@ -58,9 +59,6 @@ export async function POST() {
     })
   } catch (error) {
     log.error('[Admin] Manual financial data refresh failed:', error)
-    return NextResponse.json(
-      { success: false, error: '시장 데이터 갱신에 실패했습니다.' },
-      { status: 500 }
-    )
+    return apiError('시장 데이터 갱신에 실패했습니다.', 500)
   }
 }

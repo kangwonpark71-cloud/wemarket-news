@@ -1,4 +1,5 @@
 import { NextResponse } from 'next/server';
+import { apiError } from '@/lib/api-response';
 import { getSessionUser } from '@/lib/utils/auth';
 import { askEconomicNews, saveChatMessage, getChatHistory } from '@/lib/services/chat/chat-service';
 import { createLogger } from '@/lib/logger';
@@ -11,10 +12,7 @@ export async function POST(request: Request) {
     const { message } = await request.json();
 
     if (!message || typeof message !== 'string' || message.trim().length === 0) {
-      return NextResponse.json(
-        { success: false, error: '메시지를 입력해주세요.' },
-        { status: 400 },
-      );
+      return apiError('메시지를 입력해주세요.', 400);
     }
 
     // Truncate very long messages
@@ -44,9 +42,6 @@ export async function POST(request: Request) {
     });
   } catch (error) {
     log.error('Chat API error:', error);
-    return NextResponse.json(
-      { success: false, error: '챗봇 응답 생성 중 오류가 발생했습니다.' },
-      { status: 500 },
-    );
+    return apiError('챗봇 응답 생성 중 오류가 발생했습니다.', 500);
   }
 }

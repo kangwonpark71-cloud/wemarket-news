@@ -1,4 +1,5 @@
 import { NextResponse } from 'next/server';
+import { apiError } from '@/lib/api-response';
 import { prisma } from '@/lib/db';
 import { hashPassword } from '@/lib/utils/auth';
 import { z } from 'zod';
@@ -24,10 +25,7 @@ export async function POST(request: Request) {
     // Server-side validation
     const validationResult = signupSchema.safeParse(body);
     if (!validationResult.success) {
-      return NextResponse.json(
-        { success: false, error: validationResult.error.issues.map(err => err.message).join(', ') },
-        { status: 400 }
-      );
+      return apiError(validationResult.error.issues.map(err => err.message).join(', '), 400);
     }
 
     const { password, phone } = validationResult.data;
@@ -35,10 +33,7 @@ export async function POST(request: Request) {
     // Validate phone number format
     const phoneValidation = validatePhoneNumber(phone);
     if (!phoneValidation.isValid) {
-      return NextResponse.json(
-        { success: false, error: phoneValidation.message },
-        { status: 400 }
-      );
+      return apiError(phoneValidation.message, 400);
     }
 
     // Check if user already exists by phone
@@ -47,19 +42,13 @@ export async function POST(request: Request) {
     });
 
     if (existingPhone) {
-      return NextResponse.json(
-        { success: false, error: '이미 등록된 휴대폰 번호입니다.' },
-        { status: 409 }
-      );
+      return apiError('이미 등록된 휴대폰 번호입니다.', 409);
     }
 
     // Rate limiting check for phone verification
     const canRequest = await canRequestVerification(phone);
     if (!canRequest.canRequest) {
-      return NextResponse.json(
-        { success: false, error: canRequest.reason },
-        { status: 429 }
-      );
+      return apiError(canRequest.reason ?? '인증 요청이 너무 많습니다. 잠시 후 다시 시도해주세요.', 429);
     }
 
     // Hash password securely
@@ -122,15 +111,9 @@ export async function POST(request: Request) {
     log.error('Signup error:', error);
     
     if (error instanceof Error && error.message.includes('P2002')) {
-      return NextResponse.json(
-        { success: false, error: '이미 등록된 정보입니다.' },
-        { status: 409 }
-      );
+      return apiError('이미 등록된 정보입니다.', 409);
     }
     
-    return NextResponse.json(
-      { success: false, error: '회원가입 중 서버 오류가 발생했습니다.' },
-      { status: 500 }
-    );
+    return apiError('회원가입 중 서버 오류가 발생했습니다.', 500);
   }
 }

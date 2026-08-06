@@ -1,4 +1,5 @@
 import { NextResponse } from 'next/server';
+import { apiError } from '@/lib/api-response';
 import { koreaInvestmentService } from '@/lib/services/financial/financial-service';
 import { prisma } from '@/lib/db';
 import { createLogger } from '@/lib/logger';
@@ -19,20 +20,14 @@ export async function GET(request: Request) {
     switch (action) {
       case 'price':
         if (!code) {
-          return NextResponse.json(
-            { success: false, error: 'Code is required' },
-            { status: 400 }
-          );
+          return apiError('Code is required', 400);
         }
         result = await koreaInvestmentService.getStockPrice(code);
         break;
 
       case 'prices':
         if (codes.length === 0) {
-          return NextResponse.json(
-            { success: false, error: 'Codes are required' },
-            { status: 400 }
-          );
+          return apiError('Codes are required', 400);
         }
         const priceMap = await koreaInvestmentService.getStockPrices(codes);
         result = Array.from(priceMap.values());
@@ -40,10 +35,7 @@ export async function GET(request: Request) {
 
       case 'detail':
         if (!code) {
-          return NextResponse.json(
-            { success: false, error: 'Code is required' },
-            { status: 400 }
-          );
+          return apiError('Code is required', 400);
         }
         const [detailPrice, masterList] = await Promise.all([
           koreaInvestmentService.getStockPrice(code),
@@ -105,10 +97,7 @@ export async function GET(request: Request) {
       case 'search':
         const query = searchParams.get('q');
         if (!query) {
-          return NextResponse.json(
-            { success: false, error: 'Query is required' },
-            { status: 400 }
-          );
+          return apiError('Query is required', 400);
         }
         const master = await koreaInvestmentService.getStockMaster();
         result = master.filter(
@@ -120,18 +109,12 @@ export async function GET(request: Request) {
         break;
 
       default:
-        return NextResponse.json(
-          { success: false, error: 'Invalid action' },
-          { status: 400 }
-        );
+        return apiError('Invalid action', 400);
     }
 
     return NextResponse.json({ success: true, data: result });
   } catch (error) {
     log.error('[API] Stock error:', error);
-    return NextResponse.json(
-      { success: false, error: 'Failed to fetch stock data' },
-      { status: 500 }
-    );
+    return apiError('Failed to fetch stock data', 500);
   }
 }
