@@ -44,6 +44,8 @@ async function getRedis(): Promise<Redis | null> {
       maxRetriesPerRequest: 1,
       connectTimeout: 2000,
       lazyConnect: true,
+      enableOfflineQueue: false,
+      retryStrategy: () => null,
     });
     client.on('connect', () => {
       redisReady = true;

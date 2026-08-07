@@ -27,8 +27,10 @@ class CacheService {
         const Redis = (await import('ioredis')).default;
          const redis = new Redis(process.env.REDIS_URL, {
            maxRetriesPerRequest: 0,
-           connectTimeout: 3000,
+           connectTimeout: 2000,
            lazyConnect: true,
+           enableOfflineQueue: false,
+           retryStrategy: () => null,
          });
         this.redis = redis;
 
