@@ -358,7 +358,7 @@ export const IT_KOREAN_SOURCES: AIITSourceConfig[] = [
   {
     name: '전자신문',
     nameEn: 'etnews',
-    url: 'https://rss.etnews.com/Section901.xml',
+    url: 'https://news.google.com/rss/search?q=site%3Aetnews.com&hl=ko&gl=KR&ceid=KR:ko',
     category: 'it',
     subcategory: 'korean_it',
     language: 'ko',
@@ -370,7 +370,7 @@ export const IT_KOREAN_SOURCES: AIITSourceConfig[] = [
   {
     name: '디지털데일리',
     nameEn: 'digitaldaily',
-    url: 'https://www.ddaily.co.kr/rss/all.xml',
+    url: 'https://news.google.com/rss/search?q=site%3Addaily.co.kr&hl=ko&gl=KR&ceid=KR:ko',
     category: 'it',
     subcategory: 'korean_it',
     language: 'ko',
