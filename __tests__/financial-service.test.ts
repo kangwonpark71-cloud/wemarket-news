@@ -1,4 +1,4 @@
-import { KoreaInvestmentService } from '@/lib/services/financial/financial-service';
+import { KoreaInvestmentService, koreaInvestmentService, KoreaInvestmentClient, YahooFinanceClient } from '@/lib/services/financial/financial-service';
 
 // Force fallback-mock mode: no real KIS credentials present.
 process.env.KOREA_INVEST_APP_KEY = '';
@@ -33,5 +33,20 @@ describe('KoreaInvestmentService (mock / simulated mode)', () => {
     expect(prices.size).toBe(2);
     expect(prices.get('005930')!.name).toBe('삼성전자');
     expect(prices.get('000660')!.name).toBe('SK하이닉스');
+  });
+
+  it('re-exports the koreaInvestmentService singleton', async () => {
+    const price = await koreaInvestmentService.getStockPrice('005930');
+    expect(price?.code).toBe('005930');
+  });
+
+  it('re-exports KoreaInvestmentClient usable in mock mode', () => {
+    const client = new KoreaInvestmentClient();
+    expect(client.isConfigured()).toBe(false);
+  });
+
+  it('re-exports YahooFinanceClient', () => {
+    const client = new YahooFinanceClient();
+    expect(typeof client.getStockPrice).toBe('function');
   });
 });

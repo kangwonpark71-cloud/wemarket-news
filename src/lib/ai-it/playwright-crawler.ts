@@ -65,7 +65,33 @@ export interface ExtractionStrategy {
 let _browser: Browser | null = null;
 let _context: BrowserContext | null = null;
 
+/**
+ * Close the shared browser after this many ms of inactivity so the
+ * headless Chromium process doesn't sit idle between crawl batches.
+ */
+const IDLE_CLOSE_TIMEOUT_MS = 90_000;
+
+let _idleTimer: NodeJS.Timeout | null = null;
+
+function cancelIdleClose(): void {
+  if (_idleTimer) {
+    clearTimeout(_idleTimer);
+    _idleTimer = null;
+  }
+}
+
+function scheduleIdleClose(): void {
+  if (process.env.JEST_WORKER_ID || process.env.NODE_ENV === 'test') return;
+  cancelIdleClose();
+  _idleTimer = setTimeout(() => {
+    _idleTimer = null;
+    void closeBrowser();
+  }, IDLE_CLOSE_TIMEOUT_MS);
+  _idleTimer.unref?.();
+}
+
 async function getBrowser(): Promise<Browser> {
+  cancelIdleClose();
   if (!_browser || !_browser.isConnected()) {
     registerBrowserShutdown();
     const { chromium } = await import('playwright');
@@ -76,6 +102,10 @@ async function getBrowser(): Promise<Browser> {
         '--disable-setuid-sandbox',
         '--disable-dev-shm-usage',
         '--disable-gpu',
+        '--disable-extensions',
+        '--disable-background-networking',
+        '--disable-component-extensions-with-background-pages',
+        '--js-flags=--max-old-space-size=128',
       ],
     });
   }
@@ -133,6 +163,7 @@ async function getContext(): Promise<BrowserContext> {
  * (e.g. SIGTERM) to release resources.
  */
 export async function closeBrowser(): Promise<void> {
+  cancelIdleClose();
   if (_context) {
     await _context.close().catch(() => {});
     _context = null;
@@ -469,22 +500,36 @@ export async function crawlWithPlaywright(
   } finally {
     if (page) await page.close().catch(() => {});
     // Keep context alive for reuse
+    scheduleIdleClose();
   }
 }
 
 /**
- * Crawl multiple sources in parallel.
+ * Bound the number of concurrent headless pages so a crawl batch
+ * doesn't spawn one Chromium tab per source at once (memory spike).
+ */
+const CRAWL_CONCURRENCY = 2;
+
+/**
+ * Crawl multiple sources with bounded concurrency.
  */
 export async function crawlAllWithPlaywright(
   sources: AIITSourceConfig[],
 ): Promise<Map<string, CrawlResult>> {
   const results = new Map<string, CrawlResult>();
+  let nextIndex = 0;
 
-  const promises = sources.map(async (source) => {
-    const result = await crawlWithPlaywright(source);
-    results.set(source.nameEn, result);
-  });
+  async function worker(): Promise<void> {
+    while (nextIndex < sources.length) {
+      const index = nextIndex++;
+      const source = sources[index];
+      if (!source) continue;
+      const result = await crawlWithPlaywright(source);
+      results.set(source.nameEn, result);
+    }
+  }
 
-  await Promise.allSettled(promises);
+  const workerCount = Math.max(1, Math.min(CRAWL_CONCURRENCY, sources.length));
+  await Promise.allSettled(Array.from({ length: workerCount }, () => worker()));
   return results;
 }

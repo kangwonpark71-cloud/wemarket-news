@@ -51,3 +51,6 @@ public/screenshots/
 
 # database backups
 backups/
+
+# ram measurement artifacts
+/.ram/
