@@ -251,7 +251,7 @@ export const AI_TECH_SOURCES: AIITSourceConfig[] = [
   {
     name: 'IEEE Spectrum Robotics',
     nameEn: 'ieee_robotics',
-    url: 'https://spectrum.ieee.org/feeds/topic/robotics.xml',
+    url: 'https://news.google.com/rss/search?q=site%3Aspectrum.ieee.org%20robotics&hl=en-US&gl=US&ceid=US:en',
     category: 'ai',
     subcategory: 'robotics',
     language: 'en',
