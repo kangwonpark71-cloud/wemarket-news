@@ -71,7 +71,7 @@ export const DOMESTIC_CATEGORY_SOURCES: RSSSourceConfig[] = [
   {
     name: 'YTN 정치',
     nameEn: 'ytn_politics',
-    url: 'https://www.ytn.co.kr/rss/rss_politics.xml',
+    url: 'https://news.google.com/rss/search?q=site%3Aytn.co.kr%20%EC%A0%95%EC%B9%98&hl=ko&gl=KR&ceid=KR:ko',
     category: 'domestic',
     subcategory: 'politics',
     language: 'ko',
@@ -90,7 +90,7 @@ export const DOMESTIC_CATEGORY_SOURCES: RSSSourceConfig[] = [
   {
     name: 'YTN 사회',
     nameEn: 'ytn_society',
-    url: 'https://www.ytn.co.kr/rss/rss_society.xml',
+    url: 'https://news.google.com/rss/search?q=site%3Aytn.co.kr%20%EC%82%AC%ED%9A%8C&hl=ko&gl=KR&ceid=KR:ko',
     category: 'domestic',
     subcategory: 'society',
     language: 'ko',
@@ -109,7 +109,7 @@ export const DOMESTIC_CATEGORY_SOURCES: RSSSourceConfig[] = [
   {
     name: 'YTN 문화',
     nameEn: 'ytn_culture',
-    url: 'https://www.ytn.co.kr/rss/rss_culture.xml',
+    url: 'https://news.google.com/rss/search?q=site%3Aytn.co.kr%20%EB%AC%B8%ED%99%94&hl=ko&gl=KR&ceid=KR:ko',
     category: 'domestic',
     subcategory: 'culture',
     language: 'ko',
@@ -153,7 +153,7 @@ export const DOMESTIC_CATEGORY_SOURCES: RSSSourceConfig[] = [
   {
     name: 'YTN 스포츠',
     nameEn: 'ytn_sports',
-    url: 'https://www.ytn.co.kr/rss/rss_sports.xml',
+    url: 'https://news.google.com/rss/search?q=site%3Aytn.co.kr%20%EC%8A%A4%ED%8F%AC%EC%B8%A0&hl=ko&gl=KR&ceid=KR:ko',
     category: 'domestic',
     subcategory: 'sports',
     language: 'ko',

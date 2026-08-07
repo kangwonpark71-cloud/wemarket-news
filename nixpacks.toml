@@ -5,7 +5,7 @@ nixPkgs = ["nodejs_22"]
 cmds = ["npm install --legacy-peer-deps"]
 
 [phases.build]
-cmds = ["npx prisma generate", "rm -rf .next/cache", "npm run build", "echo BUILD_ID=$(date +%s)"]
+cmds = ["npx prisma generate", "rm -rf .next/cache", "npm run build", "npx playwright install --with-deps chromium", "echo BUILD_ID=$(date +%s)"]
 
 [start]
 cmd = "npm run start"

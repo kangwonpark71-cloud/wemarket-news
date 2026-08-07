@@ -58,7 +58,7 @@ export const AI_OFFICIAL_SOURCES: AIITSourceConfig[] = [
   {
     name: 'Google AI Blog',
     nameEn: 'google_ai_blog',
-    url: 'https://ai.googleblog.com/feeds/posts/default',
+    url: 'https://blog.google/technology/ai/rss/',
     category: 'ai',
     subcategory: 'google_ai',
     language: 'en',
@@ -82,7 +82,7 @@ export const AI_OFFICIAL_SOURCES: AIITSourceConfig[] = [
   {
     name: 'Microsoft AI Blog',
     nameEn: 'microsoft_ai_blog',
-    url: 'https://blogs.microsoft.com/ai/feed/',
+    url: 'https://news.google.com/rss/search?q=site%3Ablogs.microsoft.com&hl=en-US&gl=US&ceid=US:en',
     category: 'ai',
     subcategory: 'microsoft_ai',
     language: 'en',
@@ -94,7 +94,7 @@ export const AI_OFFICIAL_SOURCES: AIITSourceConfig[] = [
   {
     name: 'Meta AI Blog',
     nameEn: 'meta_ai_blog',
-    url: 'https://ai.meta.com/blog/rss/',
+    url: 'https://news.google.com/rss/search?q=site%3Aai.meta.com&hl=en-US&gl=US&ceid=US:en',
     category: 'ai',
     subcategory: 'meta_ai',
     language: 'en',
@@ -160,7 +160,7 @@ export const AI_TECH_SOURCES: AIITSourceConfig[] = [
   {
     name: 'The Verge AI',
     nameEn: 'theverge_ai',
-    url: 'https://www.theverge.com/ai-artificial-intelligence/rss/index.xml',
+    url: 'https://www.theverge.com/rss/ai-artificial-intelligence/index.xml',
     category: 'ai',
     subcategory: 'ai_industry',
     language: 'en',
@@ -220,7 +220,7 @@ export const AI_TECH_SOURCES: AIITSourceConfig[] = [
   {
     name: 'Papers With Code',
     nameEn: 'papers_with_code',
-    url: 'https://paperswithcode.com/rss',
+    url: 'https://news.google.com/rss/search?q=%22papers%20with%20code%22&hl=en-US&gl=US&ceid=US:en',
     category: 'ai',
     subcategory: 'llm',
     language: 'en',
@@ -251,7 +251,7 @@ export const AI_TECH_SOURCES: AIITSourceConfig[] = [
   {
     name: 'IEEE Spectrum Robotics',
     nameEn: 'ieee_robotics',
-    url: 'https://spectrum.ieee.org/rss/topic/robotics/fulltext',
+    url: 'https://spectrum.ieee.org/feeds/topic/robotics.xml',
     category: 'ai',
     subcategory: 'robotics',
     language: 'en',
@@ -299,25 +299,17 @@ export const AI_TECH_SOURCES: AIITSourceConfig[] = [
       pagination: { type: 'scroll', maxPages: 2 },
     },
   },
-  // AI News aggregator (JS-rendered)
+  // AI News aggregator
   {
     name: 'AI News Hub',
     nameEn: 'ai_news_hub',
-    url: 'https://www.artificialintelligence-news.com/feed/',
+    url: 'https://news.google.com/rss/search?q=site%3Aartificialintelligence-news.com&hl=en-US&gl=US&ceid=US:en',
     category: 'ai',
     subcategory: 'ai_industry',
     language: 'en',
     icon: '📡',
     fetchInterval: 1,
-    type: 'crawler',
-    crawlerConfig: {
-      selector: 'article, [class*="post-item"], [class*="news-item"]',
-      titleSelector: 'h2, h3, [class*="title"]',
-      linkSelector: 'a[href]',
-      descriptionSelector: 'p, [class*="excerpt"]',
-      thumbnailSelector: 'img[src]',
-      pagination: { type: 'page', maxPages: 2 },
-    },
+    type: 'rss',
   },
 ];
 
@@ -330,7 +322,7 @@ export const IT_KOREAN_SOURCES: AIITSourceConfig[] = [
   {
     name: '블로터',
     nameEn: 'bloter',
-    url: 'https://www.bloter.net/newsfeed',
+    url: 'https://news.google.com/rss/search?q=site%3Abloter.net&hl=ko&gl=KR&ceid=KR:ko',
     category: 'it',
     subcategory: 'korean_it',
     language: 'ko',
@@ -342,7 +334,7 @@ export const IT_KOREAN_SOURCES: AIITSourceConfig[] = [
   {
     name: '지디넷코리아',
     nameEn: 'zdnet_korea',
-    url: 'https://www.zdnet.co.kr/news/news_rss.xml',
+    url: 'http://feeds.feedburner.com/zdkorea',
     category: 'it',
     subcategory: 'korean_it',
     language: 'ko',
@@ -354,7 +346,7 @@ export const IT_KOREAN_SOURCES: AIITSourceConfig[] = [
   {
     name: 'IT조선',
     nameEn: 'it_chosun',
-    url: 'https://it.chosun.com/rss/all.xml',
+    url: 'https://news.google.com/rss/search?q=site%3Ait.chosun.com&hl=ko&gl=KR&ceid=KR:ko',
     category: 'it',
     subcategory: 'korean_it',
     language: 'ko',
@@ -366,7 +358,7 @@ export const IT_KOREAN_SOURCES: AIITSourceConfig[] = [
   {
     name: '전자신문',
     nameEn: 'etnews',
-    url: 'https://www.etnews.com/rss/all.xml',
+    url: 'https://rss.etnews.com/Section901.xml',
     category: 'it',
     subcategory: 'korean_it',
     language: 'ko',

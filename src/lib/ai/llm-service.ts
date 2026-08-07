@@ -3,12 +3,29 @@ import { createLogger } from '@/lib/logger';
 
 const log = createLogger('LLMService')
 
-const LLM_API_URL = 'https://api.openai.com/v1/chat/completions'
+const OPENAI_URL = 'https://api.openai.com/v1/chat/completions'
+const GEMINI_OPENAI_URL = 'https://generativelanguage.googleapis.com/v1beta/openai/chat/completions'
+
+type LLMProvider = 'openai' | 'gemini'
+
+function getProvider(): LLMProvider {
+  return (process.env.LLM_PROVIDER || 'openai').toLowerCase() === 'gemini' ? 'gemini' : 'openai'
+}
+
+function getApiUrl(): string {
+  return getProvider() === 'gemini' ? GEMINI_OPENAI_URL : OPENAI_URL
+}
+
+function getModel(): string {
+  return process.env.LLM_MODEL || (getProvider() === 'gemini' ? 'gemini-2.0-flash' : 'gpt-4o-mini')
+}
 
 function getApiKey(): string {
-  const key = process.env.OPENAI_API_KEY || process.env.LLM_API_KEY
+  const key = getProvider() === 'gemini'
+    ? process.env.GEMINI_API_KEY
+    : (process.env.OPENAI_API_KEY || process.env.LLM_API_KEY)
   if (!key) {
-    throw new Error('LLM API key not configured. Set OPENAI_API_KEY or LLM_API_KEY')
+    throw new Error('LLM API key not configured. Set OPENAI_API_KEY/LLM_API_KEY or GEMINI_API_KEY for gemini provider')
   }
   return key
 }
@@ -38,14 +55,14 @@ export async function summarizeWithLLM(
 ): Promise<AISummaryResult> {
   const prompt = buildPrompt(title, description, content)
 
-  const response = await fetch(LLM_API_URL, {
+  const response = await fetch(getApiUrl(), {
     method: 'POST',
     headers: {
       'Content-Type': 'application/json',
       Authorization: `Bearer ${getApiKey()}`,
     },
     body: JSON.stringify({
-      model: 'gpt-4o-mini',
+      model: getModel(),
       messages: [
         { role: 'system', content: 'You are a helpful AI/IT news analyst. Respond only with valid JSON.' },
         { role: 'user', content: prompt },
@@ -84,14 +101,14 @@ const QUICK_TRANSLATE_PROMPT = `Translate the following English news title to Ko
 Title:`
 
 export async function translateTitleQuick(title: string): Promise<string> {
-  const response = await fetch(LLM_API_URL, {
+  const response = await fetch(getApiUrl(), {
     method: 'POST',
     headers: {
       'Content-Type': 'application/json',
       Authorization: `Bearer ${getApiKey()}`,
     },
     body: JSON.stringify({
-      model: 'gpt-4o-mini',
+      model: getModel(),
       messages: [
         { role: 'system', content: 'You are a professional translator. Translate English news titles to natural Korean. Respond only with valid JSON.' },
         { role: 'user', content: `${QUICK_TRANSLATE_PROMPT} ${title}"` },
@@ -115,14 +132,14 @@ export async function translateTitleQuick(title: string): Promise<string> {
 export async function translateFullContent(title: string, content: string): Promise<string> {
   const truncated = content.length > 12000 ? content.substring(0, 12000) + '\n...(truncated)' : content
 
-  const response = await fetch(LLM_API_URL, {
+  const response = await fetch(getApiUrl(), {
     method: 'POST',
     headers: {
       'Content-Type': 'application/json',
       Authorization: `Bearer ${getApiKey()}`,
     },
     body: JSON.stringify({
-      model: 'gpt-4o-mini',
+      model: getModel(),
       messages: [
         {
           role: 'system',

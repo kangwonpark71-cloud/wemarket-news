@@ -9,10 +9,25 @@ import { createLogger } from '@/lib/logger';
 
 const log = createLogger('ChatService');
 
-const LLM_API_URL = 'https://api.openai.com/v1/chat/completions';
+const OPENAI_URL = 'https://api.openai.com/v1/chat/completions';
+const GEMINI_OPENAI_URL = 'https://generativelanguage.googleapis.com/v1beta/openai/chat/completions';
+
+function getProvider(): 'openai' | 'gemini' {
+  return (process.env.LLM_PROVIDER || 'openai').toLowerCase() === 'gemini' ? 'gemini' : 'openai';
+}
+
+function getApiUrl(): string {
+  return getProvider() === 'gemini' ? GEMINI_OPENAI_URL : OPENAI_URL;
+}
+
+function getModel(): string {
+  return process.env.LLM_MODEL || (getProvider() === 'gemini' ? 'gemini-2.0-flash' : 'gpt-4o-mini');
+}
 
 function getApiKey(): string {
-  const key = process.env.OPENAI_API_KEY || process.env.LLM_API_KEY;
+  const key = getProvider() === 'gemini'
+    ? process.env.GEMINI_API_KEY
+    : (process.env.OPENAI_API_KEY || process.env.LLM_API_KEY);
   if (!key) throw new Error('LLM API key not configured');
   return key;
 }
@@ -124,14 +139,14 @@ ${ragContext || '(참고 기사 없음 — 일반 지식으로 답변)'}
   ];
 
   try {
-    const response = await fetch(LLM_API_URL, {
+    const response = await fetch(getApiUrl(), {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
         Authorization: `Bearer ${getApiKey()}`,
       },
       body: JSON.stringify({
-        model: 'gpt-4o-mini',
+        model: getModel(),
         messages: apiMessages,
         temperature: 0.3,
         max_tokens: 500,

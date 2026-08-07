@@ -87,7 +87,7 @@ npm run dev
 
 | Command | Description |
 |---------|-------------|
-| `npm test` | Jest 단위 테스트 (331 tests, 27 suites) |
+| `npm test` | Jest 단위 테스트 (399 tests, 29 suites) |
 | `npm run test:watch` | Watch 모드 |
 | `npm run test:coverage` | 커버리지 리포트 |
 | `npm run test:e2e` | Playwright E2E 테스트 |
@@ -143,7 +143,7 @@ economy-news/
 │   ├── schema.prisma           # PG 스키마 (31 models)
 │   ├── schema.sqlite.prisma    # SQLite 로컬 개발 스키마
 │   └── seed.ts                 # 소스 시드 데이터
-├── __tests__/                  # Jest 단위/통합 테스트 (27 suites)
+├── __tests__/                  # Jest 단위/통합 테스트 (29 suites)
 ├── e2e/                        # Playwright E2E
 ├── worker/                     # 독립형 cron 워커
 └── scripts/                    # 유틸리티 (백업, 시드, 스크린샷 등)
@@ -208,7 +208,7 @@ economy-news/
 | **Auth** | 전화번호 (Twilio) + Google/Kakao OAuth, scrypt, JWT |
 | **Email** | nodemailer (뉴스레터, 맞춤형 다이제스트) |
 | **Push** | web-push (PWA) |
-| **Testing** | Jest (331 tests, 27 suites), Playwright (E2E) |
+| **Testing** | Jest (399 tests, 29 suites), Playwright (E2E) |
 | **CI** | GitHub Actions (lint → typecheck → test → coverage) |
 | **Deploy** | Railway (Nixpacks) |
 | **Runtime** | Node 22+, npm |
@@ -231,7 +231,7 @@ economy-news/
 
 ```bash
 # 전체 단위 테스트
-npm test                    # 331 tests, 27 suites ✅
+npm test                    # 399 tests, 29 suites ✅
 
 # 커버리지
 npm run test:coverage

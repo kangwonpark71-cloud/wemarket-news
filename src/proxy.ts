@@ -1,50 +1,6 @@
 import { NextResponse } from 'next/server'
 import type { NextRequest } from 'next/server'
-
-// ─── Rate Limiting (in-memory sliding window) ────────────────────────────────
-
-interface RateLimitEntry {
-  count: number
-  resetTime: number
-}
-
-const rateLimitMap = new Map<string, RateLimitEntry>()
-
-// Cleanup old entries every 5 minutes
-setInterval(() => {
-  const now = Date.now()
-  for (const [key, entry] of rateLimitMap) {
-    if (now > entry.resetTime) {
-      rateLimitMap.delete(key)
-    }
-  }
-}, 5 * 60 * 1000)
-
-function checkRateLimit(
-  ip: string,
-  limit: number,
-  windowMs: number
-): { allowed: boolean; remaining: number; resetMs: number } {
-  const now = Date.now()
-  const key = ip
-  const entry = rateLimitMap.get(key)
-
-  if (!entry || now > entry.resetTime) {
-    rateLimitMap.set(key, { count: 1, resetTime: now + windowMs })
-    return { allowed: true, remaining: limit - 1, resetMs: windowMs }
-  }
-
-  if (entry.count >= limit) {
-    return {
-      allowed: false,
-      remaining: 0,
-      resetMs: entry.resetTime - now,
-    }
-  }
-
-  entry.count++
-  return { allowed: true, remaining: limit - entry.count, resetMs: entry.resetTime - now }
-}
+import { checkRateLimit } from '@/lib/ratelimit'
 
 // ─── Route Configuration ─────────────────────────────────────────────────────
 // Railway shares a single outbound IP — per-IP limits must be generous.
@@ -78,7 +34,7 @@ function getClientIp(request: NextRequest): string {
 
 // ─── Proxy ───────────────────────────────────────────────────────────────────
 
-export function proxy(request: NextRequest) {
+export async function proxy(request: NextRequest) {
   const { pathname } = request.nextUrl
   const method = request.method
   const ip = getClientIp(request)
@@ -92,7 +48,7 @@ export function proxy(request: NextRequest) {
     return NextResponse.next()
   }
 
-  // ─── Rate Limiting ───────────────────────────────────────────────────────
+  // ─── Rate Limiting (Redis with in-memory fallback) ──────────────────────
   let rateLimit = API_RATE_LIMIT
   if (pathname.startsWith('/api/cron') || pathname.startsWith('/api/ai-it/trigger')) {
     rateLimit = CRON_RATE_LIMIT
@@ -100,19 +56,24 @@ export function proxy(request: NextRequest) {
     rateLimit = WRITE_RATE_LIMIT
   }
 
-  const windowMs = 60 * 1000 // 1 minute
-  const { allowed, remaining, resetMs } = checkRateLimit(ip, rateLimit, windowMs)
+  const { allowed, remaining, resetAt } = await checkRateLimit(ip, {
+    limit: rateLimit,
+    windowSeconds: 60,
+    prefix: pathname,
+  })
 
   if (!allowed) {
+    const retryAfterSeconds = Math.max(1, Math.ceil((resetAt - Date.now()) / 1000))
     return NextResponse.json(
       {
-        error: 'Too many requests',
-        retryAfter: Math.ceil(resetMs / 1000),
+        success: false,
+        error: '요청이 너무 많습니다. 잠시 후 다시 시도해주세요.',
+        code: 'RATE_LIMITED',
       },
       {
         status: 429,
         headers: {
-          'Retry-After': String(Math.ceil(resetMs / 1000)),
+          'Retry-After': String(retryAfterSeconds),
           'X-RateLimit-Limit': String(rateLimit),
           'X-RateLimit-Remaining': '0',
         },

@@ -27,9 +27,13 @@ interface SourceStat {
   newArticles: number;
   lastRun: string | null;
   lastStatus: string | null;
+  lastError: string | null;
 }
 
 type SortKey = 'successRate' | 'runs' | 'avgDuration' | 'newArticles' | 'lastRun';
+
+const DANGER_RATE = 50;
+const MIN_RUNS_FOR_ALERT = 3;
 
 export default function AdminSourcesHealthPage() {
   const [logs, setLogs] = useState<FetchLog[]>([]);
@@ -37,6 +41,8 @@ export default function AdminSourcesHealthPage() {
   const [error, setError] = useState<string | null>(null);
   const [sortKey, setSortKey] = useState<SortKey>('successRate');
   const [sortDir, setSortDir] = useState<'asc' | 'desc'>('desc');
+  const [failingOnly, setFailingOnly] = useState(false);
+  const [category, setCategory] = useState('all');
 
   useEffect(() => {
     fetch('/api/fetch-logs?limit=500')
@@ -49,7 +55,7 @@ export default function AdminSourcesHealthPage() {
       .finally(() => setLoading(false));
   }, []);
 
-  const stats = useMemo<SourceStat[]>(() => {
+  const stats = useMemo<{ rows: SourceStat[]; all: SourceStat[] }>(() => {
     const byName = new Map<string, SourceStat>();
     for (const log of logs) {
       const name = log.source?.name || log.sourceId;
@@ -68,6 +74,7 @@ export default function AdminSourcesHealthPage() {
           newArticles: 0,
           lastRun: null,
           lastStatus: null,
+          lastError: null,
         };
         byName.set(name, s);
       }
@@ -81,15 +88,21 @@ export default function AdminSourcesHealthPage() {
       if (!s.lastRun || log.fetchedAt > s.lastRun) {
         s.lastRun = log.fetchedAt;
         s.lastStatus = log.status;
+        s.lastError = log.error;
       }
     }
 
-    const result = Array.from(byName.values());
-    for (const s of result) {
+    const all = Array.from(byName.values());
+    for (const s of all) {
       s.successRate = s.runs ? Math.round(((s.success + s.partial * 0.5) / s.runs) * 100) : 0;
       s.avgDuration = s.runs ? Math.round(s.avgDuration / s.runs) : 0;
     }
-    result.sort((a, b) => {
+    const rows = all.filter((s) => {
+      if (category !== 'all' && s.category !== category) return false;
+      if (failingOnly) return s.successRate < DANGER_RATE && s.runs >= MIN_RUNS_FOR_ALERT;
+      return true;
+    });
+    rows.sort((a, b) => {
       let cmp = 0;
       if (sortKey === 'lastRun') {
         cmp = (a.lastRun || '').localeCompare(b.lastRun || '');
@@ -98,16 +111,28 @@ export default function AdminSourcesHealthPage() {
       }
       return sortDir === 'asc' ? cmp : -cmp;
     });
-    return result;
-  }, [logs, sortKey, sortDir]);
+    return { rows, all };
+  }, [logs, sortKey, sortDir, failingOnly, category]);
 
   const totals = useMemo(() => {
-    const runs = stats.reduce((a, s) => a + s.runs, 0);
-    const errors = stats.reduce((a, s) => a + s.error, 0);
-    const newArticles = stats.reduce((a, s) => a + s.newArticles, 0);
-    const avgRate = runs ? Math.round(stats.reduce((a, s) => a + s.successRate, 0) / stats.length) : 0;
-    return { runs, errors, newArticles, avgRate, sources: stats.length };
+    const runs = stats.all.reduce((a, s) => a + s.runs, 0);
+    const errors = stats.all.reduce((a, s) => a + s.error, 0);
+    const newArticles = stats.all.reduce((a, s) => a + s.newArticles, 0);
+    const avgRate = runs
+      ? Math.round(stats.all.reduce((a, s) => a + s.successRate, 0) / stats.all.length)
+      : 0;
+    return { runs, errors, newArticles, avgRate, sources: stats.all.length };
   }, [stats]);
+
+  const dangerCount = useMemo(
+    () => stats.all.filter((s) => s.successRate < DANGER_RATE && s.runs >= MIN_RUNS_FOR_ALERT).length,
+    [stats],
+  );
+
+  const categories = useMemo(
+    () => Array.from(new Set(stats.all.map((s) => s.category).filter(Boolean))).sort(),
+    [stats],
+  );
 
   function toggleSort(key: SortKey) {
     if (sortKey === key) {
@@ -143,7 +168,7 @@ export default function AdminSourcesHealthPage() {
         </p>
       </div>
 
-      <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
+      <div className="grid grid-cols-2 lg:grid-cols-5 gap-4">
         <SummaryCard label="모니터링 소스" value={totals.sources.toLocaleString()} />
         <SummaryCard label="총 수집 실행" value={totals.runs.toLocaleString()} />
         <SummaryCard label="신규 기사" value={totals.newArticles.toLocaleString()} />
@@ -152,14 +177,43 @@ export default function AdminSourcesHealthPage() {
           value={`${totals.avgRate}%`}
           tone={totals.avgRate >= 90 ? 'good' : totals.avgRate >= 70 ? 'warn' : 'bad'}
         />
+        <SummaryCard
+          label={`⚠️ 위험 소스 (성공률<${DANGER_RATE}%)`}
+          value={dangerCount.toLocaleString()}
+          tone={dangerCount === 0 ? 'good' : 'bad'}
+        />
+      </div>
+
+      <div className="flex flex-wrap items-center gap-3">
+        <button
+          type="button"
+          onClick={() => setFailingOnly((v) => !v)}
+          className={`px-3 py-1.5 text-xs font-bold border transition-colors ${
+            failingOnly
+              ? 'bg-rose-600 text-white border-rose-600'
+              : 'bg-white text-slate-600 border-slate-300 hover:border-rose-400 hover:text-rose-600'
+          }`}
+        >
+          {failingOnly ? '위험 소스 표시 중' : `위험 소스만 보기 (${dangerCount})`}
+        </button>
+        <select
+          value={category}
+          onChange={(e) => setCategory(e.target.value)}
+          className="px-3 py-1.5 text-xs bg-white border border-slate-300 text-slate-600"
+        >
+          <option value="all">전체 카테고리</option>
+          {categories.map((c) => (
+            <option key={c} value={c}>{c}</option>
+          ))}
+        </select>
       </div>
 
       <div className="bg-white rounded-none shadow-sm border border-slate-200 overflow-hidden">
         <div className="py-4 px-6 bg-slate-50/50 border-b border-slate-200 font-bold text-sm text-slate-700">
           소스별 수집 성과
         </div>
-        {stats.length === 0 ? (
-          <div className="py-8 text-center text-xs text-slate-400">수집 로그가 없습니다.</div>
+        {stats.rows.length === 0 ? (
+          <div className="py-8 text-center text-xs text-slate-400">조건에 맞는 수집 로그가 없습니다.</div>
         ) : (
           <div className="overflow-x-auto">
             <table className="w-full text-left border-collapse">
@@ -171,37 +225,56 @@ export default function AdminSourcesHealthPage() {
                   <Th onClick={() => toggleSort('avgDuration')} active={sortKey === 'avgDuration'} dir={sortDir}>평균(ms)</Th>
                   <Th onClick={() => toggleSort('newArticles')} active={sortKey === 'newArticles'} dir={sortDir}>신규</Th>
                   <th className="py-3 px-4">최근 상태</th>
+                  <th className="py-3 px-4">최근 에러</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-slate-100">
-                {stats.map((s) => (
-                  <tr key={s.name} className="hover:bg-slate-50 text-xs">
-                    <td className="py-3 px-4">
-                      <div className="font-semibold text-slate-700">{s.name}</div>
-                      <div className="text-[10px] text-slate-400">
-                        {s.category || '기타'}
-                        {s.lastRun && ` · ${new Date(s.lastRun).toLocaleString('ko-KR')}`}
-                      </div>
-                    </td>
-                    <td className="py-3 px-4 tabular-nums text-slate-600">{s.runs}</td>
-                    <td className="py-3 px-4">
-                      <div className="flex items-center gap-2">
-                        <div className="h-1.5 w-16 bg-slate-100 rounded-none overflow-hidden">
-                          <div
-                            className={`h-full rounded-none ${s.successRate >= 90 ? 'bg-emerald-500' : s.successRate >= 70 ? 'bg-amber-500' : 'bg-rose-500'}`}
-                            style={{ width: `${s.successRate}%` }}
-                          />
+                {stats.rows.map((s) => {
+                  const isDanger = s.successRate < DANGER_RATE && s.runs >= MIN_RUNS_FOR_ALERT;
+                  return (
+                    <tr key={s.name} className={`hover:bg-slate-50 text-xs ${isDanger ? 'bg-rose-50/50' : ''}`}>
+                      <td className="py-3 px-4">
+                        <div className="font-semibold text-slate-700">
+                          {s.name}
+                          {isDanger && <span className="ml-1.5 text-rose-600" aria-label="위험 소스">⚠️</span>}
                         </div>
-                        <span className="tabular-nums text-slate-600">{s.successRate}%</span>
-                      </div>
-                    </td>
-                    <td className="py-3 px-4 tabular-nums text-slate-600">{s.avgDuration || '-'}</td>
-                    <td className="py-3 px-4 tabular-nums text-slate-600">{s.newArticles.toLocaleString()}</td>
-                    <td className="py-3 px-4">
-                      <StatusPill status={s.lastStatus} />
-                    </td>
-                  </tr>
-                ))}
+                        <div className="text-[10px] text-slate-400">
+                          {s.category || '기타'}
+                          {s.lastRun && ` · ${new Date(s.lastRun).toLocaleString('ko-KR')}`}
+                        </div>
+                      </td>
+                      <td className="py-3 px-4 tabular-nums text-slate-600">{s.runs}</td>
+                      <td className="py-3 px-4">
+                        <div className="flex items-center gap-2">
+                          <div className="h-1.5 w-16 bg-slate-100 rounded-none overflow-hidden">
+                            <div
+                              className={`h-full rounded-none ${s.successRate >= 90 ? 'bg-emerald-500' : s.successRate >= 70 ? 'bg-amber-500' : 'bg-rose-500'}`}
+                              style={{ width: `${s.successRate}%` }}
+                            />
+                          </div>
+                          <span className="tabular-nums text-slate-600">{s.successRate}%</span>
+                        </div>
+                      </td>
+                      <td className="py-3 px-4 tabular-nums text-slate-600">{s.avgDuration || '-'}</td>
+                      <td className="py-3 px-4 tabular-nums text-slate-600">{s.newArticles.toLocaleString()}</td>
+                      <td className="py-3 px-4">
+                        <StatusPill status={s.lastStatus} />
+                      </td>
+                      <td className="py-3 px-4">
+                        {s.lastError ? (
+                          <span
+                            title={s.lastError}
+                            className="block max-w-[260px] truncate text-rose-700"
+                          >
+                            {s.lastError}
+                          </span>
+                        ) : (
+                          <span className="text-slate-300">-</span>
+                        )}
+                      </td>
+                    </tr>
+                  );
+                })}
               </tbody>
             </table>
           </div>
